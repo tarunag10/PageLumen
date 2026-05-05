@@ -64,6 +64,7 @@ public enum SampleDataFactory {
         return ReaderDocument(
             title: "PageLumen Demo",
             sourceType: .sample,
+            language: "en",
             processingStatus: .complete,
             pages: [page],
             outline: [OutlineItem(title: "IMPORT FLOW", pageNumber: 1)],

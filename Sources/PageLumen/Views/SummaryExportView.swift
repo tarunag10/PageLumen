@@ -5,6 +5,10 @@ struct SummaryExportView: View {
     @EnvironmentObject private var store: DocumentStore
     @StateObject private var speech = SpeechEngine()
 
+    private var accessibilityAudit: AccessibilityAudit {
+        AccessibilityAuditor().audit(document: store.document, options: store.exportOptions)
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -59,6 +63,48 @@ struct SummaryExportView: View {
                     .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
 
                 VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Label(
+                            accessibilityAudit.isReadyForTaggedExport ? "Accessibility check ready" : "Accessibility check needs review",
+                            systemImage: accessibilityAudit.isReadyForTaggedExport ? "checkmark.seal.fill" : "exclamationmark.triangle.fill"
+                        )
+                        .font(.title2.bold())
+
+                        Spacer()
+
+                        Text(accessibilityAudit.summary)
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if accessibilityAudit.findings.isEmpty {
+                        Text("No automated accessibility issues were found for the current export options.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(accessibilityAudit.findings.prefix(5)) { finding in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(findingTitle(finding))
+                                    .font(.headline)
+                                Text(finding.recommendation)
+                                    .font(.callout)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(10)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                        }
+
+                        if accessibilityAudit.findings.count > 5 {
+                            Text("\(accessibilityAudit.findings.count - 5) more items are included in the Accessibility Report export.")
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .padding()
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+
+                VStack(alignment: .leading, spacing: 12) {
                     Text("Choose what to include")
                         .font(.title2.bold())
 
@@ -74,18 +120,18 @@ struct SummaryExportView: View {
                     Text("Save as")
                         .font(.headline)
 
-                    HStack(spacing: 10) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 116), spacing: 10)], alignment: .leading, spacing: 10) {
                         ForEach(ExportFormat.allCases) { format in
                             Button {
                                 store.export(format: format)
                             } label: {
                                 Text(format.rawValue)
-                                    .frame(minWidth: 52)
+                                    .frame(maxWidth: .infinity)
                             }
                         }
                     }
 
-                    Text("Accessible PDF export is a basic structured text export. CSV exports detected table cells, and JSON exports OCR blocks and metadata.")
+                    Text("Tagged HTML and Accessibility Report are the review-ready accessibility outputs. Accessible PDF is readable/selectable text, not full PDF/UA validation yet.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -94,5 +140,10 @@ struct SummaryExportView: View {
             }
             .padding(32)
         }
+    }
+
+    private func findingTitle(_ finding: AccessibilityFinding) -> String {
+        let page = finding.pageNumber.map { "Page \($0): " } ?? ""
+        return "\(finding.severity.rawValue) - \(page)\(finding.message)"
     }
 }
