@@ -8,7 +8,7 @@ struct HomeView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Sightline Reader")
+                Text("PageLumen")
                     .font(.largeTitle.bold())
                 Text("Make PDFs, screenshots, scans, and slides readable, listenable, and exportable with local-first processing.")
                     .font(.title3)

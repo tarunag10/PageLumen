@@ -1,5 +1,5 @@
 import XCTest
-@testable import SightlineCore
+@testable import PageLumenCore
 
 final class BatchImportQueueTests: XCTestCase {
     func testEnqueueCreatesPendingItemsForSupportedURLs() {
@@ -32,7 +32,7 @@ final class BatchImportQueueTests: XCTestCase {
 
         queue.markCompleted(firstID, document: document)
         XCTAssertEqual(queue.items[0].status, .complete)
-        XCTAssertEqual(queue.items[0].document?.title, "Sightline Reader Demo")
+        XCTAssertEqual(queue.items[0].document?.title, "PageLumen Demo")
         XCTAssertEqual(queue.completedCount, 1)
 
         queue.markProcessing(secondID)

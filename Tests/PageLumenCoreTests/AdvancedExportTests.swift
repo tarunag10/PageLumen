@@ -1,5 +1,5 @@
 import XCTest
-@testable import SightlineCore
+@testable import PageLumenCore
 
 final class AdvancedExportTests: XCTestCase {
     func testCSVExportIncludesDetectedTables() {
@@ -18,7 +18,7 @@ final class AdvancedExportTests: XCTestCase {
         let data = ExportEngine().data(for: document, format: .json, options: .full)
         let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
 
-        XCTAssertEqual(object?["title"] as? String, "Sightline Reader Demo")
+        XCTAssertEqual(object?["title"] as? String, "PageLumen Demo")
         XCTAssertNotNil(object?["pages"] as? [[String: Any]])
         XCTAssertNotNil(object?["summary"] as? String)
     }

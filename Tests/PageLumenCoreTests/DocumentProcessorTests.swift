@@ -1,6 +1,6 @@
 import AppKit
 import XCTest
-@testable import SightlineCore
+@testable import PageLumenCore
 
 final class DocumentProcessorTests: XCTestCase {
     @MainActor
@@ -27,7 +27,7 @@ final class DocumentProcessorTests: XCTestCase {
             _ = try await DocumentProcessor().process(url: url)
             XCTFail("Expected unsupported files to throw")
         } catch let error as DocumentProcessorError {
-            XCTAssertEqual(error.localizedDescription, "Sightline Reader does not support \(url.lastPathComponent).")
+            XCTAssertEqual(error.localizedDescription, "PageLumen does not support \(url.lastPathComponent).")
         } catch {
             XCTFail("Unexpected error: \(error)")
         }

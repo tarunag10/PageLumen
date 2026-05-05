@@ -3,31 +3,31 @@
 import PackageDescription
 
 let package = Package(
-    name: "SightlineReader",
+    name: "PageLumen",
     platforms: [
         .macOS(.v14)
     ],
     products: [
-        .library(name: "SightlineCore", targets: ["SightlineCore"]),
-        .executable(name: "SightlineReader", targets: ["SightlineReader"])
+        .library(name: "PageLumenCore", targets: ["PageLumenCore"]),
+        .executable(name: "PageLumen", targets: ["PageLumen"])
     ],
     targets: [
         .target(
-            name: "SightlineCore",
+            name: "PageLumenCore",
             swiftSettings: [
                 .swiftLanguageMode(.v5)
             ]
         ),
         .executableTarget(
-            name: "SightlineReader",
-            dependencies: ["SightlineCore"],
+            name: "PageLumen",
+            dependencies: ["PageLumenCore"],
             swiftSettings: [
                 .swiftLanguageMode(.v5)
             ]
         ),
         .testTarget(
-            name: "SightlineCoreTests",
-            dependencies: ["SightlineCore"],
+            name: "PageLumenCoreTests",
+            dependencies: ["PageLumenCore"],
             swiftSettings: [
                 .swiftLanguageMode(.v5)
             ]

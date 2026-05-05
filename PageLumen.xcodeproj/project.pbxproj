@@ -7,75 +7,75 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		064EF823A8303BAEC003322F /* SightlineReaderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6163A825F5D94BC41914F9C5 /* SightlineReaderApp.swift */; };
-		0AB750C81E07BA0E8B02AC42 /* ExplanationEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A8198786BAF998044620F1 /* ExplanationEngineTests.swift */; };
-		0E04BD25B94F4765507B07D8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C117A388347C99B026EFF9D9 /* ContentView.swift */; };
-		0F0D3A21F0B2A6C016AD1FF5 /* ExplanationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457EC4FE3523B3A43B43BAFF /* ExplanationEngine.swift */; };
-		1EFE9F08FD8CD93B9D9E0159 /* ProcessingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4326E0C99723EB1472D0E8CF /* ProcessingView.swift */; };
-		1F909F3EF8CA58A2F4A5A2D1 /* PreviewPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E0EFA44203127A45EC61FFC /* PreviewPane.swift */; };
-		24BE36035C7D5F84319BA7BD /* LayoutAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C45443AB50A19A2E5ADD4CF /* LayoutAnalyzer.swift */; };
-		3151553EC1A93AA262D6BCD6 /* BatchImportQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCB55AD379ACAA0E4EA0CC62 /* BatchImportQueueTests.swift */; };
-		342C960018759B657D3993AD /* LayoutAnalyzerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D08ADD6A6673EC048709B826 /* LayoutAnalyzerTests.swift */; };
-		48A4B14DDB80EFC9155E0336 /* DocumentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1D7CFBE6F4855ED45295037 /* DocumentStore.swift */; };
-		4DE7BA546FFF26FE5B1D3A61 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6573188A8FDB6EEF0A399F67 /* SettingsView.swift */; };
-		548C5E49C7935F0ED8EA1907 /* AdvancedExportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27E9F00C7C6DE822737D2A72 /* AdvancedExportTests.swift */; };
-		567783ADA62B31E272A280FA /* SightlineCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6B4320FD95B35E98BADADD2D /* SightlineCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		67F150967C251D7DEA88EE64 /* DocumentEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78358D9BE5E728F5827D724F /* DocumentEditingTests.swift */; };
-		7CB7A2DD207354AACAD8EE3E /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 186088238A56703B16E93046 /* Models.swift */; };
-		88940FCEF9FF006056D0FF4F /* DocumentProcessorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68B01FA27DD1B447E1D11BB /* DocumentProcessorTests.swift */; };
-		8DA6CC93C5689AF2560BEBB7 /* ScreenshotCaptureService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16D4AD454764E54678F72CE0 /* ScreenshotCaptureService.swift */; };
-		997B006AD39B3D764DDBF634 /* SampleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37EFF379609C6AA213A443D3 /* SampleData.swift */; };
-		9D4563640B55E0815C690C3C /* DocumentEditing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233B5E11784C3BC40AF97323 /* DocumentEditing.swift */; };
-		A134A1E482B471F396F13BBC /* ExportEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61091E00A99C49A8B85633B7 /* ExportEngineTests.swift */; };
-		AB997667E252CF4E7086306F /* SightlineCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B4320FD95B35E98BADADD2D /* SightlineCore.framework */; };
-		AFEB8392CCE0E2AD2BF672E1 /* ReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D1FB5B9D623C20C21FA3A73 /* ReviewView.swift */; };
-		B1E0B2A7924823766DACCB12 /* BatchImportQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 982D4B2EA56EECB3B5B3EF3D /* BatchImportQueue.swift */; };
-		B975740D8F05179D83ED55B1 /* SpeechEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8557C8C951D0523E0AFBE1B /* SpeechEngine.swift */; };
-		BDCCEB0416E34F9338473237 /* ExportEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AD5B80510D5C2A4364C1D76 /* ExportEngine.swift */; };
-		C81E4CA19DC434E015AB2E37 /* DocumentProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD0399CB98EA536A1C587A6 /* DocumentProcessor.swift */; };
-		CAFDB52C8D92DA0B3662A0CC /* SightlineCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6B4320FD95B35E98BADADD2D /* SightlineCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		D0CA9B46CC6E778EE48DBC56 /* SummaryExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99369D74868D14A662BFF0CC /* SummaryExportView.swift */; };
-		F72753EE5E025DB606241248 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 051BB5D47F8FB47946189679 /* SidebarView.swift */; };
-		F73A3419355379B1960A8354 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5C7D70C8AD12E5CF0F25F64 /* HomeView.swift */; };
-		F74122220378BA2F0C4AE177 /* SightlineCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B4320FD95B35E98BADADD2D /* SightlineCore.framework */; };
+		1B1721DBB436523081F536D3 /* PageLumenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9E4B58A0FC934C9DC62F3754 /* PageLumenCore.framework */; };
+		2175D7BFE55280C57309D783 /* AdvancedExportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBE16865324D47B5AD434E1C /* AdvancedExportTests.swift */; };
+		2906FC2FA4187E33DF68DEDD /* ExplanationEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FF3DCCB16D8AC6195018D83 /* ExplanationEngineTests.swift */; };
+		2CAB5FDB46724B42B176621B /* SummaryExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15F7B590F76D1072EDBADD14 /* SummaryExportView.swift */; };
+		2F2E208DEFCCD417E92C7145 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B1C3F3CF365A97DC8EE00D0 /* ContentView.swift */; };
+		30B74E61BC3ACA3DE3798FBF /* PreviewPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD0CB7CF25D3032E3EC19965 /* PreviewPane.swift */; };
+		37BD647D489ACF90ABC7222D /* SampleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99E5C644819EDB4F6F621D7A /* SampleData.swift */; };
+		3886F26189A17E19BC3F719F /* PageLumenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9E4B58A0FC934C9DC62F3754 /* PageLumenCore.framework */; };
+		4EEFFD310568017D015251D4 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0993F9EF955B4BE8A1529A /* SidebarView.swift */; };
+		5F3DFBD7102B40AB54F9D8A8 /* PageLumenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 9E4B58A0FC934C9DC62F3754 /* PageLumenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		601F1428D9CD3BB69ADC2CD7 /* ReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F2CE934D395E376E741021A /* ReviewView.swift */; };
+		6382A4D25ACD3B65226BE259 /* DocumentProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1585161CB7359AA538F56787 /* DocumentProcessor.swift */; };
+		6DAABBCA06800C846AAC76C8 /* ScreenshotCaptureService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C98EC0673308A4B4EA560D4 /* ScreenshotCaptureService.swift */; };
+		6E25E93DD0D5B56610C18371 /* LayoutAnalyzerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3016851416D998E3C80B344 /* LayoutAnalyzerTests.swift */; };
+		879DCD4FD0AFC056A27FAEED /* SpeechEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1BE8CE264BD58F722F55395 /* SpeechEngine.swift */; };
+		8CE6A8FA43F6CBC88534DB5D /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C34F432A51C9DD416B5FC4 /* HomeView.swift */; };
+		925D49B3592958D424690066 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51ED10D17EEF3D8A5A4C74B0 /* Models.swift */; };
+		9E1C89AA72F6A23C2B9E054C /* ProcessingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88A5FDF976892C5555C0B0BE /* ProcessingView.swift */; };
+		A2FEB1B0E7E4B1A2B8BC9402 /* PageLumenApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D672B67ECB52918D647A0A4 /* PageLumenApp.swift */; };
+		A6ED77F985BD85AF5B4F7479 /* PageLumenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 9E4B58A0FC934C9DC62F3754 /* PageLumenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A91579C8FC7B0A0B4EAF9BB6 /* ExplanationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AAD2F542CDB20DB572FD697 /* ExplanationEngine.swift */; };
+		CADBE13ACC4787DF896763E9 /* DocumentEditing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01C6609B23473073ABF51DAC /* DocumentEditing.swift */; };
+		D1CC83CD8B4C2C0D6505952E /* BatchImportQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 672E6D23DE829F90478ECDFC /* BatchImportQueueTests.swift */; };
+		D8325C91EAF7CAA15191CFBF /* ExportEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91891F3D7C1C6D153F3EEF5D /* ExportEngine.swift */; };
+		D9D9C71DB0E61D7E7560D3A4 /* LayoutAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEC0C37527FA1BDB9FDF2FB9 /* LayoutAnalyzer.swift */; };
+		DFF10773132891AD6BC64115 /* BatchImportQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBBBD0641D444BB6CB3CE4E /* BatchImportQueue.swift */; };
+		E1509B887D850189259CCA30 /* DocumentProcessorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 753EAF90C88F5A65CA28521E /* DocumentProcessorTests.swift */; };
+		E7D21747C6852107B466D8AF /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B791BEC107B8BC347DCE28C /* SettingsView.swift */; };
+		E81380B83CD09BB36F9CD025 /* DocumentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCDA2E6EF46E0BCE1DECEC3A /* DocumentStore.swift */; };
+		ECC4328F40B23404AE5729AA /* DocumentEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10425478B42934D73AD06316 /* DocumentEditingTests.swift */; };
+		FD46CBE946493DA910F2911D /* ExportEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 886CD365A83A6800A57934BF /* ExportEngineTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		5B03DE51E5D9790212244578 /* PBXContainerItemProxy */ = {
+		280D6B492ACFC2A9BCB2A465 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = CF4AE81689A39DBC166AFBB2 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = C7BFA3D74B1C0C72C61A0597;
-			remoteInfo = SightlineCore;
+			remoteGlobalIDString = E37F3AD401E59074552853CC;
+			remoteInfo = PageLumenCore;
 		};
-		C7136734ABA416DE61B6DF70 /* PBXContainerItemProxy */ = {
+		FDBD04D25FCE8185B14F29D7 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = CF4AE81689A39DBC166AFBB2 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = C7BFA3D74B1C0C72C61A0597;
-			remoteInfo = SightlineCore;
+			remoteGlobalIDString = E37F3AD401E59074552853CC;
+			remoteInfo = PageLumenCore;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		567BD8DC088E3481AF6D17F7 /* Embed Frameworks */ = {
+		73F7965199D5E0D20111F910 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				567783ADA62B31E272A280FA /* SightlineCore.framework in Embed Frameworks */,
+				5F3DFBD7102B40AB54F9D8A8 /* PageLumenCore.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		6A0CD9FB51241862FF86F5C4 /* Embed Frameworks */ = {
+		AFFAF81FC901054BBE6B18F4 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				CAFDB52C8D92DA0B3662A0CC /* SightlineCore.framework in Embed Frameworks */,
+				A6ED77F985BD85AF5B4F7479 /* PageLumenCore.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -83,52 +83,52 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		051BB5D47F8FB47946189679 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
-		0D1FB5B9D623C20C21FA3A73 /* ReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewView.swift; sourceTree = "<group>"; };
-		16D4AD454764E54678F72CE0 /* ScreenshotCaptureService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotCaptureService.swift; sourceTree = "<group>"; };
-		186088238A56703B16E93046 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
-		188099EFB7C96A693EB65067 /* SightlineCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SightlineCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		233B5E11784C3BC40AF97323 /* DocumentEditing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentEditing.swift; sourceTree = "<group>"; };
-		27E9F00C7C6DE822737D2A72 /* AdvancedExportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedExportTests.swift; sourceTree = "<group>"; };
-		37EFF379609C6AA213A443D3 /* SampleData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleData.swift; sourceTree = "<group>"; };
-		3AD5B80510D5C2A4364C1D76 /* ExportEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportEngine.swift; sourceTree = "<group>"; };
-		4326E0C99723EB1472D0E8CF /* ProcessingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessingView.swift; sourceTree = "<group>"; };
-		457EC4FE3523B3A43B43BAFF /* ExplanationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplanationEngine.swift; sourceTree = "<group>"; };
-		4C45443AB50A19A2E5ADD4CF /* LayoutAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutAnalyzer.swift; sourceTree = "<group>"; };
-		61091E00A99C49A8B85633B7 /* ExportEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportEngineTests.swift; sourceTree = "<group>"; };
-		6163A825F5D94BC41914F9C5 /* SightlineReaderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SightlineReaderApp.swift; sourceTree = "<group>"; };
-		6573188A8FDB6EEF0A399F67 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		6AD0399CB98EA536A1C587A6 /* DocumentProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentProcessor.swift; sourceTree = "<group>"; };
-		6B4320FD95B35E98BADADD2D /* SightlineCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SightlineCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		6E0EFA44203127A45EC61FFC /* PreviewPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewPane.swift; sourceTree = "<group>"; };
-		78358D9BE5E728F5827D724F /* DocumentEditingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentEditingTests.swift; sourceTree = "<group>"; };
-		982D4B2EA56EECB3B5B3EF3D /* BatchImportQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchImportQueue.swift; sourceTree = "<group>"; };
-		99369D74868D14A662BFF0CC /* SummaryExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryExportView.swift; sourceTree = "<group>"; };
-		A68B01FA27DD1B447E1D11BB /* DocumentProcessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentProcessorTests.swift; sourceTree = "<group>"; };
-		A8557C8C951D0523E0AFBE1B /* SpeechEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechEngine.swift; sourceTree = "<group>"; };
-		B5A8198786BAF998044620F1 /* ExplanationEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplanationEngineTests.swift; sourceTree = "<group>"; };
-		B5C7D70C8AD12E5CF0F25F64 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
-		C117A388347C99B026EFF9D9 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		D08ADD6A6673EC048709B826 /* LayoutAnalyzerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutAnalyzerTests.swift; sourceTree = "<group>"; };
-		E1D7CFBE6F4855ED45295037 /* DocumentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentStore.swift; sourceTree = "<group>"; };
-		E8A0108D2BFC38DE49526E8C /* SightlineReader.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SightlineReader.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		FCB55AD379ACAA0E4EA0CC62 /* BatchImportQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchImportQueueTests.swift; sourceTree = "<group>"; };
+		01C6609B23473073ABF51DAC /* DocumentEditing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentEditing.swift; sourceTree = "<group>"; };
+		10425478B42934D73AD06316 /* DocumentEditingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentEditingTests.swift; sourceTree = "<group>"; };
+		1585161CB7359AA538F56787 /* DocumentProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentProcessor.swift; sourceTree = "<group>"; };
+		15F7B590F76D1072EDBADD14 /* SummaryExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryExportView.swift; sourceTree = "<group>"; };
+		1D672B67ECB52918D647A0A4 /* PageLumenApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageLumenApp.swift; sourceTree = "<group>"; };
+		2B791BEC107B8BC347DCE28C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		2F2CE934D395E376E741021A /* ReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewView.swift; sourceTree = "<group>"; };
+		2FBBBD0641D444BB6CB3CE4E /* BatchImportQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchImportQueue.swift; sourceTree = "<group>"; };
+		3AAD2F542CDB20DB572FD697 /* ExplanationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplanationEngine.swift; sourceTree = "<group>"; };
+		51ED10D17EEF3D8A5A4C74B0 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		672E6D23DE829F90478ECDFC /* BatchImportQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchImportQueueTests.swift; sourceTree = "<group>"; };
+		6A0993F9EF955B4BE8A1529A /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
+		6FF3DCCB16D8AC6195018D83 /* ExplanationEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplanationEngineTests.swift; sourceTree = "<group>"; };
+		71EFCA7649331DDBB9F8204A /* PageLumen.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PageLumen.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		753EAF90C88F5A65CA28521E /* DocumentProcessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentProcessorTests.swift; sourceTree = "<group>"; };
+		7B1C3F3CF365A97DC8EE00D0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		7C98EC0673308A4B4EA560D4 /* ScreenshotCaptureService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotCaptureService.swift; sourceTree = "<group>"; };
+		886CD365A83A6800A57934BF /* ExportEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportEngineTests.swift; sourceTree = "<group>"; };
+		88A5FDF976892C5555C0B0BE /* ProcessingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessingView.swift; sourceTree = "<group>"; };
+		91891F3D7C1C6D153F3EEF5D /* ExportEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportEngine.swift; sourceTree = "<group>"; };
+		99E5C644819EDB4F6F621D7A /* SampleData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleData.swift; sourceTree = "<group>"; };
+		9E4B58A0FC934C9DC62F3754 /* PageLumenCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = PageLumenCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A3016851416D998E3C80B344 /* LayoutAnalyzerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutAnalyzerTests.swift; sourceTree = "<group>"; };
+		AEC0C37527FA1BDB9FDF2FB9 /* LayoutAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutAnalyzer.swift; sourceTree = "<group>"; };
+		C0C34F432A51C9DD416B5FC4 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		D1BE8CE264BD58F722F55395 /* SpeechEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechEngine.swift; sourceTree = "<group>"; };
+		DCDA2E6EF46E0BCE1DECEC3A /* DocumentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentStore.swift; sourceTree = "<group>"; };
+		EBC3669176703A82D1F69F41 /* PageLumenCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PageLumenCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FBE16865324D47B5AD434E1C /* AdvancedExportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedExportTests.swift; sourceTree = "<group>"; };
+		FD0CB7CF25D3032E3EC19965 /* PreviewPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewPane.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		8989DD46BC20146E60426EDA /* Frameworks */ = {
+		27D8C9A80DDB301D4259FACB /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F74122220378BA2F0C4AE177 /* SightlineCore.framework in Frameworks */,
+				3886F26189A17E19BC3F719F /* PageLumenCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F868070C018BB87764D754A9 /* Frameworks */ = {
+		45961BB527D32A0516BC5D9D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AB997667E252CF4E7086306F /* SightlineCore.framework in Frameworks */,
+				1B1721DBB436523081F536D3 /* PageLumenCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -138,42 +138,57 @@
 		130ABC4F89F29A140825FBEB /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				FD720E649DE717CFEBF54611 /* SightlineCoreTests */,
+				A687E8035CF393561172623E /* PageLumenCoreTests */,
 			);
 			path = Tests;
+			sourceTree = "<group>";
+		};
+		134642FDB2D5C6AA8A321742 /* PageLumenCore */ = {
+			isa = PBXGroup;
+			children = (
+				2FBBBD0641D444BB6CB3CE4E /* BatchImportQueue.swift */,
+				01C6609B23473073ABF51DAC /* DocumentEditing.swift */,
+				1585161CB7359AA538F56787 /* DocumentProcessor.swift */,
+				3AAD2F542CDB20DB572FD697 /* ExplanationEngine.swift */,
+				91891F3D7C1C6D153F3EEF5D /* ExportEngine.swift */,
+				AEC0C37527FA1BDB9FDF2FB9 /* LayoutAnalyzer.swift */,
+				51ED10D17EEF3D8A5A4C74B0 /* Models.swift */,
+				99E5C644819EDB4F6F621D7A /* SampleData.swift */,
+			);
+			path = PageLumenCore;
 			sourceTree = "<group>";
 		};
 		17D58F0CD1DDFD9485A68E04 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				A1D11422441DC76844F70351 /* SightlineCore */,
-				B9C0C3A8C8C62A17C0E07347 /* SightlineReader */,
+				680CE959C44FA58C3E38BEC1 /* PageLumen */,
+				134642FDB2D5C6AA8A321742 /* PageLumenCore */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
 		};
-		3E99F4DD04D19517CA044F12 /* Support */ = {
+		55B42590A5D84158AF11A7FE /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				16D4AD454764E54678F72CE0 /* ScreenshotCaptureService.swift */,
-				A8557C8C951D0523E0AFBE1B /* SpeechEngine.swift */,
-			);
-			path = Support;
-			sourceTree = "<group>";
-		};
-		56AA7AC39FBCEE1A3A74A3B2 /* Views */ = {
-			isa = PBXGroup;
-			children = (
-				C117A388347C99B026EFF9D9 /* ContentView.swift */,
-				B5C7D70C8AD12E5CF0F25F64 /* HomeView.swift */,
-				6E0EFA44203127A45EC61FFC /* PreviewPane.swift */,
-				4326E0C99723EB1472D0E8CF /* ProcessingView.swift */,
-				0D1FB5B9D623C20C21FA3A73 /* ReviewView.swift */,
-				6573188A8FDB6EEF0A399F67 /* SettingsView.swift */,
-				051BB5D47F8FB47946189679 /* SidebarView.swift */,
-				99369D74868D14A662BFF0CC /* SummaryExportView.swift */,
+				7B1C3F3CF365A97DC8EE00D0 /* ContentView.swift */,
+				C0C34F432A51C9DD416B5FC4 /* HomeView.swift */,
+				FD0CB7CF25D3032E3EC19965 /* PreviewPane.swift */,
+				88A5FDF976892C5555C0B0BE /* ProcessingView.swift */,
+				2F2CE934D395E376E741021A /* ReviewView.swift */,
+				2B791BEC107B8BC347DCE28C /* SettingsView.swift */,
+				6A0993F9EF955B4BE8A1529A /* SidebarView.swift */,
+				15F7B590F76D1072EDBADD14 /* SummaryExportView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		566F0C4D9D5A46B7B5020387 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				DCDA2E6EF46E0BCE1DECEC3A /* DocumentStore.swift */,
+				1D672B67ECB52918D647A0A4 /* PageLumenApp.swift */,
+			);
+			path = App;
 			sourceTree = "<group>";
 		};
 		579607021E3A004C56CCAF82 = {
@@ -185,123 +200,108 @@
 			);
 			sourceTree = "<group>";
 		};
-		9354FB91D98D5413DF615159 /* App */ = {
+		680CE959C44FA58C3E38BEC1 /* PageLumen */ = {
 			isa = PBXGroup;
 			children = (
-				E1D7CFBE6F4855ED45295037 /* DocumentStore.swift */,
-				6163A825F5D94BC41914F9C5 /* SightlineReaderApp.swift */,
+				566F0C4D9D5A46B7B5020387 /* App */,
+				B71CBFB77422293F7F6D6C4E /* Support */,
+				55B42590A5D84158AF11A7FE /* Views */,
 			);
-			path = App;
-			sourceTree = "<group>";
-		};
-		A1D11422441DC76844F70351 /* SightlineCore */ = {
-			isa = PBXGroup;
-			children = (
-				982D4B2EA56EECB3B5B3EF3D /* BatchImportQueue.swift */,
-				233B5E11784C3BC40AF97323 /* DocumentEditing.swift */,
-				6AD0399CB98EA536A1C587A6 /* DocumentProcessor.swift */,
-				457EC4FE3523B3A43B43BAFF /* ExplanationEngine.swift */,
-				3AD5B80510D5C2A4364C1D76 /* ExportEngine.swift */,
-				4C45443AB50A19A2E5ADD4CF /* LayoutAnalyzer.swift */,
-				186088238A56703B16E93046 /* Models.swift */,
-				37EFF379609C6AA213A443D3 /* SampleData.swift */,
-			);
-			path = SightlineCore;
+			path = PageLumen;
 			sourceTree = "<group>";
 		};
 		A33572BA4217C31FDE5EADE1 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6B4320FD95B35E98BADADD2D /* SightlineCore.framework */,
-				188099EFB7C96A693EB65067 /* SightlineCoreTests.xctest */,
-				E8A0108D2BFC38DE49526E8C /* SightlineReader.app */,
+				71EFCA7649331DDBB9F8204A /* PageLumen.app */,
+				9E4B58A0FC934C9DC62F3754 /* PageLumenCore.framework */,
+				EBC3669176703A82D1F69F41 /* PageLumenCoreTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		B9C0C3A8C8C62A17C0E07347 /* SightlineReader */ = {
+		A687E8035CF393561172623E /* PageLumenCoreTests */ = {
 			isa = PBXGroup;
 			children = (
-				9354FB91D98D5413DF615159 /* App */,
-				3E99F4DD04D19517CA044F12 /* Support */,
-				56AA7AC39FBCEE1A3A74A3B2 /* Views */,
+				FBE16865324D47B5AD434E1C /* AdvancedExportTests.swift */,
+				672E6D23DE829F90478ECDFC /* BatchImportQueueTests.swift */,
+				10425478B42934D73AD06316 /* DocumentEditingTests.swift */,
+				753EAF90C88F5A65CA28521E /* DocumentProcessorTests.swift */,
+				6FF3DCCB16D8AC6195018D83 /* ExplanationEngineTests.swift */,
+				886CD365A83A6800A57934BF /* ExportEngineTests.swift */,
+				A3016851416D998E3C80B344 /* LayoutAnalyzerTests.swift */,
 			);
-			path = SightlineReader;
+			path = PageLumenCoreTests;
 			sourceTree = "<group>";
 		};
-		FD720E649DE717CFEBF54611 /* SightlineCoreTests */ = {
+		B71CBFB77422293F7F6D6C4E /* Support */ = {
 			isa = PBXGroup;
 			children = (
-				27E9F00C7C6DE822737D2A72 /* AdvancedExportTests.swift */,
-				FCB55AD379ACAA0E4EA0CC62 /* BatchImportQueueTests.swift */,
-				78358D9BE5E728F5827D724F /* DocumentEditingTests.swift */,
-				A68B01FA27DD1B447E1D11BB /* DocumentProcessorTests.swift */,
-				B5A8198786BAF998044620F1 /* ExplanationEngineTests.swift */,
-				61091E00A99C49A8B85633B7 /* ExportEngineTests.swift */,
-				D08ADD6A6673EC048709B826 /* LayoutAnalyzerTests.swift */,
+				7C98EC0673308A4B4EA560D4 /* ScreenshotCaptureService.swift */,
+				D1BE8CE264BD58F722F55395 /* SpeechEngine.swift */,
 			);
-			path = SightlineCoreTests;
+			path = Support;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		C6CE9FF7BAFE714426886C42 /* SightlineCoreTests */ = {
+		114285C5C49B46E4CFD7E932 /* PageLumenCoreTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C2CD7A7918A2A98542F315F7 /* Build configuration list for PBXNativeTarget "SightlineCoreTests" */;
+			buildConfigurationList = 3DA6F83221CD53233F5B8870 /* Build configuration list for PBXNativeTarget "PageLumenCoreTests" */;
 			buildPhases = (
-				E98635B5E84BCAE4DF596FC2 /* Sources */,
-				F868070C018BB87764D754A9 /* Frameworks */,
-				567BD8DC088E3481AF6D17F7 /* Embed Frameworks */,
+				21E73B13F1DFFF8884C360A8 /* Sources */,
+				27D8C9A80DDB301D4259FACB /* Frameworks */,
+				73F7965199D5E0D20111F910 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				8CFA36FA6A8A9809AC2D3E1C /* PBXTargetDependency */,
+				8D232007A35AED2520CF0808 /* PBXTargetDependency */,
 			);
-			name = SightlineCoreTests;
+			name = PageLumenCoreTests;
 			packageProductDependencies = (
 			);
-			productName = SightlineCoreTests;
-			productReference = 188099EFB7C96A693EB65067 /* SightlineCoreTests.xctest */;
+			productName = PageLumenCoreTests;
+			productReference = EBC3669176703A82D1F69F41 /* PageLumenCoreTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		C7BFA3D74B1C0C72C61A0597 /* SightlineCore */ = {
+		5C2657DF8BFEC120F22D2211 /* PageLumen */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 597A8BA57E5456863F2A3649 /* Build configuration list for PBXNativeTarget "SightlineCore" */;
+			buildConfigurationList = CE9506F816B58C72F76EC295 /* Build configuration list for PBXNativeTarget "PageLumen" */;
 			buildPhases = (
-				DA9A361847CAEA6173C40C68 /* Sources */,
+				04BB38F3D6DF4CB62C0DADFA /* Sources */,
+				45961BB527D32A0516BC5D9D /* Frameworks */,
+				AFFAF81FC901054BBE6B18F4 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				2080F569F63D0C8967BCA477 /* PBXTargetDependency */,
 			);
-			name = SightlineCore;
+			name = PageLumen;
 			packageProductDependencies = (
 			);
-			productName = SightlineCore;
-			productReference = 6B4320FD95B35E98BADADD2D /* SightlineCore.framework */;
-			productType = "com.apple.product-type.framework";
-		};
-		E18E968BF4FB7229EA9883AD /* SightlineReader */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = D217C62158D0490494C446D1 /* Build configuration list for PBXNativeTarget "SightlineReader" */;
-			buildPhases = (
-				B45ABE70FB296DCBF41E8F26 /* Sources */,
-				8989DD46BC20146E60426EDA /* Frameworks */,
-				6A0CD9FB51241862FF86F5C4 /* Embed Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				8EDA5D0BDCC55EA5C2D6603C /* PBXTargetDependency */,
-			);
-			name = SightlineReader;
-			packageProductDependencies = (
-			);
-			productName = SightlineReader;
-			productReference = E8A0108D2BFC38DE49526E8C /* SightlineReader.app */;
+			productName = PageLumen;
+			productReference = 71EFCA7649331DDBB9F8204A /* PageLumen.app */;
 			productType = "com.apple.product-type.application";
+		};
+		E37F3AD401E59074552853CC /* PageLumenCore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4556817F30C6FEBCC8781186 /* Build configuration list for PBXNativeTarget "PageLumenCore" */;
+			buildPhases = (
+				516E0EC61D4F6CF648056A58 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PageLumenCore;
+			packageProductDependencies = (
+			);
+			productName = PageLumenCore;
+			productReference = 9E4B58A0FC934C9DC62F3754 /* PageLumenCore.framework */;
+			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
 
@@ -312,13 +312,13 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
-					C6CE9FF7BAFE714426886C42 = {
+					114285C5C49B46E4CFD7E932 = {
 						ProvisioningStyle = Automatic;
 					};
-					C7BFA3D74B1C0C72C61A0597 = {
+					5C2657DF8BFEC120F22D2211 = {
 						ProvisioningStyle = Automatic;
 					};
-					E18E968BF4FB7229EA9883AD = {
+					E37F3AD401E59074552853CC = {
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -337,95 +337,78 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				C7BFA3D74B1C0C72C61A0597 /* SightlineCore */,
-				C6CE9FF7BAFE714426886C42 /* SightlineCoreTests */,
-				E18E968BF4FB7229EA9883AD /* SightlineReader */,
+				5C2657DF8BFEC120F22D2211 /* PageLumen */,
+				E37F3AD401E59074552853CC /* PageLumenCore */,
+				114285C5C49B46E4CFD7E932 /* PageLumenCoreTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
-		B45ABE70FB296DCBF41E8F26 /* Sources */ = {
+		04BB38F3D6DF4CB62C0DADFA /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0E04BD25B94F4765507B07D8 /* ContentView.swift in Sources */,
-				48A4B14DDB80EFC9155E0336 /* DocumentStore.swift in Sources */,
-				F73A3419355379B1960A8354 /* HomeView.swift in Sources */,
-				1F909F3EF8CA58A2F4A5A2D1 /* PreviewPane.swift in Sources */,
-				1EFE9F08FD8CD93B9D9E0159 /* ProcessingView.swift in Sources */,
-				AFEB8392CCE0E2AD2BF672E1 /* ReviewView.swift in Sources */,
-				8DA6CC93C5689AF2560BEBB7 /* ScreenshotCaptureService.swift in Sources */,
-				4DE7BA546FFF26FE5B1D3A61 /* SettingsView.swift in Sources */,
-				F72753EE5E025DB606241248 /* SidebarView.swift in Sources */,
-				064EF823A8303BAEC003322F /* SightlineReaderApp.swift in Sources */,
-				B975740D8F05179D83ED55B1 /* SpeechEngine.swift in Sources */,
-				D0CA9B46CC6E778EE48DBC56 /* SummaryExportView.swift in Sources */,
+				2F2E208DEFCCD417E92C7145 /* ContentView.swift in Sources */,
+				E81380B83CD09BB36F9CD025 /* DocumentStore.swift in Sources */,
+				8CE6A8FA43F6CBC88534DB5D /* HomeView.swift in Sources */,
+				A2FEB1B0E7E4B1A2B8BC9402 /* PageLumenApp.swift in Sources */,
+				30B74E61BC3ACA3DE3798FBF /* PreviewPane.swift in Sources */,
+				9E1C89AA72F6A23C2B9E054C /* ProcessingView.swift in Sources */,
+				601F1428D9CD3BB69ADC2CD7 /* ReviewView.swift in Sources */,
+				6DAABBCA06800C846AAC76C8 /* ScreenshotCaptureService.swift in Sources */,
+				E7D21747C6852107B466D8AF /* SettingsView.swift in Sources */,
+				4EEFFD310568017D015251D4 /* SidebarView.swift in Sources */,
+				879DCD4FD0AFC056A27FAEED /* SpeechEngine.swift in Sources */,
+				2CAB5FDB46724B42B176621B /* SummaryExportView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		DA9A361847CAEA6173C40C68 /* Sources */ = {
+		21E73B13F1DFFF8884C360A8 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B1E0B2A7924823766DACCB12 /* BatchImportQueue.swift in Sources */,
-				9D4563640B55E0815C690C3C /* DocumentEditing.swift in Sources */,
-				C81E4CA19DC434E015AB2E37 /* DocumentProcessor.swift in Sources */,
-				0F0D3A21F0B2A6C016AD1FF5 /* ExplanationEngine.swift in Sources */,
-				BDCCEB0416E34F9338473237 /* ExportEngine.swift in Sources */,
-				24BE36035C7D5F84319BA7BD /* LayoutAnalyzer.swift in Sources */,
-				7CB7A2DD207354AACAD8EE3E /* Models.swift in Sources */,
-				997B006AD39B3D764DDBF634 /* SampleData.swift in Sources */,
+				2175D7BFE55280C57309D783 /* AdvancedExportTests.swift in Sources */,
+				D1CC83CD8B4C2C0D6505952E /* BatchImportQueueTests.swift in Sources */,
+				ECC4328F40B23404AE5729AA /* DocumentEditingTests.swift in Sources */,
+				E1509B887D850189259CCA30 /* DocumentProcessorTests.swift in Sources */,
+				2906FC2FA4187E33DF68DEDD /* ExplanationEngineTests.swift in Sources */,
+				FD46CBE946493DA910F2911D /* ExportEngineTests.swift in Sources */,
+				6E25E93DD0D5B56610C18371 /* LayoutAnalyzerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		E98635B5E84BCAE4DF596FC2 /* Sources */ = {
+		516E0EC61D4F6CF648056A58 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				548C5E49C7935F0ED8EA1907 /* AdvancedExportTests.swift in Sources */,
-				3151553EC1A93AA262D6BCD6 /* BatchImportQueueTests.swift in Sources */,
-				67F150967C251D7DEA88EE64 /* DocumentEditingTests.swift in Sources */,
-				88940FCEF9FF006056D0FF4F /* DocumentProcessorTests.swift in Sources */,
-				0AB750C81E07BA0E8B02AC42 /* ExplanationEngineTests.swift in Sources */,
-				A134A1E482B471F396F13BBC /* ExportEngineTests.swift in Sources */,
-				342C960018759B657D3993AD /* LayoutAnalyzerTests.swift in Sources */,
+				DFF10773132891AD6BC64115 /* BatchImportQueue.swift in Sources */,
+				CADBE13ACC4787DF896763E9 /* DocumentEditing.swift in Sources */,
+				6382A4D25ACD3B65226BE259 /* DocumentProcessor.swift in Sources */,
+				A91579C8FC7B0A0B4EAF9BB6 /* ExplanationEngine.swift in Sources */,
+				D8325C91EAF7CAA15191CFBF /* ExportEngine.swift in Sources */,
+				D9D9C71DB0E61D7E7560D3A4 /* LayoutAnalyzer.swift in Sources */,
+				925D49B3592958D424690066 /* Models.swift in Sources */,
+				37BD647D489ACF90ABC7222D /* SampleData.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		8CFA36FA6A8A9809AC2D3E1C /* PBXTargetDependency */ = {
+		2080F569F63D0C8967BCA477 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C7BFA3D74B1C0C72C61A0597 /* SightlineCore */;
-			targetProxy = C7136734ABA416DE61B6DF70 /* PBXContainerItemProxy */;
+			target = E37F3AD401E59074552853CC /* PageLumenCore */;
+			targetProxy = FDBD04D25FCE8185B14F29D7 /* PBXContainerItemProxy */;
 		};
-		8EDA5D0BDCC55EA5C2D6603C /* PBXTargetDependency */ = {
+		8D232007A35AED2520CF0808 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C7BFA3D74B1C0C72C61A0597 /* SightlineCore */;
-			targetProxy = 5B03DE51E5D9790212244578 /* PBXContainerItemProxy */;
+			target = E37F3AD401E59074552853CC /* PageLumenCore */;
+			targetProxy = 280D6B492ACFC2A9BCB2A465 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		01BFF2B5070F93D0622AD455 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = "generated/SightlineReader-Info.plist";
-				INFOPLIST_KEY_LSMinimumSystemVersion = 14.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.pagelumen.SightlineReader;
-				PRODUCT_NAME = SightlineReader;
-				SDKROOT = macosx;
-			};
-			name = Release;
-		};
 		34354AA94CDD151A7BA98E0B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -490,49 +473,36 @@
 			};
 			name = Debug;
 		};
-		3DC324BBC1205B5795633B31 /* Release */ = {
+		3EDBEC471DC2B0B3F99D69F2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "";
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = "generated/SightlineCore-Info.plist";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				INFOPLIST_FILE = "generated/PageLumenCoreTests-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.pagelumen.SightlineCore;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pagelumen.PageLumenCoreTests;
 				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				VERSIONING_SYSTEM = "apple-generic";
 			};
-			name = Release;
+			name = Debug;
 		};
-		43FCEDBC6558FC4FC8E16E8C /* Debug */ = {
+		47D5DF15B9A8010972323F93 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = "generated/SightlineCore-Info.plist";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				INFOPLIST_FILE = "generated/PageLumen-Info.plist";
+				INFOPLIST_KEY_LSMinimumSystemVersion = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.pagelumen.SightlineCore;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pagelumen.PageLumen;
+				PRODUCT_NAME = PageLumen;
 				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
 		};
@@ -593,63 +563,102 @@
 			};
 			name = Release;
 		};
-		835660725B3409AD1E36E075 /* Debug */ = {
+		5B08EC40A601E9D0A3B853A5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = "generated/PageLumenCore-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.pagelumen.PageLumenCore;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		AE92D59B092398808FEC5892 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = "generated/SightlineReader-Info.plist";
+				INFOPLIST_FILE = "generated/PageLumen-Info.plist";
 				INFOPLIST_KEY_LSMinimumSystemVersion = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.pagelumen.SightlineReader;
-				PRODUCT_NAME = SightlineReader;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pagelumen.PageLumen;
+				PRODUCT_NAME = PageLumen;
 				SDKROOT = macosx;
 			};
-			name = Debug;
+			name = Release;
 		};
-		9FBC7C0BB3F2EBBAA81DEBEF /* Debug */ = {
+		EDF56E52FAC0572F03A44446 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = "generated/SightlineCoreTests-Info.plist";
+				INFOPLIST_FILE = "generated/PageLumenCoreTests-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.pagelumen.SightlineCoreTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pagelumen.PageLumenCoreTests;
 				SDKROOT = macosx;
 			};
-			name = Debug;
+			name = Release;
 		};
-		CA175511CA9DE4487EBC5793 /* Release */ = {
+		F67277502F51AD6E9361E393 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "";
 				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = "generated/SightlineCoreTests-Info.plist";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = "generated/PageLumenCore-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
-					"@loader_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.pagelumen.SightlineCoreTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pagelumen.PageLumenCore;
 				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		597A8BA57E5456863F2A3649 /* Build configuration list for PBXNativeTarget "SightlineCore" */ = {
+		3DA6F83221CD53233F5B8870 /* Build configuration list for PBXNativeTarget "PageLumenCoreTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				43FCEDBC6558FC4FC8E16E8C /* Debug */,
-				3DC324BBC1205B5795633B31 /* Release */,
+				3EDBEC471DC2B0B3F99D69F2 /* Debug */,
+				EDF56E52FAC0572F03A44446 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		4556817F30C6FEBCC8781186 /* Build configuration list for PBXNativeTarget "PageLumenCore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5B08EC40A601E9D0A3B853A5 /* Debug */,
+				F67277502F51AD6E9361E393 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -663,20 +672,11 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		C2CD7A7918A2A98542F315F7 /* Build configuration list for PBXNativeTarget "SightlineCoreTests" */ = {
+		CE9506F816B58C72F76EC295 /* Build configuration list for PBXNativeTarget "PageLumen" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				9FBC7C0BB3F2EBBAA81DEBEF /* Debug */,
-				CA175511CA9DE4487EBC5793 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
-		D217C62158D0490494C446D1 /* Build configuration list for PBXNativeTarget "SightlineReader" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				835660725B3409AD1E36E075 /* Debug */,
-				01BFF2B5070F93D0622AD455 /* Release */,
+				47D5DF15B9A8010972323F93 /* Debug */,
+				AE92D59B092398808FEC5892 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

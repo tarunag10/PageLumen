@@ -1,4 +1,4 @@
-import SightlineCore
+import PageLumenCore
 import SwiftUI
 
 struct ReviewView: View {

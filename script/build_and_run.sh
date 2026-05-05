@@ -2,8 +2,8 @@
 set -euo pipefail
 
 MODE="${1:-run}"
-APP_NAME="SightlineReader"
-BUNDLE_ID="com.pagelumen.SightlineReader"
+APP_NAME="PageLumen"
+BUNDLE_ID="com.pagelumen.PageLumen"
 MIN_SYSTEM_VERSION="14.0"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -34,7 +34,7 @@ cat >"$INFO_PLIST" <<PLIST
   <key>CFBundleIdentifier</key>
   <string>$BUNDLE_ID</string>
   <key>CFBundleName</key>
-  <string>Sightline Reader</string>
+  <string>PageLumen</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>LSMinimumSystemVersion</key>

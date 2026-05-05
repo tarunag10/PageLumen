@@ -10,72 +10,72 @@ settings:
     CODE_SIGN_STYLE: Automatic
 packages: {}
 targets:
-  SightlineCore:
+  PageLumenCore:
     type: framework
     platform: macOS
     sources:
-      - path: Sources/SightlineCore
+      - path: Sources/PageLumenCore
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.SightlineCore
+        PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.PageLumenCore
         DEFINES_MODULE: true
     info:
-      path: generated/SightlineCore-Info.plist
+      path: generated/PageLumenCore-Info.plist
       properties:
-        CFBundleName: SightlineCore
+        CFBundleName: PageLumenCore
         CFBundlePackageType: FMWK
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
-  SightlineReader:
+  PageLumen:
     type: application
     platform: macOS
     sources:
-      - path: Sources/SightlineReader
+      - path: Sources/PageLumen
     dependencies:
-      - target: SightlineCore
+      - target: PageLumenCore
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.SightlineReader
-        PRODUCT_NAME: SightlineReader
+        PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.PageLumen
+        PRODUCT_NAME: PageLumen
         INFOPLIST_KEY_LSMinimumSystemVersion: "14.0"
     info:
-      path: generated/SightlineReader-Info.plist
+      path: generated/PageLumen-Info.plist
       properties:
-        CFBundleName: Sightline Reader
-        CFBundleDisplayName: Sightline Reader
+        CFBundleName: PageLumen
+        CFBundleDisplayName: PageLumen
         CFBundlePackageType: APPL
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
         LSMinimumSystemVersion: "14.0"
         NSPrincipalClass: NSApplication
         NSHumanReadableCopyright: ""
-  SightlineCoreTests:
+  PageLumenCoreTests:
     type: bundle.unit-test
     platform: macOS
     sources:
-      - path: Tests/SightlineCoreTests
+      - path: Tests/PageLumenCoreTests
     dependencies:
-      - target: SightlineCore
+      - target: PageLumenCore
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.SightlineCoreTests
+        PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.PageLumenCoreTests
     info:
-      path: generated/SightlineCoreTests-Info.plist
+      path: generated/PageLumenCoreTests-Info.plist
       properties:
-        CFBundleName: SightlineCoreTests
+        CFBundleName: PageLumenCoreTests
         CFBundlePackageType: BNDL
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
 schemes:
-  SightlineReader:
+  PageLumen:
     build:
       targets:
-        SightlineReader: all
-        SightlineCoreTests: [test]
+        PageLumen: all
+        PageLumenCoreTests: [test]
     run:
       config: Debug
-      executable: SightlineReader
+      executable: PageLumen
     test:
       config: Debug
       targets:
-        - SightlineCoreTests
+        - PageLumenCoreTests

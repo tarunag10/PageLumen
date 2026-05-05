@@ -11,7 +11,7 @@ public enum DocumentProcessorError: LocalizedError, Sendable {
     public var errorDescription: String? {
         switch self {
         case .unsupportedFile(let url):
-            return "Sightline Reader does not support \(url.lastPathComponent)."
+            return "PageLumen does not support \(url.lastPathComponent)."
         case .unreadableImage:
             return "The selected image could not be decoded."
         case .unreadablePDF(let url):

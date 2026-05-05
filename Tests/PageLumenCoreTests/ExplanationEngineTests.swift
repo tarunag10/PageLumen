@@ -1,5 +1,5 @@
 import XCTest
-@testable import SightlineCore
+@testable import PageLumenCore
 
 final class ExplanationEngineTests: XCTestCase {
     func testAudioSummaryUsesExtractedContentAndPageReferences() {
@@ -8,7 +8,7 @@ final class ExplanationEngineTests: XCTestCase {
         let summary = ExplanationEngine().summary(for: document, length: .short)
 
         XCTAssertTrue(summary.contains("Page 1"))
-        XCTAssertTrue(summary.contains("Sightline Reader turns inaccessible visual documents"))
+        XCTAssertTrue(summary.contains("PageLumen turns inaccessible visual documents"))
         XCTAssertFalse(summary.contains("cloud"))
     }
 

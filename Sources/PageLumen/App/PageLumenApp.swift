@@ -1,5 +1,5 @@
 import AppKit
-import SightlineCore
+import PageLumenCore
 import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -10,12 +10,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 @main
-struct SightlineReaderApp: App {
+struct PageLumenApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var store = DocumentStore()
 
     var body: some Scene {
-        WindowGroup("Sightline Reader", id: "main") {
+        WindowGroup("PageLumen", id: "main") {
             ContentView()
                 .environmentObject(store)
                 .frame(minWidth: 1_120, minHeight: 720)

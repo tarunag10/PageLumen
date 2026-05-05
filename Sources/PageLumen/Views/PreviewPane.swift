@@ -1,5 +1,5 @@
 import AppKit
-import SightlineCore
+import PageLumenCore
 import SwiftUI
 
 struct PreviewPane: View {

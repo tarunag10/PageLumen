@@ -7,9 +7,9 @@ enum ScreenshotCaptureMode {
     var filePrefix: String {
         switch self {
         case .selectedRegion:
-            return "Sightline-Selection"
+            return "PageLumen-Selection"
         case .window:
-            return "Sightline-Window"
+            return "PageLumen-Window"
         }
     }
 }

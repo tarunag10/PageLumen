@@ -1,5 +1,5 @@
 import XCTest
-@testable import SightlineCore
+@testable import PageLumenCore
 
 final class ExportEngineTests: XCTestCase {
     func testMarkdownExportIncludesHeadingsPageMarkersTablesAndFigures() {
@@ -7,7 +7,7 @@ final class ExportEngineTests: XCTestCase {
 
         let markdown = ExportEngine().markdown(for: document, options: .full)
 
-        XCTAssertTrue(markdown.contains("# Sightline Reader Demo"))
+        XCTAssertTrue(markdown.contains("# PageLumen Demo"))
         XCTAssertTrue(markdown.contains("## Page 1"))
         XCTAssertTrue(markdown.contains("### IMPORT FLOW"))
         XCTAssertTrue(markdown.contains("| Item | Status |"))
@@ -20,7 +20,7 @@ final class ExportEngineTests: XCTestCase {
         let html = ExportEngine().html(for: document, options: .full)
 
         XCTAssertTrue(html.contains("<main>"))
-        XCTAssertTrue(html.contains("<h1>Sightline Reader Demo</h1>"))
+        XCTAssertTrue(html.contains("<h1>PageLumen Demo</h1>"))
         XCTAssertTrue(html.contains("<table>"))
         XCTAssertTrue(html.contains("<figure>"))
     }

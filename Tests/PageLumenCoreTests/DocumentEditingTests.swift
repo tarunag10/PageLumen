@@ -1,5 +1,5 @@
 import XCTest
-@testable import SightlineCore
+@testable import PageLumenCore
 
 final class DocumentEditingTests: XCTestCase {
     func testMoveBlockChangesReadingOrderWithinPage() {

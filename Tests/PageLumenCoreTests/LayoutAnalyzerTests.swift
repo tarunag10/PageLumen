@@ -1,5 +1,5 @@
 import XCTest
-@testable import SightlineCore
+@testable import PageLumenCore
 
 final class LayoutAnalyzerTests: XCTestCase {
     func testTwoColumnBlocksReadLeftColumnBeforeRightColumn() {

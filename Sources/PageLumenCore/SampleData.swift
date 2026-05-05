@@ -18,7 +18,7 @@ public enum SampleDataFactory {
                 TextBlock(
                     pageNumber: 1,
                     type: .paragraph,
-                    text: "Sightline Reader turns inaccessible visual documents into readable, structured, audio-friendly, and exportable content.",
+                    text: "PageLumen turns inaccessible visual documents into readable, structured, audio-friendly, and exportable content.",
                     bounds: BoundingBox(x: 70, y: 130, width: 650, height: 72),
                     confidence: 0.95,
                     readingOrderIndex: 1
@@ -62,12 +62,12 @@ public enum SampleDataFactory {
         )
 
         return ReaderDocument(
-            title: "Sightline Reader Demo",
+            title: "PageLumen Demo",
             sourceType: .sample,
             processingStatus: .complete,
             pages: [page],
             outline: [OutlineItem(title: "IMPORT FLOW", pageNumber: 1)],
-            summary: "Page 1: Sightline Reader turns inaccessible visual documents into readable, structured, audio-friendly, and exportable content."
+            summary: "Page 1: PageLumen turns inaccessible visual documents into readable, structured, audio-friendly, and exportable content."
         )
     }
 }

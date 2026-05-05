@@ -1,7 +1,7 @@
 import AppKit
 import Combine
 import Foundation
-import SightlineCore
+import PageLumenCore
 
 @MainActor
 final class DocumentStore: ObservableObject {
