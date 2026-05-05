@@ -1,0 +1,81 @@
+name: PageLumen
+options:
+  bundleIdPrefix: com.pagelumen
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    CODE_SIGN_STYLE: Automatic
+packages: {}
+targets:
+  SightlineCore:
+    type: framework
+    platform: macOS
+    sources:
+      - path: Sources/SightlineCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.SightlineCore
+        DEFINES_MODULE: true
+    info:
+      path: generated/SightlineCore-Info.plist
+      properties:
+        CFBundleName: SightlineCore
+        CFBundlePackageType: FMWK
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+  SightlineReader:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/SightlineReader
+    dependencies:
+      - target: SightlineCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.SightlineReader
+        PRODUCT_NAME: SightlineReader
+        INFOPLIST_KEY_LSMinimumSystemVersion: "14.0"
+    info:
+      path: generated/SightlineReader-Info.plist
+      properties:
+        CFBundleName: Sightline Reader
+        CFBundleDisplayName: Sightline Reader
+        CFBundlePackageType: APPL
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        LSMinimumSystemVersion: "14.0"
+        NSPrincipalClass: NSApplication
+        NSHumanReadableCopyright: ""
+  SightlineCoreTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/SightlineCoreTests
+    dependencies:
+      - target: SightlineCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.SightlineCoreTests
+    info:
+      path: generated/SightlineCoreTests-Info.plist
+      properties:
+        CFBundleName: SightlineCoreTests
+        CFBundlePackageType: BNDL
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+schemes:
+  SightlineReader:
+    build:
+      targets:
+        SightlineReader: all
+        SightlineCoreTests: [test]
+    run:
+      config: Debug
+      executable: SightlineReader
+    test:
+      config: Debug
+      targets:
+        - SightlineCoreTests
