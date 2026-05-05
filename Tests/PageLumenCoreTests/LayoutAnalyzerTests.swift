@@ -42,4 +42,44 @@ final class LayoutAnalyzerTests: XCTestCase {
         XCTAssertEqual(analyzed.outline.map(\.title), ["INTRODUCTION"])
         XCTAssertEqual(analyzed.pages[0].blocks[0].type, .heading)
     }
+
+    func testAdjacentOCRLinesAreMergedIntoReadableParagraphs() {
+        let page = ReaderPage(
+            pageNumber: 1,
+            size: PageSize(width: 600, height: 800),
+            blocks: [
+                TextBlock(
+                    pageNumber: 1,
+                    type: .paragraph,
+                    text: "This is the first OCR line",
+                    bounds: BoundingBox(x: 72, y: 120, width: 320, height: 18),
+                    confidence: 0.91,
+                    metadata: ["source": "vision-ocr"]
+                ),
+                TextBlock(
+                    pageNumber: 1,
+                    type: .paragraph,
+                    text: "that belongs to the same paragraph.",
+                    bounds: BoundingBox(x: 72, y: 143, width: 340, height: 18),
+                    confidence: 0.89,
+                    metadata: ["source": "vision-ocr"]
+                ),
+                TextBlock(
+                    pageNumber: 1,
+                    type: .paragraph,
+                    text: "A separate paragraph starts here.",
+                    bounds: BoundingBox(x: 72, y: 205, width: 330, height: 18),
+                    confidence: 0.94,
+                    metadata: ["source": "vision-ocr"]
+                )
+            ]
+        )
+
+        let analyzed = LayoutAnalyzer().analyze(page: page)
+
+        XCTAssertEqual(analyzed.blocks.count, 2)
+        XCTAssertEqual(analyzed.blocks[0].text, "This is the first OCR line that belongs to the same paragraph.")
+        XCTAssertEqual(analyzed.blocks[0].metadata["source"], "vision-ocr")
+        XCTAssertEqual(analyzed.blocks[0].metadata["mergedLineCount"], "2")
+    }
 }

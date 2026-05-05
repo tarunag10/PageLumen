@@ -33,6 +33,9 @@ public struct LayoutAnalyzer: Sendable {
     }
 
     public func analyze(page: ReaderPage) -> ReaderPage {
+        var page = page
+        page.blocks = mergeAdjacentOCRLines(page.blocks, pageWidth: page.size.width)
+
         let layoutType = classifyLayout(for: page)
         let ordered = orderedBlocks(page.blocks, layoutType: layoutType, pageWidth: page.size.width)
             .enumerated()
@@ -49,7 +52,6 @@ public struct LayoutAnalyzer: Sendable {
                 return copy
             }
 
-        var page = page
         page.layoutType = layoutType
         page.blocks = ordered
         page.ocrStatus = .complete
@@ -93,6 +95,77 @@ public struct LayoutAnalyzer: Sendable {
         default:
             return blocks.sorted(by: positionSort)
         }
+    }
+
+    private func mergeAdjacentOCRLines(_ blocks: [TextBlock], pageWidth: Double) -> [TextBlock] {
+        let sorted = blocks.sorted(by: positionSort)
+        var merged: [TextBlock] = []
+
+        for block in sorted {
+            guard shouldMergeOCRLine(block) else {
+                merged.append(block)
+                continue
+            }
+
+            if let lastIndex = merged.indices.last,
+               shouldMerge(block, after: merged[lastIndex], pageWidth: pageWidth) {
+                merged[lastIndex] = merge(merged[lastIndex], with: block)
+            } else {
+                merged.append(block)
+            }
+        }
+
+        return merged
+    }
+
+    private func shouldMergeOCRLine(_ block: TextBlock) -> Bool {
+        guard block.type == .paragraph || block.type == .unknown else {
+            return false
+        }
+        let source = block.metadata["source"] ?? ""
+        return source == "vision-ocr" || source == "embedded-pdf"
+    }
+
+    private func shouldMerge(_ block: TextBlock, after previous: TextBlock, pageWidth: Double) -> Bool {
+        guard shouldMergeOCRLine(previous), block.pageNumber == previous.pageNumber else {
+            return false
+        }
+        guard !isLikelyHeading(previous), !isLikelyHeading(block), !isLikelyTable(previous), !isLikelyTable(block) else {
+            return false
+        }
+
+        let maxIndentDelta = max(28, pageWidth * 0.045)
+        let verticalGap = block.bounds.minY - previous.bounds.maxY
+        let maxLineGap = max(10, min(previous.bounds.height, block.bounds.height) * 1.25)
+        let sameColumn = abs(block.bounds.minX - previous.bounds.minX) <= maxIndentDelta
+        let overlaps = horizontalOverlap(previous.bounds, block.bounds) >= min(previous.bounds.width, block.bounds.width) * 0.45
+
+        return sameColumn && overlaps && verticalGap >= -4 && verticalGap <= maxLineGap
+    }
+
+    private func merge(_ previous: TextBlock, with block: TextBlock) -> TextBlock {
+        var copy = previous
+        copy.text = [previous.text, block.text]
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        copy.bounds = union(previous.bounds, block.bounds)
+        copy.confidence = min(previous.confidence, block.confidence)
+        let mergedLineCount = (Int(copy.metadata["mergedLineCount"] ?? "1") ?? 1) + 1
+        copy.metadata["mergedLineCount"] = "\(mergedLineCount)"
+        return copy
+    }
+
+    private func horizontalOverlap(_ lhs: BoundingBox, _ rhs: BoundingBox) -> Double {
+        max(0, min(lhs.maxX, rhs.maxX) - max(lhs.minX, rhs.minX))
+    }
+
+    private func union(_ lhs: BoundingBox, _ rhs: BoundingBox) -> BoundingBox {
+        let minX = min(lhs.minX, rhs.minX)
+        let minY = min(lhs.minY, rhs.minY)
+        let maxX = max(lhs.maxX, rhs.maxX)
+        let maxY = max(lhs.maxY, rhs.maxY)
+        return BoundingBox(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
     }
 
     private func positionSort(_ lhs: TextBlock, _ rhs: TextBlock) -> Bool {

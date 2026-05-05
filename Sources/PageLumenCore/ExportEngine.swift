@@ -117,13 +117,45 @@ public struct ExportEngine: Sendable {
     public func pdfData(for document: ReaderDocument, options: ExportOptions) -> Data {
         let pageRect = NSRect(x: 0, y: 0, width: 612, height: 792)
         let textRect = pageRect.insetBy(dx: 48, dy: 48)
-        let view = NSTextView(frame: pageRect)
-        view.textContainerInset = NSSize(width: textRect.minX, height: textRect.minY)
-        view.string = plainText(for: document, options: options)
-        view.font = NSFont.systemFont(ofSize: 13)
-        view.textColor = .textColor
-        view.backgroundColor = .textBackgroundColor
-        return view.dataWithPDF(inside: pageRect)
+        let data = NSMutableData()
+        guard let consumer = CGDataConsumer(data: data as CFMutableData),
+              let context = CGContext(consumer: consumer, mediaBox: nil, nil) else {
+            return Data()
+        }
+
+        let elements = pdfElements(for: document, options: options)
+        var cursorY = textRect.minY
+
+        func beginPage() {
+            context.beginPDFPage([kCGPDFContextMediaBox as String: pageRect] as CFDictionary)
+            context.saveGState()
+            context.translateBy(x: 0, y: pageRect.height)
+            context.scaleBy(x: 1, y: -1)
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: true)
+            cursorY = textRect.minY
+        }
+
+        func endPage() {
+            NSGraphicsContext.restoreGraphicsState()
+            context.restoreGState()
+            context.endPDFPage()
+        }
+
+        beginPage()
+        for element in elements {
+            let height = element.height(constrainedTo: textRect.width)
+            if cursorY > textRect.minY, cursorY + height > textRect.maxY {
+                endPage()
+                beginPage()
+            }
+
+            element.draw(in: NSRect(x: textRect.minX, y: cursorY, width: textRect.width, height: height))
+            cursorY += height + element.spacingAfter
+        }
+        endPage()
+        context.closePDF()
+        return data as Data
     }
 
     public func data(for document: ReaderDocument, format: ExportFormat, options: ExportOptions) -> Data {
@@ -212,5 +244,81 @@ public struct ExportEngine: Sendable {
             return "\"\(text.replacingOccurrences(of: "\"", with: "\"\""))\""
         }
         return text
+    }
+
+    private func pdfElements(for document: ReaderDocument, options: ExportOptions) -> [PDFTextElement] {
+        var elements: [PDFTextElement] = [
+            PDFTextElement(text: document.title, font: .boldSystemFont(ofSize: 20), spacingAfter: 18)
+        ]
+
+        for page in document.pages {
+            if options.includePageReferences {
+                elements.append(PDFTextElement(text: "Page \(page.pageNumber)", font: .boldSystemFont(ofSize: 15), spacingAfter: 10))
+            }
+
+            for block in DocumentEditing.exportableBlocks(on: page, includeHeadersAndFooters: options.includeHeadersAndFooters) {
+                switch block.type {
+                case .heading where options.includeHeadings:
+                    elements.append(PDFTextElement(text: block.text, font: .boldSystemFont(ofSize: 15), spacingAfter: 8))
+                case .table where options.includeTables:
+                    if let table = page.tables.first(where: { $0.bounds == block.bounds }) {
+                        let tableText = table.rows.map { $0.joined(separator: " | ") }.joined(separator: "\n")
+                        elements.append(PDFTextElement(text: tableText, font: .monospacedSystemFont(ofSize: 12, weight: .regular), spacingAfter: 6))
+                        elements.append(PDFTextElement(text: "Table note: \(table.explanation)", font: .systemFont(ofSize: 12), spacingAfter: 10))
+                    } else {
+                        elements.append(PDFTextElement(text: block.text, font: .systemFont(ofSize: 13), spacingAfter: 8))
+                    }
+                case .figure where options.includeFigures:
+                    let description = page.figures.first(where: { $0.bounds == block.bounds })?.description ?? block.text
+                    elements.append(PDFTextElement(text: "Figure: \(description)", font: .systemFont(ofSize: 13), spacingAfter: 10))
+                default:
+                    elements.append(PDFTextElement(text: block.text, font: .systemFont(ofSize: 13), spacingAfter: 8))
+                }
+
+                if options.includeConfidenceNotes, block.confidence < 0.7 {
+                    elements.append(PDFTextElement(text: "Confidence: \(Int(block.confidence * 100))%. Review recommended.", font: .systemFont(ofSize: 11), spacingAfter: 8))
+                }
+            }
+        }
+
+        return elements.filter { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
+}
+
+private struct PDFTextElement {
+    let text: String
+    let font: NSFont
+    let spacingAfter: CGFloat
+
+    private var attributes: [NSAttributedString.Key: Any] {
+        [
+            .font: font,
+            .foregroundColor: NSColor.textColor,
+            .paragraphStyle: paragraphStyle
+        ]
+    }
+
+    private var paragraphStyle: NSParagraphStyle {
+        let style = NSMutableParagraphStyle()
+        style.lineBreakMode = .byWordWrapping
+        style.lineSpacing = 2
+        return style
+    }
+
+    func height(constrainedTo width: CGFloat) -> CGFloat {
+        let bounding = (text as NSString).boundingRect(
+            with: NSSize(width: width, height: .greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin, .usesFontLeading],
+            attributes: attributes
+        )
+        return ceil(bounding.height)
+    }
+
+    func draw(in rect: NSRect) {
+        (text as NSString).draw(
+            with: rect,
+            options: [.usesLineFragmentOrigin, .usesFontLeading],
+            attributes: attributes
+        )
     }
 }
