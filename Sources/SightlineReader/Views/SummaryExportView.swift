@@ -31,6 +31,12 @@ struct SummaryExportView: View {
                     } label: {
                         Label(speech.isSpeaking ? "Stop" : "Play", systemImage: speech.isSpeaking ? "stop.fill" : "play.fill")
                     }
+
+                    Button {
+                        speech.isSpeaking ? speech.stop() : speech.speak(store.fullExtractedText())
+                    } label: {
+                        Label("Read Full Text", systemImage: "text.bubble")
+                    }
                 }
 
                 Text(store.document.summary)
@@ -50,6 +56,7 @@ struct SummaryExportView: View {
                     Toggle("Include chart and figure explanations", isOn: $store.exportOptions.includeFigures)
                     Toggle("Include page references", isOn: $store.exportOptions.includePageReferences)
                     Toggle("Include confidence notes", isOn: $store.exportOptions.includeConfidenceNotes)
+                    Toggle("Include repeated headers and footers", isOn: $store.exportOptions.includeHeadersAndFooters)
 
                     HStack {
                         ForEach(ExportFormat.allCases) { format in
@@ -59,7 +66,7 @@ struct SummaryExportView: View {
                         }
                     }
 
-                    Text("Accessible PDF export is a basic structured text export. It is designed to be more readable, not a full PDF/UA remediation.")
+                    Text("Accessible PDF export is a basic structured text export. CSV exports detected table cells, and JSON exports OCR blocks and metadata.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }

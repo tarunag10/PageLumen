@@ -6,6 +6,8 @@ public enum ExportFormat: String, CaseIterable, Identifiable, Sendable {
     case text = "TXT"
     case html = "HTML"
     case pdf = "Accessible PDF"
+    case csv = "CSV"
+    case json = "JSON"
 
     public var id: String { rawValue }
 
@@ -15,6 +17,8 @@ public enum ExportFormat: String, CaseIterable, Identifiable, Sendable {
         case .text: return "txt"
         case .html: return "html"
         case .pdf: return "pdf"
+        case .csv: return "csv"
+        case .json: return "json"
         }
     }
 }
@@ -30,7 +34,7 @@ public struct ExportEngine: Sendable {
                 lines.append("")
             }
 
-            for block in page.blocks {
+            for block in DocumentEditing.exportableBlocks(on: page, includeHeadersAndFooters: options.includeHeadersAndFooters) {
                 switch block.type {
                 case .heading where options.includeHeadings:
                     lines.append("### \(block.text)")
@@ -68,7 +72,7 @@ public struct ExportEngine: Sendable {
                 lines.append("Page \(page.pageNumber)")
                 lines.append(String(repeating: "-", count: 12))
             }
-            lines.append(contentsOf: page.blocks.map(\.text))
+            lines.append(contentsOf: DocumentEditing.exportableBlocks(on: page, includeHeadersAndFooters: options.includeHeadersAndFooters).map(\.text))
             return lines.joined(separator: "\n")
         }.joined(separator: "\n\n")
     }
@@ -82,7 +86,7 @@ public struct ExportEngine: Sendable {
                 body.append("<h2>Page \(page.pageNumber)</h2>")
             }
 
-            for block in page.blocks {
+            for block in DocumentEditing.exportableBlocks(on: page, includeHeadersAndFooters: options.includeHeadersAndFooters) {
                 switch block.type {
                 case .heading where options.includeHeadings:
                     body.append("<h3>\(escape(block.text))</h3>")
@@ -132,7 +136,49 @@ public struct ExportEngine: Sendable {
             return Data(html(for: document, options: options).utf8)
         case .pdf:
             return pdfData(for: document, options: options)
+        case .csv:
+            return Data(csv(for: document, options: options).utf8)
+        case .json:
+            return jsonData(for: document, options: options)
         }
+    }
+
+    public func csv(for document: ReaderDocument, options: ExportOptions) -> String {
+        var rows = ["Page,Table,Row,Column,Value"]
+
+        for page in document.pages {
+            for tableIndex in page.tables.indices {
+                let table = page.tables[tableIndex]
+                for rowIndex in table.rows.indices {
+                    for columnIndex in table.rows[rowIndex].indices {
+                        rows.append([
+                            "\(page.pageNumber)",
+                            "\(tableIndex + 1)",
+                            "\(rowIndex + 1)",
+                            "\(columnIndex + 1)",
+                            csvEscape(table.rows[rowIndex][columnIndex])
+                        ].joined(separator: ","))
+                    }
+                }
+            }
+        }
+
+        return rows.joined(separator: "\n")
+    }
+
+    public func jsonData(for document: ReaderDocument, options: ExportOptions) -> Data {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+
+        var filtered = document
+        filtered.pages = document.pages.map { page in
+            var copy = page
+            copy.blocks = DocumentEditing.exportableBlocks(on: page, includeHeadersAndFooters: options.includeHeadersAndFooters)
+            return copy
+        }
+
+        return (try? encoder.encode(filtered)) ?? Data("{}".utf8)
     }
 
     private func markdownTable(_ rows: [[String]]) -> String {
@@ -159,5 +205,12 @@ public struct ExportEngine: Sendable {
             .replacingOccurrences(of: "<", with: "&lt;")
             .replacingOccurrences(of: ">", with: "&gt;")
             .replacingOccurrences(of: "\"", with: "&quot;")
+    }
+
+    private func csvEscape(_ text: String) -> String {
+        if text.contains(",") || text.contains("\"") || text.contains("\n") {
+            return "\"\(text.replacingOccurrences(of: "\"", with: "\"\""))\""
+        }
+        return text
     }
 }

@@ -267,13 +267,15 @@ public struct ExportOptions: Equatable, Sendable {
     public var includeFigures: Bool
     public var includePageReferences: Bool
     public var includeConfidenceNotes: Bool
+    public var includeHeadersAndFooters: Bool
 
     public static let full = ExportOptions(
         includeHeadings: true,
         includeTables: true,
         includeFigures: true,
         includePageReferences: true,
-        includeConfidenceNotes: true
+        includeConfidenceNotes: true,
+        includeHeadersAndFooters: true
     )
 
     public init(
@@ -281,13 +283,15 @@ public struct ExportOptions: Equatable, Sendable {
         includeTables: Bool,
         includeFigures: Bool,
         includePageReferences: Bool,
-        includeConfidenceNotes: Bool
+        includeConfidenceNotes: Bool,
+        includeHeadersAndFooters: Bool = true
     ) {
         self.includeHeadings = includeHeadings
         self.includeTables = includeTables
         self.includeFigures = includeFigures
         self.includePageReferences = includePageReferences
         self.includeConfidenceNotes = includeConfidenceNotes
+        self.includeHeadersAndFooters = includeHeadersAndFooters
     }
 }
 

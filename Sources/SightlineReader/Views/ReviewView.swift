@@ -108,6 +108,22 @@ private struct EditableBlockRow: View {
                 Label(block.type.rawValue.capitalized, systemImage: iconName)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                Button {
+                    store.moveBlock(block, direction: .up)
+                } label: {
+                    Image(systemName: "arrow.up")
+                }
+                .buttonStyle(.borderless)
+                .help("Move earlier in reading order")
+
+                Button {
+                    store.moveBlock(block, direction: .down)
+                } label: {
+                    Image(systemName: "arrow.down")
+                }
+                .buttonStyle(.borderless)
+                .help("Move later in reading order")
+
                 Spacer()
                 Text("\(Int(block.confidence * 100))%")
                     .font(.caption)
@@ -133,6 +149,8 @@ private struct EditableBlockRow: View {
         case .heading: return "textformat.size"
         case .table: return "tablecells"
         case .figure: return "chart.bar"
+        case .header: return "rectangle.topthird.inset.filled"
+        case .footer: return "rectangle.bottomthird.inset.filled"
         default: return "text.alignleft"
         }
     }

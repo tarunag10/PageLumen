@@ -24,6 +24,7 @@ final class DocumentStore: ObservableObject {
     private let processor = DocumentProcessor()
     private let exportEngine = ExportEngine()
     private let explanationEngine = ExplanationEngine()
+    private let screenshotCaptureService = ScreenshotCaptureService()
 
     var selectedPage: ReaderPage? {
         document.pages.first(where: { $0.pageNumber == selectedPageNumber }) ?? document.pages.first
@@ -104,6 +105,31 @@ final class DocumentStore: ObservableObject {
         }
     }
 
+    func captureSelectedRegion() {
+        Task {
+            await captureScreenshot(mode: .selectedRegion)
+        }
+    }
+
+    func captureWindow() {
+        Task {
+            await captureScreenshot(mode: .window)
+        }
+    }
+
+    func captureScreenshot(mode: ScreenshotCaptureMode) async {
+        isProcessing = true
+        statusMessage = mode == .selectedRegion ? "Select a screen region to capture..." : "Click a window to capture..."
+        defer { isProcessing = false }
+
+        do {
+            let url = try await screenshotCaptureService.capture(mode: mode)
+            await importURL(url)
+        } catch {
+            statusMessage = error.localizedDescription
+        }
+    }
+
     func regenerateSummary() {
         document.summary = explanationEngine.summary(for: document, length: summaryLength)
     }
@@ -132,6 +158,15 @@ final class DocumentStore: ObservableObject {
         }
         document.pages[pageIndex].blocks[blockIndex].text = text
         document.summary = explanationEngine.summary(for: document, length: summaryLength)
+    }
+
+    func moveBlock(_ block: TextBlock, direction: BlockMoveDirection) {
+        DocumentEditing.moveBlock(id: block.id, direction: direction, in: &document)
+        document.summary = explanationEngine.summary(for: document, length: summaryLength)
+    }
+
+    func fullExtractedText() -> String {
+        DocumentEditing.fullText(for: document, includeHeadersAndFooters: exportOptions.includeHeadersAndFooters)
     }
 
     func export(format: ExportFormat) {

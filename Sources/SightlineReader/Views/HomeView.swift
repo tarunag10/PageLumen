@@ -34,6 +34,14 @@ struct HomeView: View {
                         store.pasteImageFromClipboard()
                     }
 
+                    Button("Capture Region") {
+                        store.captureSelectedRegion()
+                    }
+
+                    Button("Capture Window") {
+                        store.captureWindow()
+                    }
+
                     Button("Load Demo") {
                         store.loadSample()
                     }
@@ -74,7 +82,7 @@ struct HomeView: View {
             HStack(spacing: 16) {
                 InfoTile(title: "Trust", value: "Extracted text and generated notes stay visually separated.")
                 InfoTile(title: "Privacy", value: "OCR uses Apple Vision locally for baseline processing.")
-                InfoTile(title: "Exports", value: "Markdown, TXT, HTML, and basic accessible PDF.")
+                InfoTile(title: "Exports", value: "Markdown, TXT, HTML, PDF, CSV, and JSON.")
             }
 
             Spacer()

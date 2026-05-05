@@ -4,7 +4,7 @@ public struct LayoutAnalyzer: Sendable {
     public init() {}
 
     public func analyze(document: ReaderDocument) -> ReaderDocument {
-        var analyzedPages = document.pages.map(analyze(page:))
+        var analyzedPages = markRepeatedHeadersAndFooters(in: document.pages.map(analyze(page:)))
         let outline = analyzedPages.flatMap { page in
             page.blocks
                 .filter { $0.type == .heading }
@@ -158,5 +158,62 @@ public struct LayoutAnalyzer: Sendable {
 
     private func headingLevel(for title: String) -> Int {
         title.range(of: #"^\d+\.\d+"#, options: .regularExpression) == nil ? 1 : 2
+    }
+
+    private func markRepeatedHeadersAndFooters(in pages: [ReaderPage]) -> [ReaderPage] {
+        guard pages.count > 1 else {
+            return pages
+        }
+
+        let headerCandidates = repeatedTexts(in: pages, region: .top)
+        let footerCandidates = repeatedTexts(in: pages, region: .bottom)
+
+        return pages.map { page in
+            var copy = page
+            for index in copy.blocks.indices {
+                let normalized = normalize(copy.blocks[index].text)
+                if isTop(copy.blocks[index], on: page), headerCandidates.contains(normalized) {
+                    copy.blocks[index].type = .header
+                } else if isBottom(copy.blocks[index], on: page), footerCandidates.contains(normalized) {
+                    copy.blocks[index].type = .footer
+                }
+            }
+            return copy
+        }
+    }
+
+    private enum PageRegion {
+        case top
+        case bottom
+    }
+
+    private func repeatedTexts(in pages: [ReaderPage], region: PageRegion) -> Set<String> {
+        var counts: [String: Set<Int>] = [:]
+
+        for page in pages {
+            for block in page.blocks {
+                let inRegion = region == .top ? isTop(block, on: page) : isBottom(block, on: page)
+                guard inRegion else { continue }
+                let normalized = normalize(block.text)
+                guard normalized.count > 2 else { continue }
+                counts[normalized, default: []].insert(page.pageNumber)
+            }
+        }
+
+        return Set(counts.filter { $0.value.count >= 2 }.map(\.key))
+    }
+
+    private func isTop(_ block: TextBlock, on page: ReaderPage) -> Bool {
+        block.bounds.midY <= page.size.height * 0.14
+    }
+
+    private func isBottom(_ block: TextBlock, on page: ReaderPage) -> Bool {
+        block.bounds.midY >= page.size.height * 0.86
+    }
+
+    private func normalize(_ text: String) -> String {
+        text.lowercased()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
     }
 }
