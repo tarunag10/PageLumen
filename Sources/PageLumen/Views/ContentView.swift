@@ -5,17 +5,24 @@ struct ContentView: View {
     @EnvironmentObject private var store: DocumentStore
 
     var body: some View {
-        NavigationSplitView {
+        HStack(spacing: 0) {
             SidebarView()
-        } detail: {
-            switch store.selectedDestination ?? .home {
-            case .home:
-                HomeView()
-            case .review:
-                ReviewView()
-            case .summaryExport:
-                SummaryExportView()
+                .frame(width: 280)
+
+            Divider()
+
+            Group {
+                switch store.selectedDestination ?? .home {
+                case .home:
+                    HomeView()
+                case .review:
+                    ReviewView()
+                case .summaryExport:
+                    SummaryExportView()
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(nsColor: .windowBackgroundColor))
         }
         .toolbar {
             ToolbarItemGroup {
