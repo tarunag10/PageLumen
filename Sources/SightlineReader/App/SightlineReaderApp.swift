@@ -22,7 +22,7 @@ struct SightlineReaderApp: App {
         }
         .commands {
             CommandGroup(after: .newItem) {
-                Button("Open Document...") {
+                Button("Open Documents...") {
                     store.openDocumentPanel()
                 }
                 .keyboardShortcut("o", modifiers: [.command])

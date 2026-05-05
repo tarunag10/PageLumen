@@ -18,6 +18,8 @@ final class DocumentStore: ObservableObject {
     @Published var statusMessage = "Ready"
     @Published var exportOptions = ExportOptions.full
     @Published var summaryLength: SummaryLength = .short
+    @Published var batchQueue = BatchImportQueue()
+    @Published var recentDocuments: [ReaderDocument] = []
 
     private let processor = DocumentProcessor()
     private let exportEngine = ExportEngine()
@@ -29,6 +31,7 @@ final class DocumentStore: ObservableObject {
 
     func loadSample() {
         document = SampleDataFactory.makeDemoDocument()
+        remember(document)
         selectedPageNumber = 1
         selectedDestination = .review
         statusMessage = "Loaded demo document"
@@ -37,27 +40,46 @@ final class DocumentStore: ObservableObject {
     func openDocumentPanel() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.pdf, .png, .jpeg, .tiff, .heic]
-        panel.allowsMultipleSelection = false
+        panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
-        panel.message = "Choose a PDF, screenshot, scan, or image to make readable."
-        if panel.runModal() == .OK, let url = panel.url {
-            Task { await importURL(url) }
+        panel.message = "Choose PDFs, screenshots, scans, or images to make readable."
+        if panel.runModal() == .OK {
+            Task { await importURLs(panel.urls) }
         }
     }
 
     func importURL(_ url: URL) async {
-        isProcessing = true
-        statusMessage = "Processing \(url.lastPathComponent)..."
-        selectedDestination = .review
-        defer { isProcessing = false }
+        await importURLs([url])
+    }
 
-        do {
-            let processed = try await processor.process(url: url)
-            document = processed
-            selectedPageNumber = processed.pages.first?.pageNumber ?? 1
-            statusMessage = "Extracted \(processed.pageCount) page\(processed.pageCount == 1 ? "" : "s") locally"
-        } catch {
-            statusMessage = error.localizedDescription
+    func importURLs(_ urls: [URL]) async {
+        let supportedURLs = urls.filter(BatchImportQueue.isSupportedURL)
+        guard !supportedURLs.isEmpty else {
+            statusMessage = "No supported PDF or image files were selected."
+            return
+        }
+
+        batchQueue = BatchImportQueue(urls: supportedURLs)
+        isProcessing = true
+        selectedDestination = .review
+        defer {
+            isProcessing = false
+            statusMessage = batchSummary
+        }
+
+        while let item = batchQueue.pendingItem {
+            batchQueue.markProcessing(item.id)
+            statusMessage = "Processing \(item.fileName)..."
+
+            do {
+                let processed = try await processor.process(url: item.url)
+                batchQueue.markCompleted(item.id, document: processed)
+                remember(processed)
+                document = processed
+                selectedPageNumber = processed.pages.first?.pageNumber ?? 1
+            } catch {
+                batchQueue.markFailed(item.id, message: error.localizedDescription)
+            }
         }
     }
 
@@ -73,6 +95,7 @@ final class DocumentStore: ObservableObject {
             defer { isProcessing = false }
             do {
                 document = try await processor.processClipboardImage(image)
+                remember(document)
                 selectedPageNumber = 1
                 statusMessage = "Extracted clipboard image locally"
             } catch {
@@ -83,6 +106,23 @@ final class DocumentStore: ObservableObject {
 
     func regenerateSummary() {
         document.summary = explanationEngine.summary(for: document, length: summaryLength)
+    }
+
+    func selectBatchItem(_ item: BatchImportItem) {
+        guard let selectedDocument = item.document else {
+            return
+        }
+        document = selectedDocument
+        selectedPageNumber = selectedDocument.pages.first?.pageNumber ?? 1
+        selectedDestination = .review
+        statusMessage = "Viewing \(selectedDocument.title)"
+    }
+
+    func selectRecentDocument(_ selectedDocument: ReaderDocument) {
+        document = selectedDocument
+        selectedPageNumber = selectedDocument.pages.first?.pageNumber ?? 1
+        selectedDestination = .review
+        statusMessage = "Viewing \(selectedDocument.title)"
     }
 
     func updateBlock(_ block: TextBlock, text: String) {
@@ -109,5 +149,23 @@ final class DocumentStore: ObservableObject {
                 statusMessage = "Export failed: \(error.localizedDescription)"
             }
         }
+    }
+
+    private var batchSummary: String {
+        if batchQueue.totalCount == 0 {
+            return "Ready"
+        }
+        if batchQueue.failedCount == 0 {
+            return "Processed \(batchQueue.completedCount) of \(batchQueue.totalCount) files"
+        }
+        return "Processed \(batchQueue.completedCount) of \(batchQueue.totalCount) files, \(batchQueue.failedCount) failed"
+    }
+
+    private func remember(_ newDocument: ReaderDocument) {
+        recentDocuments.removeAll { existing in
+            existing.id == newDocument.id || (existing.sourceURL != nil && existing.sourceURL == newDocument.sourceURL)
+        }
+        recentDocuments.insert(newDocument, at: 0)
+        recentDocuments = Array(recentDocuments.prefix(12))
     }
 }

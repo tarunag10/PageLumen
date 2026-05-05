@@ -22,7 +22,7 @@ struct ContentView: View {
                 Button {
                     store.openDocumentPanel()
                 } label: {
-                    Label("Open", systemImage: "doc.badge.plus")
+                    Label("Open Files", systemImage: "doc.badge.plus")
                 }
 
                 Button {

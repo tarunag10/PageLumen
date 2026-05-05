@@ -20,12 +20,12 @@ struct HomeView: View {
                 Image(systemName: "doc.viewfinder")
                     .font(.system(size: 52, weight: .regular))
                     .foregroundStyle(.tint)
-                Text("Drop a PDF or image")
+                Text("Drop PDFs or images")
                     .font(.title2.weight(.semibold))
-                Text("PDF, PNG, JPEG, TIFF, and HEIC are supported. Originals are preserved.")
+                Text("Batch import PDF, PNG, JPEG, TIFF, and HEIC files. Originals are preserved.")
                     .foregroundStyle(.secondary)
                 HStack {
-                    Button("Open Document") {
+                    Button("Open Documents") {
                         store.openDocumentPanel()
                     }
                     .keyboardShortcut("o", modifiers: [.command])
@@ -46,17 +46,28 @@ struct HomeView: View {
                     .stroke(isTargeted ? Color.accentColor : Color.secondary.opacity(0.25), style: StrokeStyle(lineWidth: 2, dash: [8, 6]))
             }
             .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
-                guard let provider = providers.first else { return false }
-                provider.loadDataRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { data, _ in
-                    guard let data,
-                          let string = String(data: data, encoding: .utf8),
-                          let url = URL(string: string) else {
-                        return
-                    }
-                    Task { @MainActor in
-                        await store.importURL(url)
+                var urls: [URL] = []
+                let group = DispatchGroup()
+
+                for provider in providers {
+                    group.enter()
+                    provider.loadDataRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { data, _ in
+                        defer { group.leave() }
+                        guard let data,
+                              let string = String(data: data, encoding: .utf8),
+                              let url = URL(string: string) else {
+                            return
+                        }
+                        urls.append(url)
                     }
                 }
+
+                group.notify(queue: .main) {
+                    Task { @MainActor in
+                        await store.importURLs(urls)
+                    }
+                }
+
                 return true
             }
 
