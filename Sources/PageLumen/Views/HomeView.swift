@@ -8,42 +8,58 @@ struct HomeView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("PageLumen")
+                Text("Step 1")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+                Text("Add a document")
                     .font(.largeTitle.bold())
-                Text("Make PDFs, screenshots, scans, and slides readable, listenable, and exportable with local-first processing.")
+                Text("Choose a PDF, screenshot, scan, slide, or image. PageLumen will extract text locally, build a reading order, and send you to review.")
                     .font(.title3)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            VStack(spacing: 16) {
+            VStack(spacing: 18) {
                 Image(systemName: "doc.viewfinder")
                     .font(.system(size: 52, weight: .regular))
                     .foregroundStyle(.tint)
-                Text("Drop PDFs or images")
+                Text("Drop a file here")
                     .font(.title2.weight(.semibold))
-                Text("Batch import PDF, PNG, JPEG, TIFF, and HEIC files. Originals are preserved.")
+                Text("Works with PDF, PNG, JPEG, TIFF, and HEIC. You can also import multiple files at once.")
                     .foregroundStyle(.secondary)
-                HStack {
-                    Button("Open Documents") {
+                    .multilineTextAlignment(.center)
+
+                HStack(spacing: 12) {
+                    Button {
                         store.openDocumentPanel()
+                    } label: {
+                        Label("Open Files", systemImage: "doc.badge.plus")
                     }
+                    .buttonStyle(.borderedProminent)
                     .keyboardShortcut("o", modifiers: [.command])
 
-                    Button("Paste Image") {
+                    Button {
                         store.pasteImageFromClipboard()
+                    } label: {
+                        Label("Paste Image", systemImage: "doc.on.clipboard")
                     }
 
-                    Button("Capture Region") {
-                        store.captureSelectedRegion()
+                    Menu {
+                        Button("Capture Selected Region") {
+                            store.captureSelectedRegion()
+                        }
+
+                        Button("Capture Current Window") {
+                            store.captureWindow()
+                        }
+                    } label: {
+                        Label("Capture Screen", systemImage: "camera.viewfinder")
                     }
 
-                    Button("Capture Window") {
-                        store.captureWindow()
-                    }
-
-                    Button("Load Demo") {
+                    Button {
                         store.loadSample()
+                    } label: {
+                        Label("Try Demo", systemImage: "play.circle")
                     }
                 }
             }
@@ -80,9 +96,9 @@ struct HomeView: View {
             }
 
             HStack(spacing: 16) {
-                InfoTile(title: "Trust", value: "Extracted text and generated notes stay visually separated.")
-                InfoTile(title: "Privacy", value: "OCR uses Apple Vision locally for baseline processing.")
-                InfoTile(title: "Exports", value: "Markdown, TXT, HTML, PDF, CSV, and JSON.")
+                InfoTile(number: "1", title: "Add", value: "Open, paste, capture, or drop source files.")
+                InfoTile(number: "2", title: "Review", value: "Fix OCR text, check page order, and inspect notes.")
+                InfoTile(number: "3", title: "Export", value: "Save Markdown, TXT, HTML, PDF, CSV, or JSON.")
             }
 
             Spacer()
@@ -92,13 +108,21 @@ struct HomeView: View {
 }
 
 private struct InfoTile: View {
+    let number: String
     let title: String
     let value: String
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.headline)
+            HStack(spacing: 8) {
+                Text(number)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 22, height: 22)
+                    .background(Color.accentColor, in: Circle())
+                Text(title)
+                    .font(.headline)
+            }
             Text(value)
                 .font(.callout)
                 .foregroundStyle(.secondary)

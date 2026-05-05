@@ -6,12 +6,12 @@ struct SidebarView: View {
 
     var body: some View {
         List(selection: $store.selectedDestination) {
-            Section("Workflow") {
-                Label("Home", systemImage: "tray.and.arrow.down")
+            Section("Steps") {
+                Label("1. Add Document", systemImage: "tray.and.arrow.down")
                     .tag(DocumentStore.Destination.home)
-                Label("Review", systemImage: "rectangle.split.2x1")
+                Label("2. Review Text", systemImage: "rectangle.split.2x1")
                     .tag(DocumentStore.Destination.review)
-                Label("Summary & Export", systemImage: "waveform.and.arrow.up")
+                Label("3. Listen & Export", systemImage: "square.and.arrow.up")
                     .tag(DocumentStore.Destination.summaryExport)
             }
 
@@ -71,7 +71,7 @@ struct SidebarView: View {
 
             Section("Outline") {
                 if store.document.outline.isEmpty {
-                    Text("No headings detected")
+                    Text("Headings appear here after import")
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(store.document.outline) { item in

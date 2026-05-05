@@ -21,7 +21,6 @@ struct ReviewView: View {
                 .frame(minWidth: 460)
             }
         }
-        .navigationTitle(store.document.title)
     }
 }
 
@@ -50,6 +49,16 @@ private struct ReviewHeader: View {
 
     var body: some View {
         HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Step 2: Review text")
+                    .font(.headline)
+                Text("Compare the preview with the extracted blocks. Edit anything that looks wrong.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
             Picker("Page", selection: $store.selectedPageNumber) {
                 ForEach(store.document.pages) { page in
                     Text("Page \(page.pageNumber)").tag(page.pageNumber)
@@ -57,16 +66,21 @@ private struct ReviewHeader: View {
             }
             .frame(width: 150)
 
-            Toggle("Reading order", isOn: $showReadingOrder)
+            Toggle("Show order", isOn: $showReadingOrder)
                 .toggleStyle(.switch)
-
-            Spacer()
 
             if let page = store.selectedPage {
                 Text(page.layoutType.rawValue)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+
+            Button {
+                store.selectedDestination = .summaryExport
+            } label: {
+                Label("Continue", systemImage: "arrow.right")
+            }
+            .buttonStyle(.borderedProminent)
         }
         .padding(12)
     }

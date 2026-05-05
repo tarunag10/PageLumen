@@ -9,13 +9,16 @@ struct SummaryExportView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Summary")
+                    Text("Step 3")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                    Text("Listen and export")
                         .font(.largeTitle.bold())
-                    Text("Generated from extracted text only. Review low-confidence pages before sharing.")
+                    Text("Use the summary for a quick pass, read the full extraction aloud, then save the format you need.")
                         .foregroundStyle(.secondary)
                 }
 
-                HStack {
+                HStack(spacing: 12) {
                     Picker("Length", selection: $store.summaryLength) {
                         ForEach(SummaryLength.allCases) { length in
                             Text(length.rawValue).tag(length)
@@ -37,6 +40,14 @@ struct SummaryExportView: View {
                     } label: {
                         Label("Read Full Text", systemImage: "text.bubble")
                     }
+
+                    Spacer()
+
+                    Button {
+                        store.selectedDestination = .review
+                    } label: {
+                        Label("Back to Review", systemImage: "arrow.left")
+                    }
                 }
 
                 Text(store.document.summary)
@@ -48,7 +59,7 @@ struct SummaryExportView: View {
                     .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
 
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Export")
+                    Text("Choose what to include")
                         .font(.title2.bold())
 
                     Toggle("Include headings", isOn: $store.exportOptions.includeHeadings)
@@ -58,10 +69,18 @@ struct SummaryExportView: View {
                     Toggle("Include confidence notes", isOn: $store.exportOptions.includeConfidenceNotes)
                     Toggle("Include repeated headers and footers", isOn: $store.exportOptions.includeHeadersAndFooters)
 
-                    HStack {
+                    Divider()
+
+                    Text("Save as")
+                        .font(.headline)
+
+                    HStack(spacing: 10) {
                         ForEach(ExportFormat.allCases) { format in
-                            Button(format.rawValue) {
+                            Button {
                                 store.export(format: format)
+                            } label: {
+                                Text(format.rawValue)
+                                    .frame(minWidth: 52)
                             }
                         }
                     }
