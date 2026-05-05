@@ -24,4 +24,14 @@ final class ExportEngineTests: XCTestCase {
         XCTAssertTrue(html.contains("<table>"))
         XCTAssertTrue(html.contains("<figure>"))
     }
+
+    func testPDFExportReturnsPDFData() {
+        let document = SampleDataFactory.makeDemoDocument()
+
+        let data = ExportEngine().data(for: document, format: .pdf, options: .full)
+        let prefix = String(data: data.prefix(5), encoding: .utf8)
+
+        XCTAssertEqual(prefix, "%PDF-")
+        XCTAssertGreaterThan(data.count, 100)
+    }
 }
