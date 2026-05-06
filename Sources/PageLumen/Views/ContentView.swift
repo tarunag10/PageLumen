@@ -20,6 +20,8 @@ struct ContentView: View {
                     switch store.selectedDestination ?? .home {
                     case .home:
                         HomeView()
+                    case .processing:
+                        ProcessingView()
                     case .review:
                         ReviewView()
                     case .summaryExport:
@@ -62,10 +64,13 @@ private struct WorkflowHeader: View {
             StepPill(number: 1, title: "Add", destination: .home)
             Divider()
                 .frame(height: 18)
-            StepPill(number: 2, title: "Review", destination: .review)
+            StepPill(number: 2, title: "Process", destination: .processing)
             Divider()
                 .frame(height: 18)
-            StepPill(number: 3, title: "Export", destination: .summaryExport)
+            StepPill(number: 3, title: "Review", destination: .review)
+            Divider()
+                .frame(height: 18)
+            StepPill(number: 4, title: "Export", destination: .summaryExport)
 
             Spacer()
 
@@ -91,6 +96,8 @@ private struct WorkflowHeader: View {
         switch store.selectedDestination ?? .home {
         case .home:
             return "Start by opening, dropping, pasting, or capturing a document."
+        case .processing:
+            return store.isProcessing ? "Extracting text and building the readable document." : store.statusMessage
         case .review:
             return "Check the extracted text, reading order, tables, and figures."
         case .summaryExport:

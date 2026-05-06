@@ -13,7 +13,7 @@ struct SummaryExportView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Step 3")
+                    Text("Step 4")
                         .font(.headline)
                         .foregroundStyle(.secondary)
                     Text("Listen and export")

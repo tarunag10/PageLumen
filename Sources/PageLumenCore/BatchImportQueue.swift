@@ -4,6 +4,7 @@ public enum BatchImportItemStatus: Equatable, Sendable {
     case pending
     case processing
     case complete
+    case cancelled
     case failed(String)
 
     public var label: String {
@@ -14,6 +15,8 @@ public enum BatchImportItemStatus: Equatable, Sendable {
             return "Processing"
         case .complete:
             return "Complete"
+        case .cancelled:
+            return "Cancelled"
         case .failed:
             return "Failed"
         }
@@ -106,6 +109,18 @@ public struct BatchImportQueue: Equatable, Sendable {
         update(id) { item in
             item.status = .failed(message)
             item.document = nil
+        }
+    }
+
+    public mutating func cancelActiveAndPendingItems() {
+        for index in items.indices {
+            switch items[index].status {
+            case .pending, .processing:
+                items[index].status = .cancelled
+                items[index].document = nil
+            case .complete, .cancelled, .failed:
+                break
+            }
         }
     }
 

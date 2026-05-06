@@ -20,6 +20,8 @@ public enum DocumentProcessorError: LocalizedError, Sendable {
     }
 }
 
+public typealias DocumentProcessingProgressHandler = @MainActor @Sendable (ReaderDocument) async -> Void
+
 public final class DocumentProcessor: @unchecked Sendable {
     private let analyzer: LayoutAnalyzer
 
@@ -27,35 +29,64 @@ public final class DocumentProcessor: @unchecked Sendable {
         self.analyzer = analyzer
     }
 
-    public func process(url: URL) async throws -> ReaderDocument {
+    public func process(
+        url: URL,
+        onProgress: DocumentProcessingProgressHandler? = nil
+    ) async throws -> ReaderDocument {
         let ext = url.pathExtension.lowercased()
         if ext == "pdf" {
-            return try await processPDF(url: url)
+            return try await processPDF(url: url, onProgress: onProgress)
         }
 
         if ["png", "jpg", "jpeg", "tif", "tiff", "heic"].contains(ext) {
             let image = try loadImage(from: url)
-            return try await process(image: image, title: url.deletingPathExtension().lastPathComponent, sourceType: .image, sourceURL: url)
+            return try await process(image: image, title: url.deletingPathExtension().lastPathComponent, sourceType: .image, sourceURL: url, onProgress: onProgress)
         }
 
         throw DocumentProcessorError.unsupportedFile(url)
     }
 
-    public func processClipboardImage(_ image: NSImage) async throws -> ReaderDocument {
-        try await process(image: image, title: "Clipboard Image", sourceType: .clipboard, sourceURL: nil)
+    public func processClipboardImage(
+        _ image: NSImage,
+        onProgress: DocumentProcessingProgressHandler? = nil
+    ) async throws -> ReaderDocument {
+        try await process(image: image, title: "Clipboard Image", sourceType: .clipboard, sourceURL: nil, onProgress: onProgress)
     }
 
-    private func processPDF(url: URL) async throws -> ReaderDocument {
+    private func processPDF(url: URL, onProgress: DocumentProcessingProgressHandler?) async throws -> ReaderDocument {
         guard let pdf = PDFDocument(url: url) else {
             throw DocumentProcessorError.unreadablePDF(url)
         }
 
-        var pages: [ReaderPage] = []
+        var document = ReaderDocument(
+            title: url.deletingPathExtension().lastPathComponent,
+            sourceType: .pdf,
+            sourceURL: url,
+            processingStatus: .processing,
+            pages: (0..<pdf.pageCount).compactMap { index in
+                guard let pdfPage = pdf.page(at: index) else { return nil }
+                let bounds = pdfPage.bounds(for: .mediaBox)
+                return ReaderPage(
+                    pageNumber: index + 1,
+                    size: PageSize(width: bounds.width, height: bounds.height),
+                    thumbnailData: thumbnailData(for: pdfPage),
+                    ocrStatus: .pending,
+                    blocks: []
+                )
+            }
+        )
+        await onProgress?(document)
+
         for index in 0..<pdf.pageCount {
+            try Task.checkCancellation()
             guard let pdfPage = pdf.page(at: index) else { continue }
             let pageNumber = index + 1
             let bounds = pdfPage.bounds(for: .mediaBox)
-            let thumbnailData = thumbnailData(for: pdfPage)
+            if let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == pageNumber }) {
+                document.pages[pageIndex].ocrStatus = .processing
+                await onProgress?(document)
+            }
+
             let embeddedText = pdfPage.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
             let blocks: [TextBlock]
@@ -75,51 +106,57 @@ public final class DocumentProcessor: @unchecked Sendable {
                 ]
             }
 
-            pages.append(
-                ReaderPage(
-                    pageNumber: pageNumber,
-                    size: PageSize(width: bounds.width, height: bounds.height),
-                    thumbnailData: thumbnailData,
-                    ocrStatus: .complete,
-                    blocks: blocks
-                )
-            )
+            if let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == pageNumber }) {
+                document.pages[pageIndex].ocrStatus = .complete
+                document.pages[pageIndex].blocks = blocks
+                await onProgress?(document)
+            }
         }
 
-        let document = ReaderDocument(
-            title: url.deletingPathExtension().lastPathComponent,
-            sourceType: .pdf,
-            sourceURL: url,
-            processingStatus: .complete,
-            pages: pages
-        )
-        return analyzer.analyze(document: document)
+        document.processingStatus = .complete
+        let analyzed = analyzer.analyze(document: document)
+        await onProgress?(analyzed)
+        return analyzed
     }
 
-    private func process(image: NSImage, title: String, sourceType: SourceType, sourceURL: URL?) async throws -> ReaderDocument {
+    private func process(
+        image: NSImage,
+        title: String,
+        sourceType: SourceType,
+        sourceURL: URL?,
+        onProgress: DocumentProcessingProgressHandler?
+    ) async throws -> ReaderDocument {
         guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
             throw DocumentProcessorError.unreadableImage
         }
 
         let pageSize = CGSize(width: cgImage.width, height: cgImage.height)
-        let blocks = try await recognizeText(in: cgImage, pageNumber: 1, pageSize: pageSize)
-        let page = ReaderPage(
-            pageNumber: 1,
-            size: PageSize(width: pageSize.width, height: pageSize.height),
-            thumbnailData: image.pngData(maxPixelSize: 360),
-            ocrStatus: .complete,
-            blocks: blocks
+        var document = ReaderDocument(
+            title: title,
+            sourceType: sourceType,
+            sourceURL: sourceURL,
+            processingStatus: .processing,
+            pages: [
+                ReaderPage(
+                    pageNumber: 1,
+                    size: PageSize(width: pageSize.width, height: pageSize.height),
+                    thumbnailData: image.pngData(maxPixelSize: 360),
+                    ocrStatus: .processing,
+                    blocks: []
+                )
+            ]
         )
+        await onProgress?(document)
+        try Task.checkCancellation()
 
-        return analyzer.analyze(
-            document: ReaderDocument(
-                title: title,
-                sourceType: sourceType,
-                sourceURL: sourceURL,
-                processingStatus: .complete,
-                pages: [page]
-            )
-        )
+        let blocks = try await recognizeText(in: cgImage, pageNumber: 1, pageSize: pageSize)
+        document.pages[0].ocrStatus = .complete
+        document.pages[0].blocks = blocks
+        document.processingStatus = .complete
+
+        let analyzed = analyzer.analyze(document: document)
+        await onProgress?(analyzed)
+        return analyzed
     }
 
     private func recognizeText(in cgImage: CGImage, pageNumber: Int, pageSize: CGSize) async throws -> [TextBlock] {

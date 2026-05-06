@@ -18,6 +18,7 @@ public enum ProcessingStatus: String, Codable, Sendable {
 
 public enum OCRStatus: String, Codable, Sendable {
     case pending
+    case processing
     case complete
     case failed
 }

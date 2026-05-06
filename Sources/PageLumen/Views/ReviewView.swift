@@ -50,7 +50,7 @@ private struct ReviewHeader: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Step 2: Review text")
+                Text("Step 3: Review text")
                     .font(.headline)
                 Text("Compare the preview with the extracted blocks. Edit anything that looks wrong.")
                     .font(.caption)

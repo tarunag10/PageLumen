@@ -1,4 +1,5 @@
 import AppKit
+import PDFKit
 import XCTest
 @testable import PageLumenCore
 
@@ -34,16 +35,54 @@ final class DocumentProcessorTests: XCTestCase {
     }
 
     @MainActor
+    func testPDFProcessingPublishesPerPageProgressSnapshots() async throws {
+        let url = try makePDF(containingPages: ["First page text", "Second page text"])
+        defer { try? FileManager.default.removeItem(at: url) }
+        var snapshots: [ReaderDocument] = []
+
+        let document = try await DocumentProcessor().process(url: url) { snapshot in
+            snapshots.append(snapshot)
+        }
+
+        XCTAssertEqual(document.processingStatus, .complete)
+        XCTAssertEqual(document.pages.map(\.ocrStatus), [.complete, .complete])
+        XCTAssertTrue(snapshots.contains { $0.processingStatus == .processing && $0.pages.map(\.ocrStatus) == [.pending, .pending] })
+        XCTAssertTrue(snapshots.contains { $0.pages.map(\.ocrStatus) == [.processing, .pending] })
+        XCTAssertTrue(snapshots.contains { $0.pages.map(\.ocrStatus) == [.complete, .pending] })
+        XCTAssertTrue(snapshots.contains { $0.pages.map(\.ocrStatus) == [.complete, .processing] })
+        XCTAssertEqual(snapshots.last?.pages.map(\.ocrStatus), [.complete, .complete])
+        XCTAssertTrue(snapshots.flatMap(\.pages).contains { $0.thumbnailData != nil })
+    }
+
+    @MainActor
     private func makePDF(containing text: String) throws -> URL {
+        try makePDF(containingPages: [text])
+    }
+
+    @MainActor
+    private func makePDF(containingPages pages: [String]) throws -> URL {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
             .appendingPathExtension("pdf")
-        let pageRect = NSRect(x: 0, y: 0, width: 612, height: 792)
-        let view = NSTextView(frame: pageRect)
-        view.string = text
-        view.font = NSFont.systemFont(ofSize: 18)
-        let data = view.dataWithPDF(inside: pageRect)
-        try data.write(to: url)
+        let document = PDFDocument()
+
+        for pageText in pages {
+            let pageRect = NSRect(x: 0, y: 0, width: 612, height: 792)
+            let view = NSTextView(frame: pageRect)
+            view.string = pageText
+            view.font = NSFont.systemFont(ofSize: 18)
+            let data = view.dataWithPDF(inside: pageRect)
+            guard let source = PDFDocument(data: data), let page = source.page(at: 0) else {
+                XCTFail("Could not create PDF page")
+                continue
+            }
+            document.insert(page, at: document.pageCount)
+        }
+
+        guard document.write(to: url) else {
+            XCTFail("Could not write PDF")
+            return url
+        }
         return url
     }
 }

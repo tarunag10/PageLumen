@@ -41,4 +41,19 @@ final class BatchImportQueueTests: XCTestCase {
         XCTAssertEqual(queue.failedCount, 1)
         XCTAssertNil(queue.pendingItem)
     }
+
+    func testCancelProcessingItemAndPendingItems() {
+        var queue = BatchImportQueue(urls: [
+            URL(fileURLWithPath: "/tmp/alpha.pdf"),
+            URL(fileURLWithPath: "/tmp/beta.jpg"),
+            URL(fileURLWithPath: "/tmp/gamma.png")
+        ])
+
+        queue.markProcessing(queue.items[0].id)
+        queue.cancelActiveAndPendingItems()
+
+        XCTAssertEqual(queue.items.map(\.status), [.cancelled, .cancelled, .cancelled])
+        XCTAssertFalse(queue.isActive)
+        XCTAssertNil(queue.pendingItem)
+    }
 }

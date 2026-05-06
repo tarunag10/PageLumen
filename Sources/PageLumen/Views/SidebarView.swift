@@ -9,9 +9,11 @@ struct SidebarView: View {
             Section("Steps") {
                 Label("1. Add Document", systemImage: "tray.and.arrow.down")
                     .tag(DocumentStore.Destination.home)
-                Label("2. Review Text", systemImage: "rectangle.split.2x1")
+                Label("2. Process", systemImage: "text.viewfinder")
+                    .tag(DocumentStore.Destination.processing)
+                Label("3. Review Text", systemImage: "rectangle.split.2x1")
                     .tag(DocumentStore.Destination.review)
-                Label("3. Listen & Export", systemImage: "square.and.arrow.up")
+                Label("4. Listen & Export", systemImage: "square.and.arrow.up")
                     .tag(DocumentStore.Destination.summaryExport)
             }
 
@@ -122,6 +124,8 @@ struct SidebarView: View {
             return "hourglass"
         case .complete:
             return "checkmark.circle.fill"
+        case .cancelled:
+            return "xmark.circle"
         case .failed:
             return "exclamationmark.triangle.fill"
         }
@@ -135,6 +139,8 @@ struct SidebarView: View {
             return .accentColor
         case .complete:
             return .green
+        case .cancelled:
+            return .secondary
         case .failed:
             return .orange
         }

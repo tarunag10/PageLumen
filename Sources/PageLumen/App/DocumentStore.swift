@@ -7,6 +7,7 @@ import PageLumenCore
 final class DocumentStore: ObservableObject {
     enum Destination: Hashable {
         case home
+        case processing
         case review
         case summaryExport
     }
@@ -20,11 +21,14 @@ final class DocumentStore: ObservableObject {
     @Published var summaryLength: SummaryLength = .short
     @Published var batchQueue = BatchImportQueue()
     @Published var recentDocuments: [ReaderDocument] = []
+    @Published var processingDocument: ReaderDocument?
+    @Published var processingFileName = ""
 
     private let processor = DocumentProcessor()
     private let exportEngine = ExportEngine()
     private let explanationEngine = ExplanationEngine()
     private let screenshotCaptureService = ScreenshotCaptureService()
+    private var importTask: Task<Void, Never>?
 
     var selectedPage: ReaderPage? {
         document.pages.first(where: { $0.pageNumber == selectedPageNumber }) ?? document.pages.first
@@ -45,12 +49,19 @@ final class DocumentStore: ObservableObject {
         panel.canChooseDirectories = false
         panel.message = "Choose PDFs, screenshots, scans, or images to make readable."
         if panel.runModal() == .OK {
-            Task { await importURLs(panel.urls) }
+            startImport(urls: panel.urls)
         }
     }
 
     func importURL(_ url: URL) async {
         await importURLs([url])
+    }
+
+    func startImport(urls: [URL]) {
+        importTask?.cancel()
+        importTask = Task { [weak self] in
+            await self?.importURLs(urls)
+        }
     }
 
     func importURLs(_ urls: [URL]) async {
@@ -61,27 +72,66 @@ final class DocumentStore: ObservableObject {
         }
 
         batchQueue = BatchImportQueue(urls: supportedURLs)
+        processingDocument = nil
+        processingFileName = ""
         isProcessing = true
-        selectedDestination = .review
-        defer {
-            isProcessing = false
-            statusMessage = batchSummary
-        }
+        selectedDestination = .processing
 
-        while let item = batchQueue.pendingItem {
-            batchQueue.markProcessing(item.id)
-            statusMessage = "Processing \(item.fileName)..."
+        do {
+            while let item = batchQueue.pendingItem {
+                try Task.checkCancellation()
+                batchQueue.markProcessing(item.id)
+                processingFileName = item.fileName
+                statusMessage = "Processing \(item.fileName)..."
 
-            do {
-                let processed = try await processor.process(url: item.url)
-                batchQueue.markCompleted(item.id, document: processed)
-                remember(processed)
-                document = processed
-                selectedPageNumber = processed.pages.first?.pageNumber ?? 1
-            } catch {
-                batchQueue.markFailed(item.id, message: error.localizedDescription)
+                do {
+                    let processed = try await processor.process(url: item.url) { [weak self] snapshot in
+                        guard let self, !Task.isCancelled else { return }
+                        self.processingDocument = snapshot
+                        self.document = snapshot
+                        self.selectedPageNumber = snapshot.pages.first(where: { $0.ocrStatus == .processing })?.pageNumber
+                            ?? snapshot.pages.first(where: { $0.ocrStatus == .pending })?.pageNumber
+                            ?? snapshot.pages.first?.pageNumber
+                            ?? 1
+                    }
+                    batchQueue.markCompleted(item.id, document: processed)
+                    remember(processed)
+                    document = processed
+                    processingDocument = processed
+                    selectedPageNumber = processed.pages.first?.pageNumber ?? 1
+                } catch is CancellationError {
+                    throw CancellationError()
+                } catch {
+                    batchQueue.markFailed(item.id, message: error.localizedDescription)
+                    statusMessage = "Failed \(item.fileName): \(error.localizedDescription)"
+                }
             }
+
+            isProcessing = false
+            importTask = nil
+            statusMessage = batchSummary
+            selectedDestination = .review
+        } catch is CancellationError {
+            cancelImport()
+        } catch {
+            isProcessing = false
+            importTask = nil
+            statusMessage = error.localizedDescription
         }
+    }
+
+    func cancelImport() {
+        importTask?.cancel()
+        importTask = nil
+        batchQueue.cancelActiveAndPendingItems()
+        isProcessing = false
+        processingFileName = ""
+        if var snapshot = processingDocument {
+            snapshot.processingStatus = .partial
+            processingDocument = snapshot
+            document = snapshot
+        }
+        statusMessage = "Import cancelled"
     }
 
     func pasteImageFromClipboard() {
@@ -90,17 +140,32 @@ final class DocumentStore: ObservableObject {
             return
         }
 
-        Task {
+        importTask?.cancel()
+        importTask = Task { [weak self] in
+            guard let self else { return }
             isProcessing = true
-            selectedDestination = .review
-            defer { isProcessing = false }
+            processingFileName = "Clipboard Image"
+            selectedDestination = .processing
             do {
-                document = try await processor.processClipboardImage(image)
+                document = try await processor.processClipboardImage(image) { [weak self] snapshot in
+                    guard let self else { return }
+                    self.processingDocument = snapshot
+                    self.document = snapshot
+                }
+                try Task.checkCancellation()
+                processingDocument = document
                 remember(document)
                 selectedPageNumber = 1
                 statusMessage = "Extracted clipboard image locally"
+                selectedDestination = .review
+                isProcessing = false
+                importTask = nil
+            } catch is CancellationError {
+                cancelImport()
             } catch {
                 statusMessage = error.localizedDescription
+                isProcessing = false
+                importTask = nil
             }
         }
     }
@@ -120,12 +185,13 @@ final class DocumentStore: ObservableObject {
     func captureScreenshot(mode: ScreenshotCaptureMode) async {
         isProcessing = true
         statusMessage = mode == .selectedRegion ? "Select a screen region to capture..." : "Click a window to capture..."
-        defer { isProcessing = false }
 
         do {
             let url = try await screenshotCaptureService.capture(mode: mode)
-            await importURL(url)
+            isProcessing = false
+            startImport(urls: [url])
         } catch {
+            isProcessing = false
             statusMessage = error.localizedDescription
         }
     }
@@ -189,6 +255,10 @@ final class DocumentStore: ObservableObject {
     private var batchSummary: String {
         if batchQueue.totalCount == 0 {
             return "Ready"
+        }
+        let cancelledCount = batchQueue.items.filter { $0.status == .cancelled }.count
+        if cancelledCount > 0 {
+            return "Cancelled \(cancelledCount) of \(batchQueue.totalCount) files"
         }
         if batchQueue.failedCount == 0 {
             return "Processed \(batchQueue.completedCount) of \(batchQueue.totalCount) files"

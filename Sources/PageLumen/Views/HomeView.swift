@@ -87,9 +87,7 @@ struct HomeView: View {
                 }
 
                 group.notify(queue: .main) {
-                    Task { @MainActor in
-                        await store.importURLs(urls)
-                    }
+                    store.startImport(urls: urls)
                 }
 
                 return true
@@ -97,8 +95,9 @@ struct HomeView: View {
 
             HStack(spacing: 16) {
                 InfoTile(number: "1", title: "Add", value: "Open, paste, capture, or drop source files.")
-                InfoTile(number: "2", title: "Review", value: "Fix OCR text, check page order, and inspect notes.")
-                InfoTile(number: "3", title: "Export", value: "Save Markdown, TXT, HTML, PDF, CSV, or JSON.")
+                InfoTile(number: "2", title: "Process", value: "Watch page thumbnails and OCR progress.")
+                InfoTile(number: "3", title: "Review", value: "Fix OCR text, check page order, and inspect notes.")
+                InfoTile(number: "4", title: "Export", value: "Save Markdown, TXT, HTML, PDF, CSV, or JSON.")
             }
 
             Spacer()

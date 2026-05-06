@@ -142,7 +142,7 @@ public struct AccessibilityAuditor: Sendable {
                         severity: .warning,
                         pageNumber: page.pageNumber,
                         message: "OCR confidence is \(Int(block.confidence * 100))% for: \(trimmedText.prefix(80))",
-                        recommendation: "Review this text in Step 2 before exporting."
+                        recommendation: "Review this text in Step 3 before exporting."
                     ))
                 }
 
