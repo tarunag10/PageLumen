@@ -29,11 +29,9 @@ struct SettingsView: View {
 
             Section("Recognition") {
                 Picker("OCR profile", selection: $ocrProfile) {
-                    Text("General").tag("General")
-                    Text("Legal").tag("Legal")
-                    Text("Academic").tag("Academic")
-                    Text("Receipts").tag("Receipts")
-                    Text("Slides").tag("Slides")
+                    ForEach(OCRProfile.allCases) { profile in
+                        Text(profile.rawValue).tag(profile.rawValue)
+                    }
                 }
                 .onChange(of: ocrProfile) { _, newValue in
                     store.statusMessage = "Recognition profile set to \(newValue)"

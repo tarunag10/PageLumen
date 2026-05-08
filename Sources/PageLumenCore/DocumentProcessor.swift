@@ -25,7 +25,11 @@ public typealias DocumentProcessingProgressHandler = @MainActor @Sendable (Reade
 public final class DocumentProcessor: @unchecked Sendable {
     private let analyzer: LayoutAnalyzer
 
-    public init(analyzer: LayoutAnalyzer = LayoutAnalyzer()) {
+    public init(profile: OCRProfile = .general) {
+        self.analyzer = LayoutAnalyzer(profile: profile)
+    }
+
+    public init(analyzer: LayoutAnalyzer) {
         self.analyzer = analyzer
     }
 

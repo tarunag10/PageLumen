@@ -1,7 +1,11 @@
 import Foundation
 
 public struct LayoutAnalyzer: Sendable {
-    public init() {}
+    private let profile: OCRProfile
+
+    public init(profile: OCRProfile = .general) {
+        self.profile = profile
+    }
 
     public func analyze(document: ReaderDocument) -> ReaderDocument {
         var analyzedPages = markRepeatedHeadersAndFooters(in: document.pages.map(analyze(page:)))
@@ -35,6 +39,7 @@ public struct LayoutAnalyzer: Sendable {
     public func analyze(page: ReaderPage) -> ReaderPage {
         var page = page
         page.blocks = mergeAdjacentOCRLines(page.blocks, pageWidth: page.size.width)
+        page.blocks = applyProfileTransforms(to: page.blocks, on: page)
 
         let layoutType = classifyLayout(for: page)
         let ordered = orderedBlocks(page.blocks, layoutType: layoutType, pageWidth: page.size.width)
@@ -42,12 +47,12 @@ public struct LayoutAnalyzer: Sendable {
             .map { index, block in
                 var copy = block
                 copy.readingOrderIndex = index
-                if isLikelyHeading(copy) {
-                    copy.type = .heading
-                } else if isLikelyTable(copy) {
+                if isLikelyTable(copy) {
                     copy.type = .table
                 } else if isLikelyFigure(copy) {
                     copy.type = .figure
+                } else if isLikelyHeading(copy) {
+                    copy.type = .heading
                 }
                 return copy
             }
@@ -62,10 +67,18 @@ public struct LayoutAnalyzer: Sendable {
     }
 
     public func classifyLayout(for page: ReaderPage) -> LayoutType {
+        if profile == .receipts, page.blocks.contains(where: isLikelyTable) {
+            return .form
+        }
+
         guard page.blocks.count > 2 else { return .singleColumn }
         let leftCount = page.blocks.filter { $0.bounds.midX < page.size.width * 0.45 }.count
         let rightCount = page.blocks.filter { $0.bounds.midX > page.size.width * 0.55 }.count
         let fullWidthCount = page.blocks.filter { $0.bounds.width > page.size.width * 0.68 }.count
+
+        if profile == .slides, isSparseLargeTextPage(page) {
+            return .slide
+        }
 
         if leftCount >= 2 && rightCount >= 2 && fullWidthCount < page.blocks.count / 2 {
             return .multiColumn
@@ -80,6 +93,60 @@ public struct LayoutAnalyzer: Sendable {
         }
 
         return .singleColumn
+    }
+
+    private func applyProfileTransforms(to blocks: [TextBlock], on page: ReaderPage) -> [TextBlock] {
+        switch profile {
+        case .receipts:
+            return receiptTableBlocks(from: blocks, on: page) ?? blocks
+        default:
+            return blocks
+        }
+    }
+
+    private func receiptTableBlocks(from blocks: [TextBlock], on page: ReaderPage) -> [TextBlock]? {
+        let rows = blocks.compactMap(receiptRow)
+        guard rows.count >= 2 else {
+            return nil
+        }
+
+        let bounds = blocks.map(\.bounds).reduce(blocks[0].bounds, union)
+        let text = rows
+            .map { "\($0.0)\t\($0.1)" }
+            .joined(separator: "\n")
+        return [
+            TextBlock(
+                pageNumber: page.pageNumber,
+                type: .table,
+                text: text,
+                bounds: bounds,
+                confidence: blocks.map(\.confidence).min() ?? 0.8,
+                metadata: ["source": "receipt-profile", "profile": profile.rawValue]
+            )
+        ]
+    }
+
+    private func receiptRow(from block: TextBlock) -> (String, String)? {
+        let text = block.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let separator = text.firstIndex(of: ":") else {
+            return nil
+        }
+
+        let key = text[..<separator].trimmingCharacters(in: .whitespacesAndNewlines)
+        let value = text[text.index(after: separator)...].trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !key.isEmpty, !value.isEmpty else {
+            return nil
+        }
+        return (key, value)
+    }
+
+    private func isSparseLargeTextPage(_ page: ReaderPage) -> Bool {
+        guard page.blocks.count <= 8 else {
+            return false
+        }
+
+        let largeTextCount = page.blocks.filter { $0.bounds.height >= 26 || $0.bounds.width > page.size.width * 0.45 }.count
+        return largeTextCount >= max(2, page.blocks.count / 2)
     }
 
     private func orderedBlocks(_ blocks: [TextBlock], layoutType: LayoutType, pageWidth: Double) -> [TextBlock] {
@@ -178,6 +245,12 @@ public struct LayoutAnalyzer: Sendable {
     private func isLikelyHeading(_ block: TextBlock) -> Bool {
         let text = block.text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard text.count >= 3, text.count <= 80 else { return false }
+        if profile == .academic, isKnownAcademicHeading(text) {
+            return true
+        }
+        if profile == .slides, block.bounds.height >= 30 && !text.hasSuffix(".") {
+            return true
+        }
         if text == text.uppercased(), text.rangeOfCharacter(from: .letters) != nil {
             return true
         }
@@ -185,6 +258,22 @@ public struct LayoutAnalyzer: Sendable {
             return true
         }
         return block.bounds.height >= 30 && !text.hasSuffix(".")
+    }
+
+    private func isKnownAcademicHeading(_ text: String) -> Bool {
+        let normalized = text.lowercased()
+        return [
+            "abstract",
+            "introduction",
+            "methods",
+            "methodology",
+            "results",
+            "discussion",
+            "conclusion",
+            "references",
+            "bibliography",
+            "appendix"
+        ].contains(normalized)
     }
 
     private func isLikelyTable(_ block: TextBlock) -> Bool {
@@ -200,7 +289,10 @@ public struct LayoutAnalyzer: Sendable {
         blocks.filter { $0.type == .table }.compactMap { block in
             let rows = block.text
                 .split(separator: "\n")
-                .map { row in row.split(separator: "|").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty } }
+                .map { row in
+                    let delimiter: Character = row.contains("|") ? "|" : "\t"
+                    return row.split(separator: delimiter).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                }
                 .filter { !$0.isEmpty }
             guard !rows.isEmpty else { return nil }
             return TableRegion(pageNumber: block.pageNumber, bounds: block.bounds, rows: rows, confidence: min(block.confidence, 0.78))

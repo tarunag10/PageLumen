@@ -35,11 +35,18 @@ final class DocumentStore: ObservableObject {
     @Published var reviewSearchQuery = ""
     @Published var reviewFilter: ReviewFilter = .all
 
-    private let processor = DocumentProcessor()
     private let exportEngine = ExportEngine()
     private let explanationEngine = ExplanationEngine()
     private let screenshotCaptureService = ScreenshotCaptureService()
     private var importTask: Task<Void, Never>?
+
+    private var processor: DocumentProcessor {
+        DocumentProcessor(profile: currentOCRProfile)
+    }
+
+    private var currentOCRProfile: OCRProfile {
+        OCRProfile(settingsValue: UserDefaults.standard.string(forKey: "ocrProfile") ?? OCRProfile.general.rawValue)
+    }
 
     init() {
         exportOptions = ExportOptions(

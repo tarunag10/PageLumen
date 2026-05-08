@@ -32,6 +32,20 @@ public enum LayoutType: String, Codable, Sendable {
     case unknown
 }
 
+public enum OCRProfile: String, CaseIterable, Identifiable, Codable, Sendable {
+    case general = "General"
+    case legal = "Legal"
+    case academic = "Academic"
+    case receipts = "Receipts"
+    case slides = "Slides"
+
+    public var id: String { rawValue }
+
+    public init(settingsValue: String) {
+        self = OCRProfile(rawValue: settingsValue) ?? .general
+    }
+}
+
 public enum BlockType: String, Codable, Sendable {
     case heading
     case paragraph
