@@ -3,4 +3,5 @@
 dist/
 DerivedData/
 *.xcuserdata/
+xcuserdata/
 *.swp

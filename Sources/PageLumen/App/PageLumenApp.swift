@@ -36,6 +36,7 @@ struct PageLumenApp: App {
 
         Settings {
             SettingsView()
+                .environmentObject(store)
         }
     }
 }

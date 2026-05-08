@@ -12,6 +12,15 @@ final class DocumentStore: ObservableObject {
         case summaryExport
     }
 
+    enum ReviewFilter: String, CaseIterable, Identifiable {
+        case all = "All"
+        case needsReview = "Needs Review"
+        case headings = "Headings"
+        case tablesFigures = "Tables & Figures"
+
+        var id: String { rawValue }
+    }
+
     @Published var document: ReaderDocument = SampleDataFactory.makeDemoDocument()
     @Published var selectedDestination: Destination? = .home
     @Published var selectedPageNumber: Int = 1
@@ -23,6 +32,8 @@ final class DocumentStore: ObservableObject {
     @Published var recentDocuments: [ReaderDocument] = []
     @Published var processingDocument: ReaderDocument?
     @Published var processingFileName = ""
+    @Published var reviewSearchQuery = ""
+    @Published var reviewFilter: ReviewFilter = .all
 
     private let processor = DocumentProcessor()
     private let exportEngine = ExportEngine()
@@ -30,12 +41,105 @@ final class DocumentStore: ObservableObject {
     private let screenshotCaptureService = ScreenshotCaptureService()
     private var importTask: Task<Void, Never>?
 
+    init() {
+        exportOptions = ExportOptions(
+            includeHeadings: UserDefaults.standard.object(forKey: "includeHeadings") as? Bool ?? true,
+            includeTables: UserDefaults.standard.object(forKey: "includeTables") as? Bool ?? true,
+            includeFigures: UserDefaults.standard.object(forKey: "includeFigures") as? Bool ?? true,
+            includePageReferences: UserDefaults.standard.object(forKey: "includePageReferences") as? Bool ?? true,
+            includeConfidenceNotes: UserDefaults.standard.object(forKey: "includeConfidenceNotes") as? Bool ?? true,
+            includeHeadersAndFooters: UserDefaults.standard.object(forKey: "includeHeadersAndFooters") as? Bool ?? true
+        )
+        applyLanguagePreference()
+    }
+
     var selectedPage: ReaderPage? {
         document.pages.first(where: { $0.pageNumber == selectedPageNumber }) ?? document.pages.first
     }
 
+    var lowConfidenceBlocks: [TextBlock] {
+        document.allBlocks.filter { $0.confidence < 0.7 }
+    }
+
+    var reviewIssueCount: Int {
+        lowConfidenceBlocks.count + document.pages.filter { $0.warning != nil }.count
+    }
+
+    var extractionReadinessLabel: String {
+        if isProcessing {
+            return "Processing locally"
+        }
+        if reviewIssueCount == 0 {
+            return "Ready to export"
+        }
+        return "\(reviewIssueCount) review item\(reviewIssueCount == 1 ? "" : "s")"
+    }
+
+    var filteredSelectedPageBlocks: [TextBlock] {
+        guard let page = selectedPage else {
+            return []
+        }
+
+        let filtered = page.blocks.filter { block in
+            switch reviewFilter {
+            case .all:
+                return true
+            case .needsReview:
+                return block.confidence < 0.7 || block.type == .unknown
+            case .headings:
+                return block.type == .heading || block.type == .header || block.type == .footer
+            case .tablesFigures:
+                return block.type == .table || block.type == .figure
+            }
+        }
+
+        let query = reviewSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else {
+            return filtered
+        }
+        return filtered.filter { $0.text.localizedCaseInsensitiveContains(query) }
+    }
+
+    var reviewSearchMatchCount: Int {
+        let query = reviewSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else {
+            return 0
+        }
+        return document.allBlocks.filter { $0.text.localizedCaseInsensitiveContains(query) }.count
+    }
+
+    func jumpToFirstReviewIssue() {
+        if let block = lowConfidenceBlocks.first {
+            selectedPageNumber = block.pageNumber
+            selectedDestination = .review
+            reviewFilter = .needsReview
+        } else if let page = document.pages.first(where: { $0.warning != nil }) {
+            selectedPageNumber = page.pageNumber
+            selectedDestination = .review
+        }
+    }
+
+    func jumpToNextSearchMatch() {
+        let query = reviewSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else {
+            return
+        }
+
+        let matches = document.allBlocks.filter { $0.text.localizedCaseInsensitiveContains(query) }
+        guard !matches.isEmpty else {
+            return
+        }
+
+        let next = matches.first { $0.pageNumber > selectedPageNumber } ?? matches.first
+        if let next {
+            selectedPageNumber = next.pageNumber
+            selectedDestination = .review
+        }
+    }
+
     func loadSample() {
         document = SampleDataFactory.makeDemoDocument()
+        applyLanguagePreference()
         remember(document)
         selectedPageNumber = 1
         selectedDestination = .review
@@ -87,18 +191,22 @@ final class DocumentStore: ObservableObject {
                 do {
                     let processed = try await processor.process(url: item.url) { [weak self] snapshot in
                         guard let self, !Task.isCancelled else { return }
-                        self.processingDocument = snapshot
-                        self.document = snapshot
+                        var preparedSnapshot = snapshot
+                        self.applyLanguagePreference(to: &preparedSnapshot)
+                        self.processingDocument = preparedSnapshot
+                        self.document = preparedSnapshot
                         self.selectedPageNumber = snapshot.pages.first(where: { $0.ocrStatus == .processing })?.pageNumber
                             ?? snapshot.pages.first(where: { $0.ocrStatus == .pending })?.pageNumber
                             ?? snapshot.pages.first?.pageNumber
                             ?? 1
                     }
-                    batchQueue.markCompleted(item.id, document: processed)
-                    remember(processed)
-                    document = processed
-                    processingDocument = processed
-                    selectedPageNumber = processed.pages.first?.pageNumber ?? 1
+                    var prepared = processed
+                    applyLanguagePreference(to: &prepared)
+                    batchQueue.markCompleted(item.id, document: prepared)
+                    remember(prepared)
+                    document = prepared
+                    processingDocument = prepared
+                    selectedPageNumber = prepared.pages.first?.pageNumber ?? 1
                 } catch is CancellationError {
                     throw CancellationError()
                 } catch {
@@ -149,9 +257,12 @@ final class DocumentStore: ObservableObject {
             do {
                 document = try await processor.processClipboardImage(image) { [weak self] snapshot in
                     guard let self else { return }
-                    self.processingDocument = snapshot
-                    self.document = snapshot
+                    var preparedSnapshot = snapshot
+                    self.applyLanguagePreference(to: &preparedSnapshot)
+                    self.processingDocument = preparedSnapshot
+                    self.document = preparedSnapshot
                 }
+                applyLanguagePreference()
                 try Task.checkCancellation()
                 processingDocument = document
                 remember(document)
@@ -198,6 +309,20 @@ final class DocumentStore: ObservableObject {
 
     func regenerateSummary() {
         document.summary = explanationEngine.summary(for: document, length: summaryLength)
+    }
+
+    func persistExportDefaults() {
+        let defaults = UserDefaults.standard
+        defaults.set(exportOptions.includeHeadings, forKey: "includeHeadings")
+        defaults.set(exportOptions.includeTables, forKey: "includeTables")
+        defaults.set(exportOptions.includeFigures, forKey: "includeFigures")
+        defaults.set(exportOptions.includePageReferences, forKey: "includePageReferences")
+        defaults.set(exportOptions.includeConfidenceNotes, forKey: "includeConfidenceNotes")
+        defaults.set(exportOptions.includeHeadersAndFooters, forKey: "includeHeadersAndFooters")
+    }
+
+    func applyLanguagePreference() {
+        applyLanguagePreference(to: &document)
     }
 
     func selectBatchItem(_ item: BatchImportItem) {
@@ -272,5 +397,25 @@ final class DocumentStore: ObservableObject {
         }
         recentDocuments.insert(newDocument, at: 0)
         recentDocuments = Array(recentDocuments.prefix(12))
+    }
+
+    private func applyLanguagePreference(to targetDocument: inout ReaderDocument) {
+        let hint = UserDefaults.standard.string(forKey: "languageHint") ?? "Automatic"
+        targetDocument.language = languageCode(for: hint)
+    }
+
+    private func languageCode(for hint: String) -> String? {
+        switch hint {
+        case "English":
+            return "en"
+        case "Hindi":
+            return "hi"
+        case "Spanish":
+            return "es"
+        case "French":
+            return "fr"
+        default:
+            return nil
+        }
     }
 }
