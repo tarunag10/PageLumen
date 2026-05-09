@@ -12,6 +12,45 @@ final class AdvancedExportTests: XCTestCase {
         XCTAssertTrue(csv.contains("1,1,2,2,Ready"))
     }
 
+    func testCSVExportNeutralizesSpreadsheetFormulas() {
+        let document = ReaderDocument(
+            title: "Formula Injection",
+            sourceType: .sample,
+            pages: [
+                ReaderPage(
+                    pageNumber: 1,
+                    size: PageSize(width: 612, height: 792),
+                    blocks: [],
+                    tables: [
+                        TableRegion(
+                            pageNumber: 1,
+                            bounds: BoundingBox(x: 72, y: 72, width: 300, height: 120),
+                            rows: [
+                                ["Name", "Value"],
+                                ["Total", "=HYPERLINK(\"https://example.com\",\"click\")"],
+                                ["Delta", "+SUM(1,2)"],
+                                ["Reference", "@A1"],
+                                ["Spaced", "  =SUM(1,1)"]
+                            ],
+                            confidence: 0.95
+                        )
+                    ]
+                )
+            ]
+        )
+
+        let csv = ExportEngine().csv(for: document, options: .full)
+
+        XCTAssertTrue(csv.contains("\"'=HYPERLINK(\"\"https://example.com\"\",\"\"click\"\")\""))
+        XCTAssertTrue(csv.contains("\"'+SUM(1,2)\""))
+        XCTAssertTrue(csv.contains(",'@A1"))
+        XCTAssertTrue(csv.contains("\"'  =SUM(1,1)\""))
+        XCTAssertFalse(csv.contains(",=HYPERLINK("))
+        XCTAssertFalse(csv.contains(",+SUM("))
+        XCTAssertFalse(csv.contains(",@A1"))
+        XCTAssertFalse(csv.contains(",  =SUM("))
+    }
+
     func testJSONExportIncludesBlocksTablesFiguresAndMetadata() throws {
         let document = SampleDataFactory.makeDemoDocument()
 

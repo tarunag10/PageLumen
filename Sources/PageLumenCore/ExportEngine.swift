@@ -487,8 +487,22 @@ public struct ExportEngine: Sendable {
     }
 
     private func csvEscape(_ text: String) -> String {
-        if text.contains(",") || text.contains("\"") || text.contains("\n") {
-            return "\"\(text.replacingOccurrences(of: "\"", with: "\"\""))\""
+        let safeText = neutralizedSpreadsheetFormula(text)
+        if safeText.contains(",") || safeText.contains("\"") || safeText.contains("\n") {
+            return "\"\(safeText.replacingOccurrences(of: "\"", with: "\"\""))\""
+        }
+        return safeText
+    }
+
+    private func neutralizedSpreadsheetFormula(_ text: String) -> String {
+        let leadingCharacters = CharacterSet.whitespacesAndNewlines.union(.controlCharacters)
+        let visibleStart = text.unicodeScalars.firstIndex { !leadingCharacters.contains($0) }
+        guard let visibleStart else {
+            return text
+        }
+
+        if ["=", "+", "-", "@"].contains(text.unicodeScalars[visibleStart]) {
+            return "'\(text)"
         }
         return text
     }

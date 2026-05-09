@@ -35,6 +35,21 @@ final class DocumentProcessorTests: XCTestCase {
     }
 
     @MainActor
+    func testPDFOverPageBudgetThrowsReadableError() async throws {
+        let url = try makePDF(containingPages: Array(repeating: "Budget page", count: 101))
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        do {
+            _ = try await DocumentProcessor().process(url: url)
+            XCTFail("Expected oversized PDFs to throw")
+        } catch let error as DocumentProcessorError {
+            XCTAssertEqual(error.localizedDescription, "The selected document is too large to process safely.")
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+    }
+
+    @MainActor
     func testPDFProcessingPublishesPerPageProgressSnapshots() async throws {
         let url = try makePDF(containingPages: ["First page text", "Second page text"])
         defer { try? FileManager.default.removeItem(at: url) }

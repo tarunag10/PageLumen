@@ -318,8 +318,13 @@ final class DocumentStore: ObservableObject {
 
         do {
             let url = try await screenshotCaptureService.capture(mode: mode)
-            isProcessing = false
-            startImport(urls: [url])
+            importTask?.cancel()
+            importTask = Task { [weak self] in
+                defer {
+                    try? FileManager.default.removeItem(at: url)
+                }
+                await self?.importURLs([url])
+            }
         } catch {
             isProcessing = false
             statusMessage = error.localizedDescription

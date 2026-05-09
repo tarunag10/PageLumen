@@ -7,6 +7,7 @@ public enum DocumentProcessorError: LocalizedError, Sendable {
     case unsupportedFile(URL)
     case unreadableImage
     case unreadablePDF(URL)
+    case documentTooLarge
 
     public var errorDescription: String? {
         switch self {
@@ -16,6 +17,8 @@ public enum DocumentProcessorError: LocalizedError, Sendable {
             return "The selected image could not be decoded."
         case .unreadablePDF(let url):
             return "The PDF \(url.lastPathComponent) could not be opened."
+        case .documentTooLarge:
+            return "The selected document is too large to process safely."
         }
     }
 }
@@ -23,6 +26,13 @@ public enum DocumentProcessorError: LocalizedError, Sendable {
 public typealias DocumentProcessingProgressHandler = @MainActor @Sendable (ReaderDocument) async -> Void
 
 public final class DocumentProcessor: @unchecked Sendable {
+    private enum ImportBudget {
+        static let maxFileBytes: UInt64 = 200 * 1_024 * 1_024
+        static let maxPDFPages = 100
+        static let maxPagePixels: UInt64 = 50_000_000
+        static let maxPDFPageArea: CGFloat = 80_000_000
+    }
+
     private let analyzer: LayoutAnalyzer
 
     public init(profile: OCRProfile = .general) {
@@ -39,10 +49,12 @@ public final class DocumentProcessor: @unchecked Sendable {
     ) async throws -> ReaderDocument {
         let ext = url.pathExtension.lowercased()
         if ext == "pdf" {
+            try validateFileBudget(url)
             return try await processPDF(url: url, onProgress: onProgress)
         }
 
         if ["png", "jpg", "jpeg", "tif", "tiff", "heic"].contains(ext) {
+            try validateFileBudget(url)
             let image = try loadImage(from: url)
             return try await process(image: image, title: url.deletingPathExtension().lastPathComponent, sourceType: .image, sourceURL: url, onProgress: onProgress)
         }
@@ -61,6 +73,7 @@ public final class DocumentProcessor: @unchecked Sendable {
         guard let pdf = PDFDocument(url: url) else {
             throw DocumentProcessorError.unreadablePDF(url)
         }
+        try validatePDFBudget(pdf)
 
         var document = ReaderDocument(
             title: url.deletingPathExtension().lastPathComponent,
@@ -133,6 +146,7 @@ public final class DocumentProcessor: @unchecked Sendable {
         guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
             throw DocumentProcessorError.unreadableImage
         }
+        try validateImageBudget(cgImage)
 
         let pageSize = CGSize(width: cgImage.width, height: cgImage.height)
         var document = ReaderDocument(
@@ -229,6 +243,35 @@ public final class DocumentProcessor: @unchecked Sendable {
             throw DocumentProcessorError.unreadableImage
         }
         return image
+    }
+
+    private func validateFileBudget(_ url: URL) throws {
+        let values = try? url.resourceValues(forKeys: [.fileSizeKey, .totalFileSizeKey])
+        let byteCount = values?.totalFileSize ?? values?.fileSize ?? 0
+        if byteCount > ImportBudget.maxFileBytes {
+            throw DocumentProcessorError.documentTooLarge
+        }
+    }
+
+    private func validatePDFBudget(_ pdf: PDFDocument) throws {
+        if pdf.pageCount > ImportBudget.maxPDFPages {
+            throw DocumentProcessorError.documentTooLarge
+        }
+
+        for index in 0..<pdf.pageCount {
+            guard let page = pdf.page(at: index) else { continue }
+            let bounds = page.bounds(for: .mediaBox)
+            if bounds.width * bounds.height > ImportBudget.maxPDFPageArea {
+                throw DocumentProcessorError.documentTooLarge
+            }
+        }
+    }
+
+    private func validateImageBudget(_ image: CGImage) throws {
+        let pixels = UInt64(image.width) * UInt64(image.height)
+        if pixels > ImportBudget.maxPagePixels {
+            throw DocumentProcessorError.documentTooLarge
+        }
     }
 
     private func render(pdfPage: PDFPage) -> NSImage? {
