@@ -29,7 +29,7 @@ struct ContentView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(nsColor: .windowBackgroundColor))
+                .background(AccessibleStyle.appBackground)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -79,17 +79,17 @@ private struct WorkflowHeader: View {
                     .controlSize(.small)
                 Text("Processing locally")
                     .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
             } else {
                 Text(nextStepText)
                     .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
                     .lineLimit(1)
             }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
-        .background(.bar)
+        .accessibleToolbarSurface()
     }
 
     private var nextStepText: String {
@@ -123,13 +123,17 @@ private struct StepPill: View {
             HStack(spacing: 8) {
                 Text("\(number)")
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(isSelected ? .white : .secondary)
+                    .foregroundStyle(isSelected ? .white : .primary)
                     .frame(width: 22, height: 22)
-                    .background(isSelected ? Color.accentColor : Color.secondary.opacity(0.18), in: Circle())
+                    .background(isSelected ? AccessibleStyle.selected : AccessibleStyle.elevatedBackground, in: Circle())
+                    .overlay {
+                        Circle()
+                            .stroke(AccessibleStyle.border)
+                    }
 
                 Text(title)
                     .font(.headline)
-                    .foregroundStyle(isSelected ? .primary : .secondary)
+                    .foregroundStyle(.primary)
             }
             .contentShape(Rectangle())
         }

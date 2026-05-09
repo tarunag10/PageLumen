@@ -34,7 +34,7 @@ struct SidebarView: View {
 
                                     Text(detail(for: item))
                                         .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(.primary)
                                         .lineLimit(1)
                                 }
                             }
@@ -46,23 +46,23 @@ struct SidebarView: View {
             }
 
             if !store.recentDocuments.isEmpty {
-                Section("Recent") {
+                Section("Library") {
                     ForEach(store.recentDocuments) { document in
                         Button {
                             store.selectRecentDocument(document)
                         } label: {
                             HStack(spacing: 10) {
-                                Image(systemName: "clock")
-                                    .foregroundStyle(.secondary)
+                                Image(systemName: document.processingStatus == .complete ? "checkmark.circle" : "doc.text.magnifyingglass")
+                                    .foregroundStyle(.primary)
                                     .frame(width: 16)
 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(document.title)
                                         .lineLimit(1)
 
-                                    Text("\(document.pageCount) page\(document.pageCount == 1 ? "" : "s")")
+                                    Text("\(document.pageCount) page\(document.pageCount == 1 ? "" : "s") • \(document.processingStatus.rawValue)")
                                         .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(.primary)
                                 }
                             }
                         }
@@ -74,7 +74,7 @@ struct SidebarView: View {
             Section("Outline") {
                 if store.document.outline.isEmpty {
                     Text("Headings appear here after import")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
                 } else {
                     ForEach(store.document.outline) { item in
                         Button {
@@ -83,13 +83,13 @@ struct SidebarView: View {
                         } label: {
                             HStack {
                                 Image(systemName: "textformat.size")
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(.primary)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(item.title)
                                         .lineLimit(1)
                                     Text("Page \(item.pageNumber)")
                                         .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(.primary)
                                 }
                             }
                         }
@@ -107,12 +107,12 @@ struct SidebarView: View {
                     .lineLimit(1)
                 Text(store.statusMessage)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
                     .lineLimit(2)
             }
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.bar)
+            .accessibleToolbarSurface()
         }
     }
 

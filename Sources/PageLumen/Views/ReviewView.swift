@@ -32,14 +32,14 @@ private struct ProcessingBanner: View {
         if store.isProcessing || store.document.pages.contains(where: { $0.warning != nil }) {
             HStack(spacing: 10) {
                 Image(systemName: store.isProcessing ? "hourglass" : "exclamationmark.triangle")
-                    .foregroundStyle(store.isProcessing ? Color.secondary : Color.orange)
+                    .foregroundStyle(store.isProcessing ? Color.primary : AccessibleStyle.warning)
                 Text(store.isProcessing ? "Processing locally..." : "Some OCR or reading-order confidence is low. Review before export.")
                     .font(.callout)
                 Spacer()
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
-            .background(.bar)
+            .accessibleToolbarSurface()
         }
     }
 }
@@ -56,7 +56,7 @@ private struct ReviewHeader: View {
                         .font(.headline)
                     Text("Compare the preview with extracted blocks, then resolve anything marked for review.")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
                 }
 
                 Spacer()
@@ -74,7 +74,7 @@ private struct ReviewHeader: View {
                 if let page = store.selectedPage {
                     Text(page.layoutType.rawValue)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
                 }
 
                 Button {
@@ -112,7 +112,7 @@ private struct ReviewHeader: View {
 
                 Text(searchSummary)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
             }
         }
         .padding(12)
@@ -136,24 +136,40 @@ private struct ReviewTrustBar: View {
                 title: "Extraction",
                 value: store.extractionReadinessLabel,
                 systemImage: store.reviewIssueCount == 0 ? "checkmark.seal.fill" : "exclamationmark.triangle.fill",
-                tint: store.reviewIssueCount == 0 ? .green : .orange
+                tint: store.reviewIssueCount == 0 ? AccessibleStyle.success : AccessibleStyle.warning
             )
 
             TrustMetric(
                 title: "Pages",
                 value: "\(store.document.pageCount)",
                 systemImage: "doc.richtext",
-                tint: .accentColor
+                tint: AccessibleStyle.selected
             )
 
             TrustMetric(
-                title: "Low confidence",
-                value: "\(store.lowConfidenceBlocks.count)",
-                systemImage: "text.badge.exclamationmark",
-                tint: store.lowConfidenceBlocks.isEmpty ? .secondary : .orange
+                title: "Reviewed",
+                value: "\(Int(store.reviewProgress.fractionComplete * 100))%",
+                systemImage: "checklist.checked",
+                tint: store.reviewProgress.fractionComplete >= 1 ? AccessibleStyle.success : AccessibleStyle.selected
             )
 
             Spacer()
+
+            Menu {
+                if store.reviewIssues.isEmpty {
+                    Text("No review issues")
+                } else {
+                    ForEach(store.reviewIssues.prefix(12)) { issue in
+                        Button {
+                            store.jumpToIssue(issue)
+                        } label: {
+                            Text("Page \(issue.pageNumber): \(issue.title)")
+                        }
+                    }
+                }
+            } label: {
+                Label("Issue Navigator", systemImage: "list.bullet.rectangle")
+            }
 
             Button {
                 store.jumpToFirstReviewIssue()
@@ -161,10 +177,16 @@ private struct ReviewTrustBar: View {
                 Label("Review Issues", systemImage: "scope")
             }
             .disabled(store.reviewIssueCount == 0)
+
+            Button {
+                store.setSelectedPageReviewed(true)
+            } label: {
+                Label("Mark Page Reviewed", systemImage: "checkmark.circle")
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(.thinMaterial)
+        .accessibleToolbarSurface()
     }
 }
 
@@ -182,7 +204,7 @@ private struct TrustMetric: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
                 Text(value)
                     .font(.caption.weight(.semibold))
                     .lineLimit(1)
@@ -190,7 +212,7 @@ private struct TrustMetric: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .accessiblePanel()
         .accessibilityElement(children: .combine)
     }
 }
@@ -217,11 +239,23 @@ private struct StructuredOutputView: View {
 
                     if store.reviewFilter == .all || store.reviewFilter == .tablesFigures {
                         ForEach(page.tables) { table in
-                            GeneratedNote(title: "Table explanation", text: table.explanation, systemImage: "tablecells")
+                            EditableGeneratedNote(
+                                title: "Table explanation",
+                                text: table.explanation,
+                                systemImage: "tablecells"
+                            ) { newValue in
+                                store.updateTableExplanation(table, text: newValue)
+                            }
                         }
 
                         ForEach(page.figures) { figure in
-                            GeneratedNote(title: "Figure explanation", text: figure.description, systemImage: "chart.bar")
+                            EditableGeneratedNote(
+                                title: "Figure explanation",
+                                text: figure.description,
+                                systemImage: "chart.bar"
+                            ) { newValue in
+                                store.updateFigureDescription(figure, text: newValue)
+                            }
                         }
                     }
                 }
@@ -239,9 +273,15 @@ private struct EditableBlockRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Label(block.type.rawValue.capitalized, systemImage: iconName)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Picker("Block type", selection: blockTypeBinding) {
+                    ForEach(editableBlockTypes, id: \.self) { type in
+                        Label(type.rawValue.capitalized, systemImage: iconName(for: type))
+                            .tag(type)
+                    }
+                }
+                .labelsHidden()
+                .frame(width: 150)
+
                 Button {
                     store.moveBlock(block, direction: .up)
                 } label: {
@@ -259,9 +299,18 @@ private struct EditableBlockRow: View {
                 .help("Move later in reading order")
 
                 Spacer()
+                if block.confidence < 0.7 {
+                    Label("Needs review", systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(AccessibleStyle.warning)
+                }
+                Toggle("Reviewed", isOn: reviewedBinding)
+                    .toggleStyle(.checkbox)
+                    .font(.caption)
+
                 Text("\(Int(block.confidence * 100))%")
                     .font(.caption)
-                    .foregroundStyle(block.confidence < 0.7 ? .orange : .secondary)
+                    .foregroundStyle(.primary)
             }
 
             TextEditor(text: $draft)
@@ -276,17 +325,34 @@ private struct EditableBlockRow: View {
                 }
         }
         .padding(12)
-        .background(block.confidence < 0.7 ? Color.orange.opacity(0.08) : Color.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 8))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(block.confidence < 0.7 ? Color.orange.opacity(0.42) : Color.secondary.opacity(0.12))
-        }
+        .accessiblePanel(borderColor: block.confidence < 0.7 ? AccessibleStyle.warning : AccessibleStyle.border)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(block.type.rawValue), confidence \(Int(block.confidence * 100)) percent")
+        .accessibilityHint(block.confidence < 0.7 ? "This block needs review before export." : "Edit text, type, order, or review status.")
     }
 
-    private var iconName: String {
-        switch block.type {
+    private var blockTypeBinding: Binding<BlockType> {
+        Binding {
+            block.type
+        } set: { newValue in
+            store.changeBlockType(block, to: newValue)
+        }
+    }
+
+    private var reviewedBinding: Binding<Bool> {
+        Binding {
+            DocumentEditing.isReviewed(block)
+        } set: { newValue in
+            store.setBlockReviewed(block, isReviewed: newValue)
+        }
+    }
+
+    private var editableBlockTypes: [BlockType] {
+        [.heading, .paragraph, .list, .table, .figure, .caption, .header, .footer, .unknown]
+    }
+
+    private func iconName(for type: BlockType) -> String {
+        switch type {
         case .heading: return "textformat.size"
         case .table: return "tablecells"
         case .figure: return "chart.bar"
@@ -297,20 +363,32 @@ private struct EditableBlockRow: View {
     }
 }
 
-private struct GeneratedNote: View {
+private struct EditableGeneratedNote: View {
     let title: String
     let text: String
     let systemImage: String
+    let onChange: (String) -> Void
+    @State private var draft = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Label(title, systemImage: systemImage)
                 .font(.headline)
-            Text(text)
-                .foregroundStyle(.secondary)
-                .textSelection(.enabled)
+            TextEditor(text: $draft)
+                .font(.body)
+                .frame(minHeight: 72)
+                .onAppear { draft = text }
+                .onChange(of: text) { _, newValue in
+                    draft = newValue
+                }
+                .onChange(of: draft) { _, newValue in
+                    onChange(newValue)
+                }
         }
         .padding(12)
-        .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+        .accessiblePanel(borderColor: AccessibleStyle.selected)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(title)
+        .accessibilityHint("Edit the generated description before export.")
     }
 }

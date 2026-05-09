@@ -31,6 +31,16 @@ struct PageLumenApp: App {
                     store.pasteImageFromClipboard()
                 }
                 .keyboardShortcut("v", modifiers: [.command, .shift])
+
+                Button("Review First Issue") {
+                    store.jumpToFirstReviewIssue()
+                }
+                .keyboardShortcut("r", modifiers: [.command, .shift])
+
+                Button("Mark Page Reviewed") {
+                    store.setSelectedPageReviewed(true)
+                }
+                .keyboardShortcut(.return, modifiers: [.command, .shift])
             }
         }
 

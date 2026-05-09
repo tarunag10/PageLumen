@@ -14,7 +14,7 @@ struct SettingsView: View {
                     Label("PageLumen Preferences", systemImage: "slider.horizontal.3")
                         .font(.title2.bold())
                     Text("Tune recognition, export defaults, and release-readiness checks for the current native workflow.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(.vertical, 4)
@@ -24,7 +24,7 @@ struct SettingsView: View {
                 Toggle("Privacy mode", isOn: $privacyMode)
                 Text("Privacy mode keeps the MVP workflow local and disables future network-assisted processing by default.")
                     .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
             }
 
             Section("Recognition") {
@@ -60,7 +60,7 @@ struct SettingsView: View {
 
                 Text("These defaults are used by the export screen and saved for future sessions.")
                     .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
             }
 
             Section("Review Status") {
@@ -68,7 +68,7 @@ struct SettingsView: View {
                     Label(store.extractionReadinessLabel, systemImage: store.reviewIssueCount == 0 ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
                     Spacer()
                     Text("\(store.document.pageCount) page\(store.document.pageCount == 1 ? "" : "s")")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
                 }
 
                 if store.reviewIssueCount > 0 {
@@ -83,11 +83,11 @@ struct SettingsView: View {
             Section("PRD Coverage") {
                 Text("Implemented locally: PDF/image import, paste image, batch import, screenshot capture, OCR, reading order, outline, editing, header/footer filtering, summaries, speech playback, Markdown/TXT/HTML/PDF/CSV/JSON exports, and privacy/profile settings.")
                     .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
 
                 Text("Longer-term roadmap: scanner/browser imports, trained layout models, full PDF/UA validation, advanced chart data extraction, audio-file export, EPUB/LMS/integration exports, and enterprise administration.")
                     .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
             }
         }
         .padding(24)

@@ -64,7 +64,7 @@ struct ProcessingView: View {
                     .lineLimit(1)
 
                 Text(store.statusMessage)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
                     .lineLimit(2)
             }
 
@@ -76,7 +76,7 @@ struct ProcessingView: View {
 
                 Text(progressLabel)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
             }
 
             Button(role: .cancel) {
@@ -87,7 +87,7 @@ struct ProcessingView: View {
             .disabled(!store.isProcessing)
         }
         .padding(20)
-        .background(.bar)
+        .accessibleToolbarSurface()
     }
 
     private var title: String {
@@ -141,7 +141,9 @@ private struct ProcessingPageCard: View {
             }
         }
         .padding(12)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .accessiblePanel()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Page \(page.pageNumber), \(page.ocrStatus.label)")
     }
 
     @ViewBuilder
@@ -151,7 +153,10 @@ private struct ProcessingPageCard: View {
                 .resizable()
                 .scaledToFit()
                 .clipShape(RoundedRectangle(cornerRadius: 5))
-                .shadow(color: .black.opacity(0.18), radius: 4, y: 2)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 5)
+                        .stroke(AccessibleStyle.border)
+                }
         } else {
             VStack(spacing: 8) {
                 Image(systemName: "doc.text.image")
@@ -159,7 +164,7 @@ private struct ProcessingPageCard: View {
                 Text("Thumbnail pending")
                     .font(.caption)
             }
-            .foregroundStyle(.secondary)
+            .foregroundStyle(.primary)
         }
     }
 
@@ -174,7 +179,11 @@ private struct ProcessingPageCard: View {
             }
         }
         .frame(width: 24, height: 24)
-        .background(.regularMaterial, in: Circle())
+        .background(AccessibleStyle.panelBackground, in: Circle())
+        .overlay {
+            Circle()
+                .stroke(AccessibleStyle.border)
+        }
     }
 }
 

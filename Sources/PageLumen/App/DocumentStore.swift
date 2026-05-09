@@ -34,6 +34,7 @@ final class DocumentStore: ObservableObject {
     @Published var processingFileName = ""
     @Published var reviewSearchQuery = ""
     @Published var reviewFilter: ReviewFilter = .all
+    @Published var exportPreviewFormat: ExportFormat = .markdown
 
     private let exportEngine = ExportEngine()
     private let explanationEngine = ExplanationEngine()
@@ -68,18 +69,26 @@ final class DocumentStore: ObservableObject {
         document.allBlocks.filter { $0.confidence < 0.7 }
     }
 
+    var reviewIssues: [ReviewIssue] {
+        DocumentEditing.reviewIssues(for: document)
+    }
+
+    var reviewProgress: ReviewProgress {
+        DocumentEditing.reviewProgress(for: document)
+    }
+
     var reviewIssueCount: Int {
-        lowConfidenceBlocks.count + document.pages.filter { $0.warning != nil }.count
+        reviewIssues.count
     }
 
     var extractionReadinessLabel: String {
         if isProcessing {
             return "Processing locally"
         }
-        if reviewIssueCount == 0 {
+        if reviewIssueCount == 0 && reviewProgress.fractionComplete >= 1 {
             return "Ready to export"
         }
-        return "\(reviewIssueCount) review item\(reviewIssueCount == 1 ? "" : "s")"
+        return "\(reviewIssueCount) issue\(reviewIssueCount == 1 ? "" : "s")"
     }
 
     var filteredSelectedPageBlocks: [TextBlock] {
@@ -116,14 +125,17 @@ final class DocumentStore: ObservableObject {
     }
 
     func jumpToFirstReviewIssue() {
-        if let block = lowConfidenceBlocks.first {
-            selectedPageNumber = block.pageNumber
+        if let issue = reviewIssues.first {
+            selectedPageNumber = issue.pageNumber
             selectedDestination = .review
             reviewFilter = .needsReview
-        } else if let page = document.pages.first(where: { $0.warning != nil }) {
-            selectedPageNumber = page.pageNumber
-            selectedDestination = .review
         }
+    }
+
+    func jumpToIssue(_ issue: ReviewIssue) {
+        selectedPageNumber = issue.pageNumber
+        selectedDestination = .review
+        reviewFilter = .needsReview
     }
 
     func jumpToNextSearchMatch() {
@@ -358,9 +370,47 @@ final class DocumentStore: ObservableObject {
         document.summary = explanationEngine.summary(for: document, length: summaryLength)
     }
 
+    func setBlockReviewed(_ block: TextBlock, isReviewed: Bool) {
+        DocumentEditing.setBlockReviewed(id: block.id, isReviewed: isReviewed, in: &document)
+        statusMessage = isReviewed ? "Marked block reviewed" : "Marked block for review"
+    }
+
+    func setSelectedPageReviewed(_ isReviewed: Bool) {
+        DocumentEditing.setPageReviewed(pageNumber: selectedPageNumber, isReviewed: isReviewed, in: &document)
+        statusMessage = isReviewed ? "Marked page \(selectedPageNumber) reviewed" : "Marked page \(selectedPageNumber) for review"
+    }
+
+    func changeBlockType(_ block: TextBlock, to type: BlockType) {
+        DocumentEditing.changeBlockType(id: block.id, to: type, in: &document)
+        document.summary = explanationEngine.summary(for: document, length: summaryLength)
+        statusMessage = "Changed block type to \(type.rawValue)"
+    }
+
+    func updateTableExplanation(_ table: TableRegion, text: String) {
+        guard let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == table.pageNumber }),
+              let tableIndex = document.pages[pageIndex].tables.firstIndex(where: { $0.id == table.id }) else {
+            return
+        }
+        document.pages[pageIndex].tables[tableIndex].explanation = text
+        document.summary = explanationEngine.summary(for: document, length: summaryLength)
+    }
+
+    func updateFigureDescription(_ figure: FigureRegion, text: String) {
+        guard let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == figure.pageNumber }),
+              let figureIndex = document.pages[pageIndex].figures.firstIndex(where: { $0.id == figure.id }) else {
+            return
+        }
+        document.pages[pageIndex].figures[figureIndex].description = text
+        document.summary = explanationEngine.summary(for: document, length: summaryLength)
+    }
+
     func moveBlock(_ block: TextBlock, direction: BlockMoveDirection) {
         DocumentEditing.moveBlock(id: block.id, direction: direction, in: &document)
         document.summary = explanationEngine.summary(for: document, length: summaryLength)
+    }
+
+    func exportPreviewText(limit: Int = 4_000) -> String {
+        DocumentEditing.exportPreview(for: document, format: exportPreviewFormat, options: exportOptions, maxCharacters: limit)
     }
 
     func fullExtractedText() -> String {

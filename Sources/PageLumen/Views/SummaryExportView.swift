@@ -15,11 +15,11 @@ struct SummaryExportView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Step 4")
                         .font(.headline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
                     Text("Listen and export")
                         .font(.largeTitle.bold())
                     Text("Use the summary for a quick pass, read the full extraction aloud, then save the format you need.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
                 }
 
                 HStack(spacing: 12) {
@@ -60,7 +60,7 @@ struct SummaryExportView: View {
                     .textSelection(.enabled)
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                    .accessiblePanel()
 
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
@@ -74,12 +74,12 @@ struct SummaryExportView: View {
 
                         Text(accessibilityAudit.summary)
                             .font(.callout)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.primary)
                     }
 
                     if accessibilityAudit.findings.isEmpty {
                         Text("No automated accessibility issues were found for the current export options.")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.primary)
                     } else {
                         ForEach(accessibilityAudit.findings.prefix(5)) { finding in
                             VStack(alignment: .leading, spacing: 4) {
@@ -87,22 +87,22 @@ struct SummaryExportView: View {
                                     .font(.headline)
                                 Text(finding.recommendation)
                                     .font(.callout)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(.primary)
                             }
                             .padding(10)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                            .accessiblePanel()
                         }
 
                         if accessibilityAudit.findings.count > 5 {
                             Text("\(accessibilityAudit.findings.count - 5) more items are included in the Accessibility Report export.")
                                 .font(.callout)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.primary)
                         }
                     }
                 }
                 .padding()
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                .accessiblePanel()
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Choose what to include")
@@ -133,10 +133,42 @@ struct SummaryExportView: View {
 
                     Text("Tagged HTML and Accessibility Report are the review-ready accessibility outputs. Accessible PDF is readable/selectable text, not full PDF/UA validation yet.")
                         .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
                 }
                 .padding()
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                .accessiblePanel()
+
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Label("Export preview", systemImage: "doc.text.magnifyingglass")
+                            .font(.title2.bold())
+
+                        Spacer()
+
+                        Picker("Preview format", selection: $store.exportPreviewFormat) {
+                            ForEach(ExportFormat.allCases) { format in
+                                Text(format.rawValue).tag(format)
+                            }
+                        }
+                        .frame(width: 220)
+                    }
+
+                    ScrollView {
+                        Text(store.exportPreviewText())
+                            .font(.system(.body, design: .monospaced))
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(12)
+                    }
+                    .frame(minHeight: 220, maxHeight: 320)
+                    .accessiblePanel()
+
+                    Text("Preview is capped for speed. The saved export includes the full selected document.")
+                        .font(.callout)
+                        .foregroundStyle(.primary)
+                }
+                .padding()
+                .accessiblePanel()
             }
             .padding(32)
         }

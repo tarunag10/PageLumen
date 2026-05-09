@@ -13,10 +13,10 @@ struct PreviewPane: View {
                     ZStack(alignment: .topLeading) {
                         PreviewImage(data: page.thumbnailData)
                             .frame(width: 360, height: 470)
-                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                            .background(AccessibleStyle.panelBackground, in: RoundedRectangle(cornerRadius: 8))
                             .overlay {
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke(.secondary.opacity(0.18))
+                                    .stroke(AccessibleStyle.border)
                             }
 
                         if showReadingOrder {
@@ -30,7 +30,7 @@ struct PreviewPane: View {
                 ContentUnavailableView("No Page Selected", systemImage: "doc.text.magnifyingglass")
             }
         }
-        .background(.background)
+        .background(AccessibleStyle.appBackground)
     }
 }
 
@@ -47,9 +47,9 @@ private struct PreviewImage: View {
             VStack(spacing: 12) {
                 Image(systemName: "doc.text.image")
                     .font(.system(size: 48))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
                 Text("Source preview")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
             }
         }
     }
@@ -64,12 +64,12 @@ private struct ReadingOrderOverlay: View {
                 let rect = scaled(block.bounds, in: proxy.size)
                 ZStack(alignment: .topLeading) {
                     RoundedRectangle(cornerRadius: 4)
-                        .stroke(Color.accentColor, lineWidth: 1.5)
-                        .background(Color.accentColor.opacity(0.08))
+                        .stroke(AccessibleStyle.selected, lineWidth: 2)
+                        .background(AccessibleStyle.panelBackground)
                     Text("\(block.readingOrderIndex + 1)")
                         .font(.caption2.bold())
                         .padding(4)
-                        .background(Color.accentColor, in: Circle())
+                        .background(AccessibleStyle.selected, in: Circle())
                         .foregroundStyle(.white)
                         .offset(x: -6, y: -6)
                 }
