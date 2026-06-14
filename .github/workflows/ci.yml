@@ -17,3 +17,14 @@ jobs:
 
       - name: Run tests
         run: swift test
+
+  build:
+    name: Xcode build
+    runs-on: macos-latest
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build with xcodebuild
+        run: xcodebuild -project PageLumen.xcodeproj -scheme PageLumen -configuration Debug -destination 'generic/platform=macOS' build

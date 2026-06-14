@@ -131,6 +131,90 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertEqual(landed, "final")
     }
 
+    func testReorderBlockMovesBlockToDestinationIndex() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        store.document = makeMoveDocument()
+
+        let thirdBlock = store.document.pages[0].blocks[2]
+
+        // Move "Third" (index 2) all the way to index 0.
+        store.reorderBlock(id: thirdBlock.id, to: 0)
+
+        XCTAssertEqual(
+            store.document.pages[0].blocks.map(\.text),
+            ["Third", "First", "Second"]
+        )
+        XCTAssertEqual(
+            store.document.pages[0].blocks.map(\.readingOrderIndex),
+            [0, 1, 2],
+            "Reading-order index should be recomputed after a reorder"
+        )
+
+        // Moving the same block back to its original tail position should be
+        // a no-op-friendly round-trip.
+        let nowFirst = store.document.pages[0].blocks[0]
+        store.reorderBlock(id: nowFirst.id, to: 2)
+        XCTAssertEqual(
+            store.document.pages[0].blocks.map(\.text),
+            ["First", "Second", "Third"]
+        )
+    }
+
+    func testSearchIndexFindsMatches() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        store.document = makeSearchableDocument()
+
+        let expectedImportMatches = store.document.allBlocks.filter { $0.text.localizedCaseInsensitiveContains("import") }.count
+        XCTAssertGreaterThan(expectedImportMatches, 0)
+        store.reviewSearchQuery = "import"
+        XCTAssertEqual(store.reviewSearchMatchCount, expectedImportMatches)
+
+        let page = store.selectedPage ?? store.document.pages[0]
+        let expected = page.blocks.filter { $0.text.localizedCaseInsensitiveContains("import") }
+        XCTAssertEqual(store.filteredSelectedPageBlocks.map(\.id).sorted(), expected.map(\.id).sorted())
+    }
+
+    func testSearchIndexInvalidatesOnDocumentChange() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        store.document = makeSearchableDocument()
+
+        store.reviewSearchQuery = "import"
+        let initial = store.reviewSearchMatchCount
+        XCTAssertGreaterThan(initial, 0)
+
+        store.document = makeDifferentSearchableDocument()
+        store.reviewSearchQuery = "auditable"
+        let updated = store.reviewSearchMatchCount
+        XCTAssertEqual(updated, 1, "Index should rebuild and find the single new match")
+
+        store.reviewSearchQuery = "import"
+        XCTAssertEqual(store.reviewSearchMatchCount, 0)
+    }
+
+    private func makeSearchableDocument() -> ReaderDocument {
+        let page = ReaderPage(
+            pageNumber: 1,
+            size: PageSize(width: 400, height: 600),
+            blocks: [
+                TextBlock(pageNumber: 1, type: .paragraph, text: "The first paragraph explains the import flow.", bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 0),
+                TextBlock(pageNumber: 1, type: .paragraph, text: "The second paragraph talks about export.", bounds: BoundingBox(x: 0, y: 40, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 1),
+                TextBlock(pageNumber: 1, type: .paragraph, text: "The third paragraph is just narration.", bounds: BoundingBox(x: 0, y: 80, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 2)
+            ]
+        )
+        return ReaderDocument(title: "Search Doc", sourceType: .sample, pages: [page])
+    }
+
+    private func makeDifferentSearchableDocument() -> ReaderDocument {
+        let page = ReaderPage(
+            pageNumber: 1,
+            size: PageSize(width: 400, height: 600),
+            blocks: [
+                TextBlock(pageNumber: 1, type: .paragraph, text: "This is now an auditable flow.", bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 0)
+            ]
+        )
+        return ReaderDocument(title: "Search Doc v2", sourceType: .sample, pages: [page])
+    }
+
     private func makeMoveDocument() -> ReaderDocument {
         let first = TextBlock(pageNumber: 1, type: .paragraph, text: "First", bounds: BoundingBox(x: 20, y: 20, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 0)
         let second = TextBlock(pageNumber: 1, type: .paragraph, text: "Second", bounds: BoundingBox(x: 20, y: 60, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 1)

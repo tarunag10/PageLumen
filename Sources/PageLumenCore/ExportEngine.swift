@@ -10,6 +10,8 @@ public enum ExportFormat: String, CaseIterable, Identifiable, Sendable {
     case csv = "CSV"
     case json = "JSON"
     case accessibilityReport = "Accessibility Report"
+    case audio = "Audio"
+    case docx = "DOCX"
 
     public var id: String { rawValue }
 
@@ -22,6 +24,8 @@ public enum ExportFormat: String, CaseIterable, Identifiable, Sendable {
         case .csv: return "csv"
         case .json: return "json"
         case .accessibilityReport: return "md"
+        case .audio: return "m4a"
+        case .docx: return "docx"
         }
     }
 }
@@ -406,7 +410,23 @@ public struct ExportEngine: Sendable {
             return jsonData(for: document, options: options)
         case .accessibilityReport:
             return Data(accessibilityReport(for: document, options: options).utf8)
+        case .audio:
+            return Data(audioPlaceholder(for: document, options: options).utf8)
+        case .docx:
+            return Data(docxPlaceholder(for: document, options: options).utf8)
         }
+    }
+
+    public func audioPlaceholder(for document: ReaderDocument, options: ExportOptions) -> String {
+        let text = plainText(for: document, options: options)
+        let preview = String(text.prefix(400))
+        return "Audio export preview\nSource text length: \(text.count) characters\n\nFirst 400 characters:\n\(preview)\n\nThe full file will be written as an .m4a AAC file by AudioExportService."
+    }
+
+    public func docxPlaceholder(for document: ReaderDocument, options: ExportOptions) -> String {
+        let text = plainText(for: document, options: options)
+        let preview = String(text.prefix(400))
+        return "DOCX export preview\nSource text length: \(text.count) characters\n\nFirst 400 characters:\n\(preview)\n\nThe full file will be written as a .docx (Office Open XML) file by DOCXWriter."
     }
 
     public func accessibilityReport(for document: ReaderDocument, options: ExportOptions) -> String {

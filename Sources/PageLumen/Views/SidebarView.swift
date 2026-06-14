@@ -49,27 +49,36 @@ struct SidebarView: View {
             }
 
             if !store.recentDocuments.isEmpty {
-                Section("Library") {
-                    ForEach(store.recentDocuments) { document in
-                        Button {
-                            store.selectRecentDocument(document)
-                        } label: {
-                            HStack(spacing: 10) {
-                                Image(systemName: document.processingStatus == .complete ? "checkmark.circle" : "doc.text.magnifyingglass")
-                                    .foregroundStyle(.primary)
-                                    .frame(width: 16)
+                Section("Most recent") {
+                    if let mostRecent = store.recentDocuments.first {
+                        recentDocumentRow(mostRecent, subtitle: lastOpenedLabel(for: mostRecent))
+                    }
+                }
 
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(document.title)
-                                        .lineLimit(1)
-
-                                    Text("\(document.pageCount) page\(document.pageCount == 1 ? "" : "s") • \(document.processingStatus.rawValue)")
-                                        .font(.caption)
+                if store.recentDocuments.count > 1 {
+                    Section("Library") {
+                        ForEach(store.recentDocuments.dropFirst()) { document in
+                            Button {
+                                store.selectRecentDocument(document)
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: document.processingStatus == .complete ? "checkmark.circle" : "doc.text.magnifyingglass")
                                         .foregroundStyle(.primary)
+                                        .frame(width: 16)
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(document.title)
+                                            .lineLimit(1)
+
+                                        Text(librarySubtitle(for: document))
+                                            .font(.caption)
+                                            .foregroundStyle(.primary)
+                                            .lineLimit(1)
+                                    }
                                 }
                             }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -126,5 +135,42 @@ struct SidebarView: View {
         default:
             return item.status.label
         }
+    }
+
+    private func lastOpenedLabel(for document: ReaderDocument) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        let when = formatter.localizedString(for: document.createdAt, relativeTo: Date())
+        return "Opened \(when) • \(document.pageCount) page\(document.pageCount == 1 ? "" : "s")"
+    }
+
+    private func librarySubtitle(for document: ReaderDocument) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        let dateString = formatter.string(from: document.createdAt)
+        return "\(dateString) • \(document.pageCount) page\(document.pageCount == 1 ? "" : "s")"
+    }
+
+    private func recentDocumentRow(_ document: ReaderDocument, subtitle: String) -> some View {
+        Button {
+            store.selectRecentDocument(document)
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: document.processingStatus == .complete ? "checkmark.circle" : "doc.text.magnifyingglass")
+                    .foregroundStyle(.primary)
+                    .frame(width: 16)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(document.title)
+                        .lineLimit(1)
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                }
+            }
+        }
+        .buttonStyle(.plain)
     }
 }

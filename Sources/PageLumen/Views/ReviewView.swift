@@ -1,5 +1,6 @@
 import PageLumenCore
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ReviewView: View {
     @EnvironmentObject private var store: DocumentStore
@@ -336,7 +337,11 @@ private struct EditableBlockRow: View {
         .accessiblePanel(borderColor: block.confidence < 0.7 ? AccessibleStyle.warning : AccessibleStyle.border)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(block.type.rawValue.capitalized) block, confidence \(Int(block.confidence * 100)) percent")
-        .accessibilityHint("Edit text, change type, or toggle reviewed.")
+        .accessibilityHint("Edit text, change type, drag to reorder, or use the arrow buttons as a keyboard fallback.")
+        .onDrag {
+            NSItemProvider(object: block.id.uuidString as NSString)
+        }
+        .onDrop(of: [.text], delegate: BlockReorderDropDelegate(targetBlock: block, store: store))
         .onDisappear {
             flushPendingCommit()
         }
@@ -425,5 +430,33 @@ private struct EditableGeneratedNote: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel(title)
         .accessibilityHint("Edit the generated description before export.")
+    }
+}
+
+private struct BlockReorderDropDelegate: DropDelegate {
+    let targetBlock: TextBlock
+    let store: DocumentStore
+
+    func performDrop(info: DropInfo) -> Bool {
+        guard let provider = info.itemProviders(for: [.text]).first else {
+            return false
+        }
+        let targetID = targetBlock.id
+        let pageNumber = targetBlock.pageNumber
+        provider.loadObject(ofClass: NSString.self) { item, _ in
+            guard let raw = item as? String,
+                  let droppedID = UUID(uuidString: raw),
+                  droppedID != targetID else {
+                return
+            }
+            Task { @MainActor in
+                guard let page = store.document.pages.first(where: { $0.pageNumber == pageNumber }),
+                      let destinationIndex = page.blocks.firstIndex(where: { $0.id == targetID }) else {
+                    return
+                }
+                store.reorderBlock(id: droppedID, to: destinationIndex)
+            }
+        }
+        return true
     }
 }

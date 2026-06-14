@@ -276,6 +276,14 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
             }
             request.recognitionLevel = .accurate
             request.usesLanguageCorrection = true
+            let userLanguages: [String]
+            if #available(macOS 13, *) {
+                userLanguages = Locale.preferredLanguages
+            } else {
+                userLanguages = ["en-US"]
+            }
+            request.recognitionLanguages = userLanguages
+            request.automaticallyDetectsLanguage = true
 
             let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
             do {

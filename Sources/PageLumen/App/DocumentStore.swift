@@ -2,6 +2,7 @@ import AppKit
 import Combine
 import Foundation
 import PageLumenCore
+import UniformTypeIdentifiers
 
 @MainActor
 final class DocumentStore: ObservableObject {
@@ -39,10 +40,15 @@ final class DocumentStore: ObservableObject {
     private let exportEngine = ExportEngine()
     private let explanationEngine = ExplanationEngine()
     private let screenshotCaptureService = ScreenshotCaptureService()
+    private let audioExportService = AudioExportService()
     private var importTask: Task<Void, Never>?
 
     private let processor: any DocumentImporting
     private let persisting: any DocumentPersisting
+
+    private var searchIndex: [String: [UUID]] = [:]
+    private var searchIndexFingerprint: Int = 0
+    private var searchIndexOrder: [TextBlock] = []
 
     private var currentOCRProfile: OCRProfile {
         OCRProfile(settingsValue: UserDefaults.standard.string(forKey: "ocrProfile") ?? OCRProfile.general.rawValue)
@@ -125,7 +131,8 @@ final class DocumentStore: ObservableObject {
         guard !query.isEmpty else {
             return filtered
         }
-        return filtered.filter { $0.text.localizedCaseInsensitiveContains(query) }
+        let matchIDs = Set(blocksMatching(query: query).map(\.id))
+        return filtered.filter { matchIDs.contains($0.id) }
     }
 
     var reviewSearchMatchCount: Int {
@@ -133,7 +140,7 @@ final class DocumentStore: ObservableObject {
         guard !query.isEmpty else {
             return 0
         }
-        return document.allBlocks.filter { $0.text.localizedCaseInsensitiveContains(query) }.count
+        return blocksMatching(query: query).count
     }
 
     func jumpToFirstReviewIssue() {
@@ -156,7 +163,7 @@ final class DocumentStore: ObservableObject {
             return
         }
 
-        let matches = document.allBlocks.filter { $0.text.localizedCaseInsensitiveContains(query) }
+        let matches = blocksMatching(query: query)
         guard !matches.isEmpty else {
             return
         }
@@ -351,7 +358,7 @@ final class DocumentStore: ObservableObject {
     }
 
     func regenerateSummary() {
-        document.summary = explanationEngine.summary(for: document, length: summaryLength)
+        document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
     }
 
     func persistExportDefaults() {
@@ -391,7 +398,7 @@ final class DocumentStore: ObservableObject {
             return
         }
         document.pages[pageIndex].blocks[blockIndex].text = text
-        document.summary = explanationEngine.summary(for: document, length: summaryLength)
+        document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
     }
 
     func setBlockReviewed(_ block: TextBlock, isReviewed: Bool) {
@@ -406,7 +413,7 @@ final class DocumentStore: ObservableObject {
 
     func changeBlockType(_ block: TextBlock, to type: BlockType) {
         DocumentEditing.changeBlockType(id: block.id, to: type, in: &document)
-        document.summary = explanationEngine.summary(for: document, length: summaryLength)
+        document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
         statusMessage = "Changed block type to \(type.rawValue)"
     }
 
@@ -416,7 +423,7 @@ final class DocumentStore: ObservableObject {
             return
         }
         document.pages[pageIndex].tables[tableIndex].explanation = text
-        document.summary = explanationEngine.summary(for: document, length: summaryLength)
+        document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
     }
 
     func updateFigureDescription(_ figure: FigureRegion, text: String) {
@@ -425,12 +432,34 @@ final class DocumentStore: ObservableObject {
             return
         }
         document.pages[pageIndex].figures[figureIndex].description = text
-        document.summary = explanationEngine.summary(for: document, length: summaryLength)
+        document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
     }
 
     func moveBlock(_ block: TextBlock, direction: BlockMoveDirection) {
         DocumentEditing.moveBlock(id: block.id, direction: direction, in: &document)
-        document.summary = explanationEngine.summary(for: document, length: summaryLength)
+        document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
+    }
+
+    /// Move a block directly to a specific index within its page, in a single
+    /// operation. Used by the drag-and-drop reorder gesture, which knows the
+    /// final destination up front and shouldn't have to chain repeated
+    /// `moveBlock(_:direction:)` calls.
+    func reorderBlock(id: UUID, to destinationIndex: Int) {
+        guard let pageIndex = document.pages.firstIndex(where: { page in
+            page.blocks.contains(where: { $0.id == id })
+        }),
+        let sourceIndex = document.pages[pageIndex].blocks.firstIndex(where: { $0.id == id }) else {
+            return
+        }
+
+        let blockCount = document.pages[pageIndex].blocks.count
+        let clampedDestination = max(0, min(destinationIndex, blockCount - 1))
+        guard sourceIndex != clampedDestination else { return }
+
+        let block = document.pages[pageIndex].blocks.remove(at: sourceIndex)
+        document.pages[pageIndex].blocks.insert(block, at: clampedDestination)
+        DocumentEditing.renumberBlocks(on: &document.pages[pageIndex])
+        document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
     }
 
     func exportPreviewText(limit: Int = 4_000) -> String {
@@ -495,6 +524,17 @@ final class DocumentStore: ObservableObject {
     }
 
     func export(format: ExportFormat) {
+        switch format {
+        case .audio:
+            exportAudio()
+        case .docx:
+            exportDOCX()
+        default:
+            exportData(format: format)
+        }
+    }
+
+    private func exportData(format: ExportFormat) {
         let panel = NSSavePanel()
         panel.allowedContentTypes = []
         panel.nameFieldStringValue = "\(document.title).\(format.fileExtension)"
@@ -509,6 +549,114 @@ final class DocumentStore: ObservableObject {
                 statusMessage = "Export failed: \(error.localizedDescription)"
             }
         }
+    }
+
+    private func exportAudio() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.audio]
+        panel.nameFieldStringValue = "\(document.title).m4a"
+        panel.message = "Export the spoken summary as an .m4a file."
+
+        guard panel.runModal() == .OK, let url = panel.url else {
+            return
+        }
+        isProcessing = true
+        statusMessage = "Synthesizing audio summary..."
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                let textToSpeak = self.document.summary.isEmpty
+                    ? self.fullExtractedText()
+                    : self.document.summary
+                try await self.audioExportService.export(text: textToSpeak, to: url)
+                self.statusMessage = "Exported Audio to \(url.lastPathComponent)"
+            } catch {
+                self.statusMessage = "Audio export failed: \(error.localizedDescription)"
+            }
+            self.isProcessing = false
+        }
+    }
+
+    private func exportDOCX() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [UTType(filenameExtension: "docx") ?? .data]
+        panel.nameFieldStringValue = "\(document.title).docx"
+        panel.message = "Export the document as a Word-compatible .docx file."
+
+        if panel.runModal() == .OK, let url = panel.url {
+            do {
+                let data = DOCXWriter().data(for: document, options: exportOptions)
+                try data.write(to: url, options: .atomic)
+                statusMessage = "Exported DOCX to \(url.lastPathComponent)"
+            } catch {
+                statusMessage = "DOCX export failed: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    private func blocksMatching(query: String) -> [TextBlock] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return []
+        }
+        let tokens = Self.searchTokens(for: trimmed)
+        guard !tokens.isEmpty else {
+            return []
+        }
+
+        rebuildSearchIndexIfNeeded()
+
+        var candidateIDs: Set<UUID>?
+        for token in tokens {
+            let hits = searchIndex[token] ?? []
+            if candidateIDs == nil {
+                candidateIDs = Set(hits)
+            } else {
+                candidateIDs?.formIntersection(hits)
+            }
+        }
+
+        let ids = candidateIDs ?? []
+        return searchIndexOrder.filter { ids.contains($0.id) }
+    }
+
+    private func rebuildSearchIndexIfNeeded() {
+        let fingerprint = currentDocumentVersion
+        guard fingerprint != searchIndexFingerprint || searchIndex.isEmpty else {
+            return
+        }
+
+        var tokenIndex: [String: [UUID]] = [:]
+        var ordered: [TextBlock] = []
+        ordered.reserveCapacity(document.allBlocks.count)
+
+        for block in document.allBlocks {
+            ordered.append(block)
+            for token in Self.tokensForIndexing(block.text) {
+                tokenIndex[token, default: []].append(block.id)
+            }
+        }
+
+        searchIndex = tokenIndex
+        searchIndexOrder = ordered
+        searchIndexFingerprint = fingerprint
+    }
+
+    private static func searchTokens(for query: String) -> [String] {
+        let lowered = query.lowercased()
+        let separators = CharacterSet.whitespacesAndNewlines
+            .union(.punctuationCharacters)
+            .union(.symbols)
+        let raw = lowered.components(separatedBy: separators)
+        return raw.filter { $0.count >= 3 }
+    }
+
+    private static func tokensForIndexing(_ text: String) -> [String] {
+        let separators = CharacterSet.whitespacesAndNewlines
+            .union(.punctuationCharacters)
+            .union(.symbols)
+        let raw = text.lowercased().components(separatedBy: separators)
+        return raw.filter { $0.count >= 3 }
     }
 
     private var batchSummary: String {
@@ -526,11 +674,14 @@ final class DocumentStore: ObservableObject {
     }
 
     private func remember(_ newDocument: ReaderDocument) {
+        var stamped = newDocument
+        stamped.createdAt = Date()
         recentDocuments.removeAll { existing in
-            existing.id == newDocument.id || (existing.sourceURL != nil && existing.sourceURL == newDocument.sourceURL)
+            existing.id == stamped.id || (existing.sourceURL != nil && existing.sourceURL == stamped.sourceURL)
         }
-        recentDocuments.insert(newDocument, at: 0)
+        recentDocuments.insert(stamped, at: 0)
         recentDocuments = Array(recentDocuments.prefix(12))
+        try? persisting.save(stamped)
     }
 
     private func applyLanguagePreference(to targetDocument: inout ReaderDocument) {

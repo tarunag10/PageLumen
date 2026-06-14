@@ -12,7 +12,7 @@ public struct LayoutAnalyzer: Sendable {
         let outline = analyzedPages.flatMap { page in
             page.blocks
                 .filter { $0.type == .heading }
-                .map { OutlineItem(title: $0.text, pageNumber: page.pageNumber, level: headingLevel(for: $0.text)) }
+                .map { OutlineItem(title: $0.text, pageNumber: page.pageNumber, level: headingLevel(for: $0, on: page)) }
         }
 
         for pageIndex in analyzedPages.indices {
@@ -42,7 +42,8 @@ public struct LayoutAnalyzer: Sendable {
         page.blocks = applyProfileTransforms(to: page.blocks, on: page)
 
         let layoutType = classifyLayout(for: page)
-        let ordered = orderedBlocks(page.blocks, layoutType: layoutType, pageWidth: page.size.width)
+        let figureCandidates = page.blocks.filter(isLikelyFigure)
+        let ordered = orderedBlocks(page.blocks, layoutType: layoutType, pageSize: page.size)
             .enumerated()
             .map { index, block in
                 var copy = block
@@ -53,6 +54,19 @@ public struct LayoutAnalyzer: Sendable {
                     copy.type = .figure
                 } else if isLikelyHeading(copy) {
                     copy.type = .heading
+                }
+                // Footnote: short text near the bottom of the page. Reuse
+                // `.footer` because the block enum has no dedicated footnote
+                // case yet (per Phase 6.3.1 in the audit plan).
+                if isLikelyFootnote(copy, on: page) {
+                    copy.type = .footer
+                }
+                // Caption: short text whose vertical center sits near a figure
+                // candidate. This runs after the figure check so a block that
+                // both contains the word "Figure" and sits near another figure
+                // is correctly tagged as the caption, not a duplicate figure.
+                if isLikelyCaption(copy, on: page, figureCandidates: figureCandidates) {
+                    copy.type = .caption
                 }
                 return copy
             }
@@ -72,15 +86,22 @@ public struct LayoutAnalyzer: Sendable {
         }
 
         guard page.blocks.count > 2 else { return .singleColumn }
-        let leftCount = page.blocks.filter { $0.bounds.midX < page.size.width * 0.45 }.count
-        let rightCount = page.blocks.filter { $0.bounds.midX > page.size.width * 0.55 }.count
         let fullWidthCount = page.blocks.filter { $0.bounds.width > page.size.width * 0.68 }.count
 
         if profile == .slides, isSparseLargeTextPage(page) {
             return .slide
         }
 
-        if leftCount >= 2 && rightCount >= 2 && fullWidthCount < page.blocks.count / 2 {
+        // A persistent narrow column at the edge of the page (e.g. a marginalia
+        // strip or pull-quote) is a sidebar — flag the page as `.mixed` so the
+        // ordering pass can defer it to the end of the reading order instead of
+        // interleaving it with the body text.
+        if hasSidebar(page) {
+            return .mixed
+        }
+
+        let columnCenters = detectColumnCenters(in: page.blocks, pageWidth: page.size.width)
+        if columnCenters.count >= 2, fullWidthCount < page.blocks.count / 2 {
             return .multiColumn
         }
 
@@ -149,19 +170,120 @@ public struct LayoutAnalyzer: Sendable {
         return largeTextCount >= max(2, page.blocks.count / 2)
     }
 
-    private func orderedBlocks(_ blocks: [TextBlock], layoutType: LayoutType, pageWidth: Double) -> [TextBlock] {
+    private func orderedBlocks(_ blocks: [TextBlock], layoutType: LayoutType, pageSize: PageSize) -> [TextBlock] {
+        let pageWidth = pageSize.width
         switch layoutType {
         case .multiColumn:
-            let fullWidth = blocks.filter { $0.bounds.width > pageWidth * 0.68 }.sorted(by: positionSort)
-            let columnBlocks = blocks.filter { $0.bounds.width <= pageWidth * 0.68 }
+            return multiColumnOrder(blocks, pageWidth: pageWidth)
+        case .mixed:
+            // Pull sidebar blocks out of the main reading flow and append them
+            // at the end so screen readers don't interrupt the body for a
+            // recurring marginal column.
+            let sidebarIDs = sidebarCandidates(in: blocks, pageSize: pageSize)
+            let mainBlocks = blocks.filter { !sidebarIDs.contains($0.id) }
+            let sidebar = blocks.filter { sidebarIDs.contains($0.id) }.sorted(by: positionSort)
+            let mainCenters = detectColumnCenters(in: mainBlocks, pageWidth: pageWidth)
+            let orderedMain: [TextBlock]
+            if mainCenters.count >= 2 {
+                orderedMain = multiColumnOrder(mainBlocks, pageWidth: pageWidth)
+            } else {
+                orderedMain = mainBlocks.sorted(by: positionSort)
+            }
+            return orderedMain + sidebar
+        default:
+            return blocks.sorted(by: positionSort)
+        }
+    }
+
+    private func multiColumnOrder(_ blocks: [TextBlock], pageWidth: Double) -> [TextBlock] {
+        let fullWidth = blocks.filter { $0.bounds.width > pageWidth * 0.68 }.sorted(by: positionSort)
+        let columnBlocks = blocks.filter { $0.bounds.width <= pageWidth * 0.68 }
+        let columnCenters = detectColumnCenters(in: columnBlocks, pageWidth: pageWidth)
+
+        // Fall back to the old 2-column split (left of midpoint vs right of
+        // midpoint) when clustering finds fewer than two distinct columns —
+        // this preserves the original behavior for documents where every
+        // block lives in one wide column.
+        guard columnCenters.count >= 2 else {
             let left = columnBlocks.filter { $0.bounds.midX < pageWidth / 2 }.sorted(by: positionSort)
             let right = columnBlocks.filter { $0.bounds.midX >= pageWidth / 2 }.sorted(by: positionSort)
             let topFullWidth = fullWidth.filter { $0.bounds.minY < (left.first?.bounds.minY ?? .greatestFiniteMagnitude) }
             let remainingFullWidth = fullWidth.filter { block in !topFullWidth.contains(where: { $0.id == block.id }) }
             return topFullWidth + left + right + remainingFullWidth
-        default:
-            return blocks.sorted(by: positionSort)
         }
+
+        // Bucket each block into the column whose center is closest to the
+        // block's horizontal midpoint, then read each column top-to-bottom.
+        var columns: [[TextBlock]] = Array(repeating: [], count: columnCenters.count)
+        for block in columnBlocks {
+            let nearest = columnCenters.enumerated().min { lhs, rhs in
+                abs(block.bounds.midX - lhs.element) < abs(block.bounds.midX - rhs.element)
+            }
+            if let nearest {
+                columns[nearest.offset].append(block)
+            }
+        }
+        let orderedColumns = columns.flatMap { $0.sorted(by: positionSort) }
+
+        let firstColumnTop = columns
+            .compactMap { $0.map(\.bounds.minY).min() }
+            .min() ?? .greatestFiniteMagnitude
+        let topFullWidth = fullWidth.filter { $0.bounds.minY < firstColumnTop }
+        let remainingFullWidth = fullWidth.filter { block in !topFullWidth.contains(where: { $0.id == block.id }) }
+        return topFullWidth + orderedColumns + remainingFullWidth
+    }
+
+    /// Find approximate column-center x-coordinates by clustering block midXs.
+    /// Two midXs whose horizontal gap exceeds `pageWidth / 10` start a new
+    /// cluster; only clusters with at least two blocks are returned, so a lone
+    /// stray block can't masquerade as a column.
+    internal func detectColumnCenters(in blocks: [TextBlock], pageWidth: Double) -> [Double] {
+        guard !blocks.isEmpty else { return [] }
+        let midXs = blocks.map(\.bounds.midX).sorted()
+        let gapThreshold = max(40.0, pageWidth / 10)
+
+        var clusters: [[Double]] = []
+        var current: [Double] = []
+        for value in midXs {
+            if let last = current.last, value - last > gapThreshold {
+                clusters.append(current)
+                current = [value]
+            } else {
+                current.append(value)
+            }
+        }
+        if !current.isEmpty {
+            clusters.append(current)
+        }
+
+        return clusters
+            .filter { $0.count >= 2 }
+            .map { values in values.reduce(0, +) / Double(values.count) }
+    }
+
+    /// IDs of blocks that look like a sidebar on this page: very narrow, tall,
+    /// and hugging the left or right edge. We require all three signals to
+    /// avoid mistaking a short caption or pull-quote for a sidebar.
+    internal func sidebarCandidates(in blocks: [TextBlock], pageSize: PageSize) -> Set<UUID> {
+        let widthLimit = pageSize.width * 0.18
+        let heightFloor = pageSize.height * 0.3
+        let edgeBand = pageSize.width * 0.3
+        var result: Set<UUID> = []
+        for block in blocks {
+            guard block.bounds.width < widthLimit, block.bounds.height >= heightFloor else {
+                continue
+            }
+            let isLeftEdge = block.bounds.maxX <= edgeBand
+            let isRightEdge = block.bounds.minX >= pageSize.width - edgeBand
+            guard isLeftEdge || isRightEdge else { continue }
+            result.insert(block.id)
+        }
+        return result
+    }
+
+    private func hasSidebar(_ page: ReaderPage) -> Bool {
+        let sidebars = sidebarCandidates(in: page.blocks, pageSize: page.size)
+        return !sidebars.isEmpty && page.blocks.count > sidebars.count
     }
 
     private func mergeAdjacentOCRLines(_ blocks: [TextBlock], pageWidth: Double) -> [TextBlock] {
@@ -255,7 +377,14 @@ public struct LayoutAnalyzer: Sendable {
         if text == text.uppercased(), text.rangeOfCharacter(from: .letters) != nil {
             return true
         }
-        if text.range(of: #"^\d+(\.\d+)*\s+\S+"#, options: .regularExpression) != nil {
+        // Multi-level numbered headings (e.g. "1.1 Background", "1.1.1 Method").
+        if text.range(of: #"^\d+(\.\d+)+\s+\S+"#, options: .regularExpression) != nil {
+            return true
+        }
+        // Top-level numbered headings (e.g. "1. Introduction"). Required as a
+        // separate clause because the multi-level regex only matches when at
+        // least one ".digit" group follows the leading number.
+        if text.range(of: #"^\d+\.\s+\S+"#, options: .regularExpression) != nil {
             return true
         }
         return block.bounds.height >= 30 && !text.hasSuffix(".")
@@ -284,6 +413,33 @@ public struct LayoutAnalyzer: Sendable {
     private func isLikelyFigure(_ block: TextBlock) -> Bool {
         let lower = block.text.lowercased()
         return lower.contains("chart") || lower.contains("figure") || lower.contains("axis") || lower.contains("legend")
+    }
+
+    internal func isLikelyFootnote(_ block: TextBlock, on page: ReaderPage) -> Bool {
+        // Footnotes are short text in the bottom 10% of the page. We skip
+        // tables and figures because their visual identity is more important
+        // than their position; everything else (paragraphs, prematurely
+        // promoted headings such as "1 See attached references...", etc.) is
+        // fair game.
+        guard block.type != .table, block.type != .figure else {
+            return false
+        }
+        let text = block.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty, text.count <= 240 else { return false }
+        return block.bounds.midY >= page.size.height * 0.9
+    }
+
+    internal func isLikelyCaption(_ block: TextBlock, on page: ReaderPage, figureCandidates: [TextBlock]? = nil) -> Bool {
+        let candidates = figureCandidates ?? page.blocks.filter(isLikelyFigure)
+        let text = block.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty, text.count <= 240 else { return false }
+        for figure in candidates where figure.id != block.id {
+            let dy = abs(block.bounds.midY - figure.bounds.midY)
+            if dy <= figure.bounds.height * 0.3 {
+                return true
+            }
+        }
+        return false
     }
 
     private func detectTables(in blocks: [TextBlock]) -> [TableRegion] {
@@ -322,8 +478,42 @@ public struct LayoutAnalyzer: Sendable {
         }
     }
 
-    private func headingLevel(for title: String) -> Int {
-        title.range(of: #"^\d+\.\d+"#, options: .regularExpression) == nil ? 1 : 2
+    internal func headingLevel(for block: TextBlock, on page: ReaderPage) -> Int {
+        let text = block.text.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // L3: "1.1.1 Method" — three-level numbering takes precedence over the
+        // shorter numbering patterns.
+        if text.range(of: #"^\d+\.\d+\.\d+\s+\S"#, options: .regularExpression) != nil {
+            return 3
+        }
+        // L2: "1.1 Background" — checked before L1's "1." pattern so we don't
+        // shadow it.
+        if text.range(of: #"^\d+\.\d+\s+\S"#, options: .regularExpression) != nil {
+            return 2
+        }
+        // L0: a document title is a very tall block in the top region of the
+        // first page. We never promote later pages or shorter blocks because
+        // a real H0 only appears once in a document.
+        if page.pageNumber == 1,
+           block.bounds.height >= 40,
+           block.bounds.midY <= page.size.height * 0.3 {
+            return 0
+        }
+        // L1: top-level numbered section, e.g. "1. Introduction".
+        if text.range(of: #"^\d+\.\s+\S"#, options: .regularExpression) != nil {
+            return 1
+        }
+        // L1: short all-caps text such as "INTRODUCTION".
+        if text == text.uppercased(),
+           text.rangeOfCharacter(from: .letters) != nil,
+           text.count <= 80 {
+            return 1
+        }
+        // L1: a moderately tall block (>= 28 pt) is most likely an H1.
+        if block.bounds.height >= 28 {
+            return 1
+        }
+        return 1
     }
 
     private func markRepeatedHeadersAndFooters(in pages: [ReaderPage]) -> [ReaderPage] {
