@@ -3,6 +3,9 @@ import SwiftUI
 
 struct SidebarView: View {
     @EnvironmentObject private var store: DocumentStore
+    // Re-render when the high-contrast toggle changes so AccessibleStyle tokens
+    // (border, elevatedBackground) pick up the new value.
+    @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
         List(selection: $store.selectedDestination) {

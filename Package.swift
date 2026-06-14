@@ -31,6 +31,13 @@ let package = Package(
             swiftSettings: [
                 .swiftLanguageMode(.v5)
             ]
+        ),
+        .testTarget(
+            name: "PageLumenTests",
+            dependencies: ["PageLumen", "PageLumenCore"],
+            swiftSettings: [
+                .swiftLanguageMode(.v5)
+            ]
         )
     ]
 )

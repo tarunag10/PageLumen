@@ -2,7 +2,7 @@
 
 Thanks for your interest in contributing.
 
-PageLumen is an accessibility-first macOS document reader. Contributions should improve access, trust, privacy, reviewability, or export quality.
+PageLumen is an accessibility-first macOS document reader (previously developed as "Sightline Reader" and renamed to "PageLumen" in 2026). Contributions should improve access, trust, privacy, reviewability, or export quality.
 
 ## Development Setup
 
@@ -19,6 +19,15 @@ swift test
 ```sh
 xcodegen generate
 ```
+
+## Documentation
+
+Before opening a pull request, skim the docs that match your change so the new behavior lines up with the documented intent:
+
+- [`docs/architecture.md`](docs/architecture.md) — the `PageLumenCore` ↔ `PageLumen` split, import / review / export pipelines, and the recipe for adding a new export format.
+- [`docs/privacy.md`](docs/privacy.md) — local-first promise, what never leaves the device, and how to clear local data.
+- [`docs/accessibility.md`](docs/accessibility.md) — the app's accessibility posture, supported assistive-tech features, and known limitations.
+- [`docs/superpowers/plans/2026-06-15-audit-implementation-plan.md`](docs/superpowers/plans/2026-06-15-audit-implementation-plan.md) — the open audit plan that catalogs known gaps; if your change closes one of them, update the relevant checkbox.
 
 ## Contribution Guidelines
 

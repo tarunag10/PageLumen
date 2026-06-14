@@ -1,5 +1,6 @@
 import Foundation
 
+#if DEBUG
 public enum SampleDataFactory {
     public static func makeDemoDocument() -> ReaderDocument {
         let page = ReaderPage(
@@ -72,3 +73,4 @@ public enum SampleDataFactory {
         )
     }
 }
+#endif

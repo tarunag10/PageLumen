@@ -71,12 +71,31 @@ targets:
         CFBundlePackageType: BNDL
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
+  PageLumenTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/PageLumenTests
+    dependencies:
+      - target: PageLumen
+      - target: PageLumenCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.PageLumenTests
+    info:
+      path: generated/PageLumenTests-Info.plist
+      properties:
+        CFBundleName: PageLumenTests
+        CFBundlePackageType: BNDL
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
 schemes:
   PageLumen:
     build:
       targets:
         PageLumen: all
         PageLumenCoreTests: [test]
+        PageLumenTests: [test]
     run:
       config: Debug
       executable: PageLumen
@@ -84,3 +103,4 @@ schemes:
       config: Debug
       targets:
         - PageLumenCoreTests
+        - PageLumenTests

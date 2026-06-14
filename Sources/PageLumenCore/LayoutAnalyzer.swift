@@ -167,6 +167,7 @@ public struct LayoutAnalyzer: Sendable {
     private func mergeAdjacentOCRLines(_ blocks: [TextBlock], pageWidth: Double) -> [TextBlock] {
         let sorted = blocks.sorted(by: positionSort)
         var merged: [TextBlock] = []
+        let yBucketTolerance: Double = 48
 
         for block in sorted {
             guard shouldMergeOCRLine(block) else {
@@ -175,7 +176,8 @@ public struct LayoutAnalyzer: Sendable {
             }
 
             if let lastIndex = merged.indices.last,
-               shouldMerge(block, after: merged[lastIndex], pageWidth: pageWidth) {
+               shouldMerge(block, after: merged[lastIndex], pageWidth: pageWidth),
+               abs(block.bounds.minY - merged[lastIndex].bounds.minY) <= yBucketTolerance {
                 merged[lastIndex] = merge(merged[lastIndex], with: block)
             } else {
                 merged.append(block)

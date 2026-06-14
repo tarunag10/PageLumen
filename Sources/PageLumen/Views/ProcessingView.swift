@@ -4,6 +4,9 @@ import SwiftUI
 
 struct ProcessingView: View {
     @EnvironmentObject private var store: DocumentStore
+    // Re-render when the high-contrast toggle changes so AccessibleStyle tokens
+    // (border, panelBackground) pick up the new value.
+    @AppStorage("boostContrast") private var boostContrast = false
 
     private var activeDocument: ReaderDocument? {
         store.processingDocument
@@ -111,6 +114,7 @@ struct ProcessingView: View {
 
 private struct ProcessingPageCard: View {
     let page: ReaderPage
+    @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -159,6 +163,9 @@ private struct ProcessingPageCard: View {
                 }
         } else {
             VStack(spacing: 8) {
+                // Font is intentionally fixed for layout reasons — this is a
+                // thumbnail placeholder icon whose visual weight should not
+                // change with text-size settings.
                 Image(systemName: "doc.text.image")
                     .font(.system(size: 30))
                 Text("Thumbnail pending")

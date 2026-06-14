@@ -4,6 +4,9 @@ import SwiftUI
 struct SummaryExportView: View {
     @EnvironmentObject private var store: DocumentStore
     @StateObject private var speech = SpeechEngine()
+    // Re-render when the high-contrast toggle changes so AccessibleStyle tokens
+    // (border, elevatedBackground) pick up the new value.
+    @AppStorage("boostContrast") private var boostContrast = false
 
     private var accessibilityAudit: AccessibilityAudit {
         AccessibilityAuditor().audit(document: store.document, options: store.exportOptions)
@@ -17,7 +20,7 @@ struct SummaryExportView: View {
                         .font(.headline)
                         .foregroundStyle(.primary)
                     Text("Listen and export")
-                        .font(.largeTitle.bold())
+                        .font(.largeTitle.weight(.bold))
                     Text("Use the summary for a quick pass, read the full extraction aloud, then save the format you need.")
                         .foregroundStyle(.primary)
                 }
@@ -68,7 +71,7 @@ struct SummaryExportView: View {
                             accessibilityAudit.isReadyForTaggedExport ? "Accessibility check ready" : "Accessibility check needs review",
                             systemImage: accessibilityAudit.isReadyForTaggedExport ? "checkmark.seal.fill" : "exclamationmark.triangle.fill"
                         )
-                        .font(.title2.bold())
+                        .font(.title2.weight(.semibold))
 
                         Spacer()
 
@@ -106,7 +109,7 @@ struct SummaryExportView: View {
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Choose what to include")
-                        .font(.title2.bold())
+                        .font(.title2.weight(.semibold))
 
                     Toggle("Include headings", isOn: $store.exportOptions.includeHeadings)
                     Toggle("Include tables", isOn: $store.exportOptions.includeTables)
@@ -141,7 +144,7 @@ struct SummaryExportView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Label("Export preview", systemImage: "doc.text.magnifyingglass")
-                            .font(.title2.bold())
+                            .font(.title2.weight(.semibold))
 
                         Spacer()
 

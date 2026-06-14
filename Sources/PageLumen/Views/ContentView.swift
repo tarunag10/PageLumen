@@ -3,6 +3,10 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var store: DocumentStore
+    // Re-render when the high-contrast toggle changes so AccessibleStyle tokens
+    // (border, selected, elevatedBackground, appBackground) pick up the new
+    // value.
+    @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -58,6 +62,7 @@ struct ContentView: View {
 
 private struct WorkflowHeader: View {
     @EnvironmentObject private var store: DocumentStore
+    @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -111,6 +116,10 @@ private struct StepPill: View {
     let number: Int
     let title: String
     let destination: DocumentStore.Destination
+    @AppStorage("boostContrast") private var boostContrast = false
+    // ScaledMetric keeps the step indicator circle readable when the user
+    // increases text size. The base 22 pt is the default at standard sizes.
+    @ScaledMetric(relativeTo: .body) private var stepCircleSize: CGFloat = 22
 
     private var isSelected: Bool {
         (store.selectedDestination ?? .home) == destination
@@ -124,7 +133,7 @@ private struct StepPill: View {
                 Text("\(number)")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(isSelected ? .white : .primary)
-                    .frame(width: 22, height: 22)
+                    .frame(width: stepCircleSize, height: stepCircleSize)
                     .background(isSelected ? AccessibleStyle.selected : AccessibleStyle.elevatedBackground, in: Circle())
                     .overlay {
                         Circle()

@@ -70,6 +70,17 @@ final class DocumentProcessorTests: XCTestCase {
     }
 
     @MainActor
+    func testSecurityScopedPDFImportProcessesNormally() async throws {
+        let url = try makePDF(containing: "Security scoped PDF text for PageLumen")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let document = try await DocumentProcessor().process(securityScopedURL: url)
+
+        XCTAssertEqual(document.sourceType, .pdf)
+        XCTAssertTrue(document.allBlocks.map(\.text).joined(separator: " ").contains("Security scoped PDF text for PageLumen"))
+    }
+
+    @MainActor
     private func makePDF(containing text: String) throws -> URL {
         try makePDF(containingPages: [text])
     }

@@ -62,6 +62,30 @@ final class AdvancedExportTests: XCTestCase {
         XCTAssertNotNil(object?["summary"] as? String)
     }
 
+    func testJSONExportSnapshotIncludesExpectedKeys() throws {
+        let document = SampleDataFactory.makeDemoDocument()
+
+        let data = ExportEngine().data(for: document, format: .json, options: .full)
+        let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        let actualKeys: Set<String> = Set((object ?? [:]).keys)
+
+        // Encoded with `JSONEncoder.outputFormatting = [.sortedKeys]`, so the
+        // top-level key set on the demo document must match exactly.
+        let expectedKeys: Set<String> = [
+            "createdAt",
+            "id",
+            "language",
+            "outline",
+            "pages",
+            "processingStatus",
+            "sourceType",
+            "summary",
+            "title"
+        ]
+
+        XCTAssertEqual(actualKeys, expectedKeys)
+    }
+
     func testAccessibilityAuditFlagsMissingStructureAndReviewRisks() {
         let document = ReaderDocument(
             title: "Audit Me",
@@ -145,5 +169,72 @@ final class AdvancedExportTests: XCTestCase {
         let audit = AccessibilityAuditor().audit(document: document, options: .full)
 
         XCTAssertTrue(audit.isReadyForTaggedExport)
+    }
+
+    func testJSONExportRedactsSourceURLWhenRequested() {
+        let document = ReaderDocument(
+            title: "Secret",
+            sourceType: .pdf,
+            sourceURL: URL(fileURLWithPath: "/private/secret.pdf"),
+            pages: [ReaderPage(pageNumber: 1, size: PageSize(width: 612, height: 792), blocks: [])]
+        )
+        var withRedaction = ExportOptions.full
+        withRedaction.redactSourceURL = true
+        let data = ExportEngine().data(for: document, format: .json, options: withRedaction)
+        let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        XCTAssertNil(json?["sourceURL"])
+    }
+
+    func testJSONExportKeepsSourceURLByDefault() throws {
+        let document = ReaderDocument(
+            title: "Open",
+            sourceType: .pdf,
+            sourceURL: URL(fileURLWithPath: "/tmp/open.pdf"),
+            pages: [ReaderPage(pageNumber: 1, size: PageSize(width: 612, height: 792), blocks: [])]
+        )
+        let data = ExportEngine().data(for: document, format: .json, options: .full)
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        XCTAssertEqual(json?["sourceURL"] as? String, "file:///tmp/open.pdf")
+    }
+
+    func testAuditRedactsTextSnippetsWhenRequested() {
+        let block = TextBlock(
+            pageNumber: 1,
+            type: .paragraph,
+            text: "Private medical record number ABC-123 should not leak into audit messages.",
+            bounds: BoundingBox(x: 72, y: 120, width: 380, height: 18),
+            confidence: 0.42
+        )
+        let document = ReaderDocument(
+            title: "Sensitive",
+            sourceType: .pdf,
+            pages: [ReaderPage(pageNumber: 1, size: PageSize(width: 612, height: 792), blocks: [block])]
+        )
+        var withRedaction = ExportOptions.full
+        withRedaction.redactTextSnippets = true
+        let audit = AccessibilityAuditor().audit(document: document, options: withRedaction)
+        let lowConfidence = audit.findings.first { $0.kind == .lowConfidenceText }
+        XCTAssertNotNil(lowConfidence)
+        XCTAssertFalse(lowConfidence?.message.contains("ABC-123") ?? true)
+        XCTAssertTrue(lowConfidence?.message.contains("redacted") ?? false)
+    }
+
+    func testAuditKeepsTextSnippetsByDefault() {
+        let block = TextBlock(
+            pageNumber: 1,
+            type: .paragraph,
+            text: "Hello, world.",
+            bounds: BoundingBox(x: 72, y: 120, width: 380, height: 18),
+            confidence: 0.42
+        )
+        let document = ReaderDocument(
+            title: "Open",
+            sourceType: .pdf,
+            pages: [ReaderPage(pageNumber: 1, size: PageSize(width: 612, height: 792), blocks: [block])]
+        )
+        let audit = AccessibilityAuditor().audit(document: document, options: .full)
+        let lowConfidence = audit.findings.first { $0.kind == .lowConfidenceText }
+        XCTAssertNotNil(lowConfidence)
+        XCTAssertTrue(lowConfidence?.message.contains("Hello, world.") ?? false)
     }
 }

@@ -6,13 +6,15 @@ struct SettingsView: View {
     @AppStorage("privacyMode") private var privacyMode = true
     @AppStorage("ocrProfile") private var ocrProfile = "General"
     @AppStorage("languageHint") private var languageHint = "Automatic"
+    @AppStorage("boostContrast") private var boostContrast = false
+    @State private var isShowingForgetConfirmation = false
 
     var body: some View {
         Form {
             Section {
                 VStack(alignment: .leading, spacing: 8) {
                     Label("PageLumen Preferences", systemImage: "slider.horizontal.3")
-                        .font(.title2.bold())
+                        .font(.title2.weight(.semibold))
                     Text("Tune recognition, export defaults, and release-readiness checks for the current native workflow.")
                         .foregroundStyle(.primary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -23,6 +25,40 @@ struct SettingsView: View {
             Section("Privacy") {
                 Toggle("Privacy mode", isOn: $privacyMode)
                 Text("Privacy mode keeps the MVP workflow local and disables future network-assisted processing by default.")
+                    .font(.callout)
+                    .foregroundStyle(.primary)
+            }
+
+            Section("Library") {
+                Button(role: .destructive) {
+                    isShowingForgetConfirmation = true
+                } label: {
+                    Label("Forget all recent documents", systemImage: "trash")
+                }
+                .disabled(store.recentDocuments.isEmpty)
+                .confirmationDialog(
+                    "Forget all recent documents? This cannot be undone.",
+                    isPresented: $isShowingForgetConfirmation,
+                    titleVisibility: .visible
+                ) {
+                    Button("Forget all", role: .destructive) {
+                        store.forgetAllRecentDocuments()
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("PageLumen will clear \(store.recentDocuments.count) document\(store.recentDocuments.count == 1 ? "" : "s") from this Mac's local library. Imported files on disk are not deleted.")
+                }
+                Text("Recent documents are stored only in this Mac's memory. Use Forget all to clear them when sharing the device.")
+                    .font(.callout)
+                    .foregroundStyle(.primary)
+            }
+
+            Section("Display") {
+                Toggle("Boost contrast", isOn: $boostContrast)
+                    .onChange(of: boostContrast) { _, newValue in
+                        AccessibleStyle.boostContrast = newValue
+                    }
+                Text("Boosts border and panel contrast for low-vision users.")
                     .font(.callout)
                     .foregroundStyle(.primary)
             }

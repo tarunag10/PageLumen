@@ -27,6 +27,9 @@ struct ReviewView: View {
 
 private struct ProcessingBanner: View {
     @EnvironmentObject private var store: DocumentStore
+    // Re-render when the high-contrast toggle changes so AccessibleStyle tokens
+    // (border, warning, panelBackground) pick up the new value.
+    @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
         if store.isProcessing || store.document.pages.contains(where: { $0.warning != nil }) {
@@ -129,6 +132,7 @@ private struct ReviewHeader: View {
 
 private struct ReviewTrustBar: View {
     @EnvironmentObject private var store: DocumentStore
+    @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -219,6 +223,7 @@ private struct TrustMetric: View {
 
 private struct StructuredOutputView: View {
     @EnvironmentObject private var store: DocumentStore
+    @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
         ScrollView {
@@ -270,6 +275,7 @@ private struct EditableBlockRow: View {
     let block: TextBlock
     @State private var draft: String = ""
     @State private var commitTask: Task<Void, Never>?
+    @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -397,6 +403,7 @@ private struct EditableGeneratedNote: View {
     let systemImage: String
     let onChange: (String) -> Void
     @State private var draft = ""
+    @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {

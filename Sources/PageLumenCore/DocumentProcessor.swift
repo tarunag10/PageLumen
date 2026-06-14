@@ -25,7 +25,7 @@ public enum DocumentProcessorError: LocalizedError, Sendable {
 
 public typealias DocumentProcessingProgressHandler = @MainActor @Sendable (ReaderDocument) async -> Void
 
-public final class DocumentProcessor: @unchecked Sendable {
+public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
     private enum ImportBudget {
         static let maxFileBytes: UInt64 = 200 * 1_024 * 1_024
         static let maxPDFPages = 100
@@ -66,6 +66,15 @@ public final class DocumentProcessor: @unchecked Sendable {
         throw DocumentProcessorError.unsupportedFile(url)
     }
 
+    public func process(
+        securityScopedURL url: URL,
+        onProgress: DocumentProcessingProgressHandler? = nil
+    ) async throws -> ReaderDocument {
+        let didStart = url.startAccessingSecurityScopedResource()
+        defer { if didStart { url.stopAccessingSecurityScopedResource() } }
+        return try await process(url: url, onProgress: onProgress)
+    }
+
     public func processClipboardImage(
         _ image: NSImage,
         onProgress: DocumentProcessingProgressHandler? = nil
@@ -98,45 +107,93 @@ public final class DocumentProcessor: @unchecked Sendable {
         )
         await onProgress?(document)
 
-        for index in 0..<pdf.pageCount {
-            try Task.checkCancellation()
-            guard let pdfPage = pdf.page(at: index) else { continue }
+        let pageInputs: [PageInput] = (0..<pdf.pageCount).compactMap { index in
+            guard let pdfPage = pdf.page(at: index) else { return nil }
             let pageNumber = index + 1
             let bounds = pdfPage.bounds(for: .mediaBox)
-            if let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == pageNumber }) {
-                document.pages[pageIndex].ocrStatus = .processing
-                if Task.isCancelled { return analyzedDocument(document) }
-                await onProgress?(document)
-            }
-
             let embeddedText = pdfPage.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let cgImage: CGImage? = embeddedText.isEmpty
+                ? render(pdfPage: pdfPage)?.cgImage(forProposedRect: nil, context: nil, hints: nil)
+                : nil
+            return PageInput(pageNumber: pageNumber, pageSize: bounds.size, embeddedText: embeddedText, cgImage: cgImage)
+        }
+        try Task.checkCancellation()
 
-            let blocks: [TextBlock]
-            if !embeddedText.isEmpty {
-                blocks = makeBlocks(from: embeddedText, pageNumber: pageNumber, pageSize: bounds.size, source: BlockSource.embeddedPDF.metadataValue, confidence: 0.98)
-            } else if let image = render(pdfPage: pdfPage), let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) {
-                blocks = try await recognizeText(in: cgImage, pageNumber: pageNumber, pageSize: bounds.size)
-            } else {
-                blocks = [
-                    TextBlock(
-                        pageNumber: pageNumber,
-                        type: .unknown,
-                        text: "No readable text was found on this page.",
-                        bounds: BoundingBox(x: 0, y: 0, width: bounds.width, height: 32),
-                        confidence: 0.0
-                    )
-                ]
+        let results: [Int: [TextBlock]] = await withTaskGroup(of: (Int, [TextBlock]).self) { group in
+            let cap = max(1, ProcessInfo.processInfo.activeProcessorCount / 2)
+            var iterator = pageInputs.makeIterator()
+            var inFlight = 0
+
+            while inFlight < cap, let next = iterator.next() {
+                let capture = next
+                group.addTask { [weak self] in
+                    guard let self else { return (capture.pageNumber, [TextBlock]()) }
+                    return await self.extractBlocks(input: capture)
+                }
+                inFlight += 1
             }
 
-            if let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == pageNumber }) {
-                document.pages[pageIndex].ocrStatus = .complete
-                document.pages[pageIndex].blocks = blocks
-                if Task.isCancelled { return analyzedDocument(document) }
-                await onProgress?(document)
+            var collected: [Int: [TextBlock]] = [:]
+            for await result in group {
+                collected[result.0] = result.1
+                inFlight -= 1
+                if let next = iterator.next() {
+                    let capture = next
+                    group.addTask { [weak self] in
+                        guard let self else { return (capture.pageNumber, [TextBlock]()) }
+                        return await self.extractBlocks(input: capture)
+                    }
+                    inFlight += 1
+                }
             }
+            return collected
+        }
+
+        for (index, page) in document.pages.enumerated() {
+            try Task.checkCancellation()
+            document.pages[index].ocrStatus = .processing
+            await onProgress?(document)
+
+            let blocks = results[page.pageNumber] ?? fallbackBlocks(pageNumber: page.pageNumber, pageSize: CGSize(width: page.size.width, height: page.size.height))
+            document.pages[index].ocrStatus = .complete
+            document.pages[index].blocks = blocks
+            await onProgress?(document)
         }
 
         return analyzedDocument(document)
+    }
+
+    private struct PageInput: Sendable {
+        let pageNumber: Int
+        let pageSize: CGSize
+        let embeddedText: String
+        let cgImage: CGImage?
+    }
+
+    private func extractBlocks(input: PageInput) async -> (Int, [TextBlock]) {
+        if !input.embeddedText.isEmpty {
+            let blocks = makeBlocks(from: input.embeddedText, pageNumber: input.pageNumber, pageSize: input.pageSize, source: BlockSource.embeddedPDF.metadataValue, confidence: 0.98)
+            return (input.pageNumber, blocks)
+        }
+        if let cgImage = input.cgImage {
+            do {
+                let blocks = try await recognizeText(in: cgImage, pageNumber: input.pageNumber, pageSize: input.pageSize)
+                return (input.pageNumber, blocks)
+            } catch {
+                return (input.pageNumber, fallbackBlocks(pageNumber: input.pageNumber, pageSize: input.pageSize))
+            }
+        }
+        return (input.pageNumber, fallbackBlocks(pageNumber: input.pageNumber, pageSize: input.pageSize))
+    }
+
+    private func fallbackBlocks(pageNumber: Int, pageSize: CGSize) -> [TextBlock] {
+        [TextBlock(
+            pageNumber: pageNumber,
+            type: .unknown,
+            text: "No readable text was found on this page.",
+            bounds: BoundingBox(x: 0, y: 0, width: pageSize.width, height: 32),
+            confidence: 0.0
+        )]
     }
 
     private func analyzedDocument(_ document: ReaderDocument) -> ReaderDocument {
@@ -286,17 +343,26 @@ public final class DocumentProcessor: @unchecked Sendable {
 
     private func render(pdfPage: PDFPage) -> NSImage? {
         let bounds = pdfPage.bounds(for: .mediaBox)
-        let image = NSImage(size: bounds.size)
-        image.lockFocus()
-        NSColor.white.setFill()
-        bounds.fill()
-        guard let context = NSGraphicsContext.current?.cgContext else {
-            image.unlockFocus()
+        guard let context = CGContext(
+            data: nil,
+            width: Int(bounds.width),
+            height: Int(bounds.height),
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
+        ) else {
             return nil
         }
+        context.beginPDFPage(nil)
+        context.translateBy(x: 0, y: bounds.height)
+        context.scaleBy(x: 1, y: -1)
+        NSColor.white.setFill()
+        bounds.fill()
         pdfPage.draw(with: .mediaBox, to: context)
-        image.unlockFocus()
-        return image
+        context.endPDFPage()
+        guard let cgImage = context.makeImage() else { return nil }
+        return NSImage(cgImage: cgImage, size: bounds.size)
     }
 
     private func thumbnailData(for page: PDFPage) -> Data? {
@@ -307,18 +373,21 @@ public final class DocumentProcessor: @unchecked Sendable {
 
 public extension NSImage {
     func pngData(maxPixelSize: CGFloat? = nil) -> Data? {
-        let image: NSImage
+        let source: NSImage
         if let maxPixelSize {
+            // TODO: Replace lockFocus-based resize with a CGImageSourceCreateThumbnailAtIndex
+            // + CGImageDestination path so we can avoid retaining a backing bitmap the size of
+            // the page and skip the main-thread AppKit round-trip.
             let scale = min(maxPixelSize / max(size.width, size.height), 1)
-            image = NSImage(size: CGSize(width: size.width * scale, height: size.height * scale))
-            image.lockFocus()
-            draw(in: NSRect(origin: .zero, size: image.size))
-            image.unlockFocus()
+            source = NSImage(size: CGSize(width: size.width * scale, height: size.height * scale))
+            source.lockFocus()
+            draw(in: NSRect(origin: .zero, size: source.size))
+            source.unlockFocus()
         } else {
-            image = self
+            source = self
         }
 
-        guard let tiff = image.tiffRepresentation,
+        guard let tiff = source.tiffRepresentation,
               let bitmap = NSBitmapImageRep(data: tiff) else {
             return nil
         }

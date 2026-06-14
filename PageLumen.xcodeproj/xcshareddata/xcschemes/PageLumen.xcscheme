@@ -35,6 +35,20 @@
                ReferencedContainer = "container:PageLumen.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "5AE4C091EA58619DC977AC19"
+               BuildableName = "PageLumenTests.xctest"
+               BlueprintName = "PageLumenTests"
+               ReferencedContainer = "container:PageLumen.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -61,6 +75,17 @@
                BlueprintIdentifier = "114285C5C49B46E4CFD7E932"
                BuildableName = "PageLumenCoreTests.xctest"
                BlueprintName = "PageLumenCoreTests"
+               ReferencedContainer = "container:PageLumen.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "5AE4C091EA58619DC977AC19"
+               BuildableName = "PageLumenTests.xctest"
+               BlueprintName = "PageLumenTests"
                ReferencedContainer = "container:PageLumen.xcodeproj">
             </BuildableReference>
          </TestableReference>

@@ -21,7 +21,7 @@ final class DocumentStore: ObservableObject {
         var id: String { rawValue }
     }
 
-    @Published var document: ReaderDocument = SampleDataFactory.makeDemoDocument()
+    @Published var document: ReaderDocument = DocumentStore.makeInitialDocument()
     @Published var selectedDestination: Destination? = .home
     @Published var selectedPageNumber: Int = 1
     @Published var isProcessing = false
@@ -41,17 +41,19 @@ final class DocumentStore: ObservableObject {
     private let screenshotCaptureService = ScreenshotCaptureService()
     private var importTask: Task<Void, Never>?
 
-    private var processorInstance: DocumentProcessor = DocumentProcessor()
-
-    private var processor: DocumentProcessor {
-        processorInstance
-    }
+    private let processor: any DocumentImporting
+    private let persisting: any DocumentPersisting
 
     private var currentOCRProfile: OCRProfile {
         OCRProfile(settingsValue: UserDefaults.standard.string(forKey: "ocrProfile") ?? OCRProfile.general.rawValue)
     }
 
-    init() {
+    init(
+        processor: any DocumentImporting = DocumentProcessor(),
+        persisting: any DocumentPersisting = FilePersisting()
+    ) {
+        self.processor = processor
+        self.persisting = persisting
         exportOptions = ExportOptions(
             includeHeadings: UserDefaults.standard.object(forKey: "includeHeadings") as? Bool ?? true,
             includeTables: UserDefaults.standard.object(forKey: "includeTables") as? Bool ?? true,
@@ -60,6 +62,14 @@ final class DocumentStore: ObservableObject {
             includeConfidenceNotes: UserDefaults.standard.object(forKey: "includeConfidenceNotes") as? Bool ?? true,
             includeHeadersAndFooters: UserDefaults.standard.object(forKey: "includeHeadersAndFooters") as? Bool ?? true
         )
+        if let stored = try? persisting.recentDocuments(), let first = stored.first {
+            self.recentDocuments = stored
+            self.document = first
+            self.selectedDestination = .review
+        } else {
+            self.document = DocumentStore.makeInitialDocument()
+            self.recentDocuments = [self.document]
+        }
         applyLanguagePreference()
     }
 
@@ -159,12 +169,19 @@ final class DocumentStore: ObservableObject {
     }
 
     func loadSample() {
-        document = SampleDataFactory.makeDemoDocument()
+        document = DocumentStore.makeInitialDocument()
         applyLanguagePreference()
         remember(document)
         selectedPageNumber = 1
         selectedDestination = .review
         statusMessage = "Loaded demo document"
+    }
+
+    func forgetAllRecentDocuments() {
+        let count = recentDocuments.count
+        recentDocuments.removeAll()
+        try? persisting.forgetAll()
+        statusMessage = count == 0 ? "No recent documents to forget" : "Forgot \(count) recent document\(count == 1 ? "" : "s")"
     }
 
     func openDocumentPanel() {
@@ -210,7 +227,7 @@ final class DocumentStore: ObservableObject {
                 statusMessage = "Processing \(item.fileName)..."
 
                 do {
-                    let processed = try await processor.process(url: item.url) { [weak self] snapshot in
+                    let processed = try await processor.process(securityScopedURL: item.url) { [weak self] snapshot in
                         guard let self, !Task.isCancelled else { return }
                         var preparedSnapshot = snapshot
                         self.applyLanguagePreference(to: &preparedSnapshot)
@@ -535,4 +552,42 @@ final class DocumentStore: ObservableObject {
             return nil
         }
     }
+
+    #if DEBUG
+    static func makeInitialDocument() -> ReaderDocument {
+        SampleDataFactory.makeDemoDocument()
+    }
+    #else
+    static func makeInitialDocument() -> ReaderDocument {
+        let page = ReaderPage(
+            pageNumber: 1,
+            size: PageSize(width: 900, height: 1_200),
+            blocks: [
+                TextBlock(
+                    pageNumber: 1,
+                    type: .heading,
+                    text: "Welcome to PageLumen",
+                    bounds: BoundingBox(x: 70, y: 64, width: 480, height: 40),
+                    confidence: 1.0,
+                    readingOrderIndex: 0
+                ),
+                TextBlock(
+                    pageNumber: 1,
+                    type: .paragraph,
+                    text: "Import a PDF, image, screenshot, or clipboard capture to begin.",
+                    bounds: BoundingBox(x: 70, y: 130, width: 650, height: 72),
+                    confidence: 1.0,
+                    readingOrderIndex: 1
+                )
+            ]
+        )
+        return ReaderDocument(
+            title: "PageLumen",
+            sourceType: .sample,
+            language: "en",
+            processingStatus: .complete,
+            pages: [page]
+        )
+    }
+    #endif
 }

@@ -1,9 +1,17 @@
+import AppKit
 import UniformTypeIdentifiers
 import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject private var store: DocumentStore
     @State private var isTargeted = false
+    // Re-render when the high-contrast toggle changes so AccessibleStyle.border
+    // and AccessibleStyle.panelBackground pick up the new value.
+    @AppStorage("boostContrast") private var boostContrast = false
+    // ScaledMetric keeps the step pill numbers and InfoTile circles readable
+    // when the user increases text size. The base 22 pt stays the default at
+    // standard accessibility sizes.
+    @ScaledMetric(relativeTo: .body) private var stepCircleSize: CGFloat = 22
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -12,7 +20,7 @@ struct HomeView: View {
                     .font(.headline)
                     .foregroundStyle(.primary)
                 Text("Add a document")
-                    .font(.largeTitle.bold())
+                    .font(.largeTitle.weight(.bold))
                 Text("Choose a PDF, screenshot, scan, slide, or image. PageLumen will extract text locally, build a reading order, and send you to review.")
                     .font(.title3)
                     .foregroundStyle(.primary)
@@ -20,6 +28,8 @@ struct HomeView: View {
             }
 
             VStack(spacing: 18) {
+                // Font is intentionally fixed for layout reasons — this is a hero icon
+                // whose visual weight should not change with text-size settings.
                 Image(systemName: "doc.viewfinder")
                     .font(.system(size: 52, weight: .regular))
                     .foregroundStyle(.tint)
@@ -91,21 +101,36 @@ struct HomeView: View {
 
                 group.notify(queue: .main) {
                     store.startImport(urls: urls)
+                    announceDropResult(count: urls.count)
                 }
 
                 return true
             }
 
             HStack(spacing: 16) {
-                InfoTile(number: "1", title: "Add", value: "Open, paste, capture, or drop source files.")
-                InfoTile(number: "2", title: "Process", value: "Watch page thumbnails and OCR progress.")
-                InfoTile(number: "3", title: "Review", value: "Fix OCR text, check page order, and inspect notes.")
-                InfoTile(number: "4", title: "Export", value: "Save Markdown, TXT, HTML, PDF, CSV, or JSON.")
+                InfoTile(number: "1", title: "Add", value: "Open, paste, capture, or drop source files.", stepCircleSize: stepCircleSize)
+                InfoTile(number: "2", title: "Process", value: "Watch page thumbnails and OCR progress.", stepCircleSize: stepCircleSize)
+                InfoTile(number: "3", title: "Review", value: "Fix OCR text, check page order, and inspect notes.", stepCircleSize: stepCircleSize)
+                InfoTile(number: "4", title: "Export", value: "Save Markdown, TXT, HTML, PDF, CSV, or JSON.", stepCircleSize: stepCircleSize)
             }
 
             Spacer()
         }
         .padding(32)
+    }
+
+    private func announceDropResult(count: Int) {
+        guard count > 0 else { return }
+        let announcement = "Imported \(count) file\(count == 1 ? "" : "s")"
+        let target: Any = NSApp.mainWindow ?? NSApp.mainMenu?.items.first?.view ?? NSApp
+        NSAccessibility.post(
+            element: target,
+            notification: .announcementRequested,
+            userInfo: [
+                .announcement: announcement,
+                .priority: NSAccessibilityPriorityLevel.high.rawValue
+            ]
+        )
     }
 }
 
@@ -113,6 +138,7 @@ private struct InfoTile: View {
     let number: String
     let title: String
     let value: String
+    let stepCircleSize: CGFloat
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -120,7 +146,7 @@ private struct InfoTile: View {
                 Text(number)
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.white)
-                    .frame(width: 22, height: 22)
+                    .frame(width: stepCircleSize, height: stepCircleSize)
                     .background(AccessibleStyle.selected, in: Circle())
                 Text(title)
                     .font(.headline)

@@ -137,11 +137,17 @@ public struct AccessibilityAuditor: Sendable {
                 }
 
                 if block.confidence < 0.7, !trimmedText.isEmpty {
+                    let preview: String
+                    if options.redactTextSnippets {
+                        preview = "<text redacted>"
+                    } else {
+                        preview = String(trimmedText.prefix(80))
+                    }
                     findings.append(AccessibilityFinding(
                         kind: .lowConfidenceText,
                         severity: .warning,
                         pageNumber: page.pageNumber,
-                        message: "OCR confidence is \(Int(block.confidence * 100))% for: \(trimmedText.prefix(80))",
+                        message: "OCR confidence is \(Int(block.confidence * 100))% for: \(preview)",
                         recommendation: "Review this text in Step 3 before exporting."
                     ))
                 }
@@ -336,8 +342,14 @@ public struct ExportEngine: Sendable {
         let pageRect = NSRect(x: 0, y: 0, width: 612, height: 792)
         let textRect = pageRect.insetBy(dx: 48, dy: 48)
         let data = NSMutableData()
+        let auxiliaryInfo: [String: Any] = [
+            kCGPDFContextTitle as String: document.title,
+            kCGPDFContextAuthor as String: "PageLumen",
+            kCGPDFContextCreator as String: "PageLumen",
+            kCGPDFContextSubject as String: "Document extracted with PageLumen"
+        ]
         guard let consumer = CGDataConsumer(data: data as CFMutableData),
-              let context = CGContext(consumer: consumer, mediaBox: nil, nil) else {
+              let context = CGContext(consumer: consumer, mediaBox: nil, auxiliaryInfo as CFDictionary) else {
             return Data()
         }
 
@@ -449,14 +461,22 @@ public struct ExportEngine: Sendable {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
 
-        var filtered = document
-        filtered.pages = document.pages.map { page in
+        var sanitized = sanitizedDocument(document, options: options)
+        sanitized.pages = sanitized.pages.map { page in
             var copy = page
             copy.blocks = DocumentEditing.exportableBlocks(on: page, includeHeadersAndFooters: options.includeHeadersAndFooters)
             return copy
         }
 
-        return (try? encoder.encode(filtered)) ?? Data("{}".utf8)
+        return (try? encoder.encode(sanitized)) ?? Data("{}".utf8)
+    }
+
+    private func sanitizedDocument(_ document: ReaderDocument, options: ExportOptions) -> ReaderDocument {
+        var copy = document
+        if options.redactSourceURL {
+            copy.sourceURL = nil
+        }
+        return copy
     }
 
     private func markdownTable(_ rows: [[String]]) -> String {

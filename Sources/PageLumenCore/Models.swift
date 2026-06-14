@@ -299,6 +299,8 @@ public struct ExportOptions: Equatable, Sendable {
     public var includePageReferences: Bool
     public var includeConfidenceNotes: Bool
     public var includeHeadersAndFooters: Bool
+    public var redactSourceURL: Bool
+    public var redactTextSnippets: Bool
 
     public static let full = ExportOptions(
         includeHeadings: true,
@@ -306,7 +308,20 @@ public struct ExportOptions: Equatable, Sendable {
         includeFigures: true,
         includePageReferences: true,
         includeConfidenceNotes: true,
-        includeHeadersAndFooters: true
+        includeHeadersAndFooters: true,
+        redactSourceURL: false,
+        redactTextSnippets: false
+    )
+
+    public static let anonymous = ExportOptions(
+        includeHeadings: true,
+        includeTables: true,
+        includeFigures: true,
+        includePageReferences: true,
+        includeConfidenceNotes: true,
+        includeHeadersAndFooters: true,
+        redactSourceURL: true,
+        redactTextSnippets: true
     )
 
     public init(
@@ -315,7 +330,9 @@ public struct ExportOptions: Equatable, Sendable {
         includeFigures: Bool,
         includePageReferences: Bool,
         includeConfidenceNotes: Bool,
-        includeHeadersAndFooters: Bool = true
+        includeHeadersAndFooters: Bool = true,
+        redactSourceURL: Bool = false,
+        redactTextSnippets: Bool = false
     ) {
         self.includeHeadings = includeHeadings
         self.includeTables = includeTables
@@ -323,6 +340,8 @@ public struct ExportOptions: Equatable, Sendable {
         self.includePageReferences = includePageReferences
         self.includeConfidenceNotes = includeConfidenceNotes
         self.includeHeadersAndFooters = includeHeadersAndFooters
+        self.redactSourceURL = redactSourceURL
+        self.redactTextSnippets = redactTextSnippets
     }
 }
 

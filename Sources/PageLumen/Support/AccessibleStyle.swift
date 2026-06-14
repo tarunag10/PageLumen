@@ -3,6 +3,12 @@ import SwiftUI
 enum AccessibleStyle {
     static let cornerRadius: CGFloat = 8
 
+    // The high-contrast toggle is read by `border` and `panelBackground` below.
+    // Views that need to re-render when the flag flips must bind
+    // `@AppStorage("boostContrast")` so SwiftUI invalidates them; this static is
+    // the shared value the rest of the UI consults at render time.
+    static var boostContrast: Bool = UserDefaults.standard.bool(forKey: "boostContrast")
+
     static var appBackground: Color {
         Color(nsColor: .windowBackgroundColor)
     }
@@ -16,7 +22,7 @@ enum AccessibleStyle {
     }
 
     static var border: Color {
-        Color(nsColor: .separatorColor)
+        boostContrast ? Color(nsColor: .labelColor) : Color(nsColor: .separatorColor)
     }
 
     static var selected: Color {
@@ -35,6 +41,20 @@ enum AccessibleStyle {
         Color(nsColor: .systemRed)
     }
 }
+
+// Accessibility guidelines for future contributors:
+// 4.4.1 — View-level animations must be gated on
+//         @Environment(\.accessibilityReduceMotion). If a `withAnimation` or
+//         `.animation` modifier is added anywhere in the view tree, wrap the
+//         conditional motion in a check for `accessibilityReduceMotion == false`
+//         so that users who request reduced motion do not see the transition.
+// 4.4.2 — Surfaces that use `.regularMaterial`, `.ultraThinMaterial`, or any
+//         other translucent material MUST fall back to
+//         `AccessibleStyle.panelBackground` (a solid color) when
+//         @Environment(\.accessibilityReduceTransparency) is true. The
+//         fallback is the same color in both modes today, but the rule ensures
+//         we never silently ship a transparent surface that cannot be
+//         disabled.
 
 struct AccessiblePanel: ViewModifier {
     var borderColor: Color = AccessibleStyle.border

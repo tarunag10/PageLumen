@@ -5,6 +5,9 @@ import SwiftUI
 struct PreviewPane: View {
     let page: ReaderPage?
     let showReadingOrder: Bool
+    // Re-render when the high-contrast toggle changes so AccessibleStyle tokens
+    // (border, selected, panelBackground, appBackground) pick up the new value.
+    @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
         ZStack {
@@ -45,6 +48,9 @@ private struct PreviewImage: View {
                 .padding(10)
         } else {
             VStack(spacing: 12) {
+                // Font is intentionally fixed for layout reasons — this is a
+                // hero placeholder icon whose visual weight should not change
+                // with text-size settings.
                 Image(systemName: "doc.text.image")
                     .font(.system(size: 48))
                     .foregroundStyle(.primary)
@@ -57,6 +63,7 @@ private struct PreviewImage: View {
 
 private struct ReadingOrderOverlay: View {
     let page: ReaderPage
+    @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
         GeometryReader { proxy in
