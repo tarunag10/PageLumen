@@ -24,8 +24,8 @@ struct SidebarView: View {
                             store.selectBatchItem(item)
                         } label: {
                             HStack(spacing: 10) {
-                                Image(systemName: iconName(for: item.status))
-                                    .foregroundStyle(color(for: item.status))
+                                Image(systemName: item.status.statusDescriptor.systemImage)
+                                    .foregroundStyle(item.status.statusDescriptor.tint)
                                     .frame(width: 16)
 
                                 VStack(alignment: .leading, spacing: 2) {
@@ -113,36 +113,6 @@ struct SidebarView: View {
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibleToolbarSurface()
-        }
-    }
-
-    private func iconName(for status: BatchImportItemStatus) -> String {
-        switch status {
-        case .pending:
-            return "circle"
-        case .processing:
-            return "hourglass"
-        case .complete:
-            return "checkmark.circle.fill"
-        case .cancelled:
-            return "xmark.circle"
-        case .failed:
-            return "exclamationmark.triangle.fill"
-        }
-    }
-
-    private func color(for status: BatchImportItemStatus) -> Color {
-        switch status {
-        case .pending:
-            return .secondary
-        case .processing:
-            return .accentColor
-        case .complete:
-            return .green
-        case .cancelled:
-            return .secondary
-        case .failed:
-            return .orange
         }
     }
 

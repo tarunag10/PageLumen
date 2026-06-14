@@ -58,6 +58,22 @@ public enum BlockType: String, Codable, Sendable {
     case unknown
 }
 
+public enum BlockSource: String, Codable, Sendable {
+    case visionOCR = "vision-ocr"
+    case embeddedPDF = "embedded-pdf"
+    case receiptProfile = "receipt-profile"
+    case userEdited = "user-edited"
+
+    public var metadataValue: String { rawValue }
+}
+
+public extension TextBlock {
+    var blockSource: BlockSource? {
+        guard let raw = metadata["source"] else { return nil }
+        return BlockSource(rawValue: raw)
+    }
+}
+
 public enum ChartType: String, Codable, Sendable {
     case bar
     case line

@@ -4,7 +4,7 @@
 
 **Goal:** Implement the remaining practical PRD capabilities in the native MVP: screenshot capture entrypoints, richer review controls, header/footer handling, full-text speech, CSV/JSON exports, and visible capability coverage.
 
-**Architecture:** Keep deterministic behavior in `SightlineCore` with tests for layout/export/document mutations. Add macOS-specific screenshot capture and audio/export controls in the app target while preserving the current single-document review model and batch queue.
+**Architecture:** Keep deterministic behavior in `PageLumenCore` with tests for layout/export/document mutations. Add macOS-specific screenshot capture and audio/export controls in the app target while preserving the current single-document review model and batch queue.
 
 **Tech Stack:** SwiftPM, XCTest, SwiftUI, AppKit, AVFoundation, PDFKit/Vision, macOS `screencapture` command integration.
 
@@ -12,27 +12,27 @@
 
 ## File Structure
 
-- Create `Sources/SightlineCore/DocumentEditing.swift`: pure helpers for block reordering, header/footer filtering, and document text assembly.
-- Create `Tests/SightlineCoreTests/DocumentEditingTests.swift`: tests for manual reorder, header/footer exclusion, and full text assembly.
-- Modify `Sources/SightlineCore/LayoutAnalyzer.swift`: mark repeated top/bottom text as header/footer across multi-page documents.
-- Modify `Sources/SightlineCore/ExportEngine.swift`: add CSV and JSON export support plus header/footer exclusion option.
-- Modify `Sources/SightlineCore/Models.swift`: extend export options/formats and add OCR profile/language metadata where useful.
-- Create `Tests/SightlineCoreTests/AdvancedExportTests.swift`: tests for CSV and JSON export.
-- Create `Sources/SightlineReader/Support/ScreenshotCaptureService.swift`: selected-region/current-window capture using macOS `screencapture`, then import captured PNGs.
-- Modify `Sources/SightlineReader/App/DocumentStore.swift`: expose capture actions, block move actions, full-text speech text, export options.
-- Modify `Sources/SightlineReader/Views/HomeView.swift`: add screenshot capture buttons.
-- Modify `Sources/SightlineReader/Views/ReviewView.swift`: add move up/down controls for reading order and header/footer indicators.
-- Modify `Sources/SightlineReader/Views/SummaryExportView.swift`: add “Read full text” playback and CSV/JSON export buttons.
-- Modify `Sources/SightlineReader/Views/SettingsView.swift`: add privacy/OCR profile/language settings and capability coverage note.
+- Create `Sources/PageLumenCore/DocumentEditing.swift`: pure helpers for block reordering, header/footer filtering, and document text assembly.
+- Create `Tests/PageLumenCoreTests/DocumentEditingTests.swift`: tests for manual reorder, header/footer exclusion, and full text assembly.
+- Modify `Sources/PageLumenCore/LayoutAnalyzer.swift`: mark repeated top/bottom text as header/footer across multi-page documents.
+- Modify `Sources/PageLumenCore/ExportEngine.swift`: add CSV and JSON export support plus header/footer exclusion option.
+- Modify `Sources/PageLumenCore/Models.swift`: extend export options/formats and add OCR profile/language metadata where useful.
+- Create `Tests/PageLumenCoreTests/AdvancedExportTests.swift`: tests for CSV and JSON export.
+- Create `Sources/PageLumenReader/Support/ScreenshotCaptureService.swift`: selected-region/current-window capture using macOS `screencapture`, then import captured PNGs.
+- Modify `Sources/PageLumenReader/App/DocumentStore.swift`: expose capture actions, block move actions, full-text speech text, export options.
+- Modify `Sources/PageLumenReader/Views/HomeView.swift`: add screenshot capture buttons.
+- Modify `Sources/PageLumenReader/Views/ReviewView.swift`: add move up/down controls for reading order and header/footer indicators.
+- Modify `Sources/PageLumenReader/Views/SummaryExportView.swift`: add “Read full text” playback and CSV/JSON export buttons.
+- Modify `Sources/PageLumenReader/Views/SettingsView.swift`: add privacy/OCR profile/language settings and capability coverage note.
 
 ## Tasks
 
 ### Task 1: Document Editing Core
 
 **Files:**
-- Create: `Tests/SightlineCoreTests/DocumentEditingTests.swift`
-- Create: `Sources/SightlineCore/DocumentEditing.swift`
-- Modify: `Sources/SightlineCore/LayoutAnalyzer.swift`
+- Create: `Tests/PageLumenCoreTests/DocumentEditingTests.swift`
+- Create: `Sources/PageLumenCore/DocumentEditing.swift`
+- Modify: `Sources/PageLumenCore/LayoutAnalyzer.swift`
 
 - [ ] **Step 1: Write failing tests for reorder and header/footer filtering**
 - [ ] **Step 2: Run `swift test --filter DocumentEditingTests` and verify red**
@@ -42,9 +42,9 @@
 ### Task 2: Advanced Exports
 
 **Files:**
-- Create: `Tests/SightlineCoreTests/AdvancedExportTests.swift`
-- Modify: `Sources/SightlineCore/Models.swift`
-- Modify: `Sources/SightlineCore/ExportEngine.swift`
+- Create: `Tests/PageLumenCoreTests/AdvancedExportTests.swift`
+- Modify: `Sources/PageLumenCore/Models.swift`
+- Modify: `Sources/PageLumenCore/ExportEngine.swift`
 
 - [ ] **Step 1: Write failing CSV/JSON export tests**
 - [ ] **Step 2: Run `swift test --filter AdvancedExportTests` and verify red**
@@ -54,12 +54,12 @@
 ### Task 3: macOS UI Integration
 
 **Files:**
-- Create: `Sources/SightlineReader/Support/ScreenshotCaptureService.swift`
-- Modify: `Sources/SightlineReader/App/DocumentStore.swift`
-- Modify: `Sources/SightlineReader/Views/HomeView.swift`
-- Modify: `Sources/SightlineReader/Views/ReviewView.swift`
-- Modify: `Sources/SightlineReader/Views/SummaryExportView.swift`
-- Modify: `Sources/SightlineReader/Views/SettingsView.swift`
+- Create: `Sources/PageLumenReader/Support/ScreenshotCaptureService.swift`
+- Modify: `Sources/PageLumenReader/App/DocumentStore.swift`
+- Modify: `Sources/PageLumenReader/Views/HomeView.swift`
+- Modify: `Sources/PageLumenReader/Views/ReviewView.swift`
+- Modify: `Sources/PageLumenReader/Views/SummaryExportView.swift`
+- Modify: `Sources/PageLumenReader/Views/SettingsView.swift`
 
 - [ ] **Step 1: Add capture selected-region/current-window actions**
 - [ ] **Step 2: Add block move controls and header/footer labels**
@@ -72,7 +72,7 @@
 - No new files.
 
 - [ ] **Step 1: Run `swift test`**
-- [ ] **Step 2: Run `swift build --product SightlineReader`**
+- [ ] **Step 2: Run `swift build --product PageLumenReader`**
 - [ ] **Step 3: Run `./script/build_and_run.sh --verify`**
 - [ ] **Step 4: Commit and push branch**
 

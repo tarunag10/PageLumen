@@ -35,12 +35,22 @@ cat >"$INFO_PLIST" <<PLIST
   <string>$BUNDLE_ID</string>
   <key>CFBundleName</key>
   <string>PageLumen</string>
+  <key>CFBundleDisplayName</key>
+  <string>PageLumen</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
   <key>LSMinimumSystemVersion</key>
   <string>$MIN_SYSTEM_VERSION</string>
+  <key>LSApplicationCategoryType</key>
+  <string>public.app-category.productivity</string>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
+  <key>NSHumanReadableCopyright</key>
+  <string></string>
 </dict>
 </plist>
 PLIST

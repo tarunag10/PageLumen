@@ -1,10 +1,10 @@
-# Sightline Reader MVP Implementation Plan
+# PageLumen MVP Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the PRD’s Phase 0/MVP native macOS app shell with local PDF/image import, OCR-oriented document structure, side-by-side review, summaries, speech playback, and Markdown/TXT/HTML/basic PDF export.
 
-**Architecture:** Use a SwiftPM macOS GUI app with a reusable `SightlineCore` library for models and document processing. Keep SwiftUI focused on workflow composition while `DocumentProcessor`, `LayoutAnalyzer`, `ExplanationEngine`, `SpeechEngine`, and `ExportEngine` own testable behavior.
+**Architecture:** Use a SwiftPM macOS GUI app with a reusable `PageLumenCore` library for models and document processing. Keep SwiftUI focused on workflow composition while `DocumentProcessor`, `LayoutAnalyzer`, `ExplanationEngine`, `SpeechEngine`, and `ExportEngine` own testable behavior.
 
 **Tech Stack:** Swift 6 toolchain in Swift 5 language mode, SwiftUI, AppKit, PDFKit, Vision, AVFoundation, XCTest, SwiftPM app-bundle run script.
 
@@ -12,18 +12,18 @@
 
 ## File Structure
 
-- `Package.swift`: SwiftPM package with `SightlineCore`, `SightlineReader`, and `SightlineCoreTests`.
-- `Sources/SightlineCore/Models.swift`: document, page, block, table, figure, outline, and export data models.
-- `Sources/SightlineCore/LayoutAnalyzer.swift`: reading-order sorting, layout classification, heading/table/figure heuristics.
-- `Sources/SightlineCore/ExplanationEngine.swift`: grounded table/chart explanations and audio-friendly summaries.
-- `Sources/SightlineCore/ExportEngine.swift`: Markdown, TXT, semantic HTML, and basic accessible PDF export.
-- `Sources/SightlineCore/DocumentProcessor.swift`: PDF/image loading, embedded PDF text extraction, Vision OCR fallback, page thumbnails.
-- `Sources/SightlineCore/SampleData.swift`: demo document used on first launch and tests.
-- `Tests/SightlineCoreTests/*`: focused tests for reading order, summaries, and exports.
-- `Sources/SightlineReader/App/SightlineReaderApp.swift`: `@main` app and activation delegate.
-- `Sources/SightlineReader/App/DocumentStore.swift`: main-window state and import/process/export actions.
-- `Sources/SightlineReader/Views/*.swift`: sidebar, home, processing, review, summary, export, preview, and reusable UI.
-- `Sources/SightlineReader/Support/SpeechEngine.swift`: AVFoundation text-to-speech wrapper.
+- `Package.swift`: SwiftPM package with `PageLumenCore`, `PageLumenReader`, and `PageLumenCoreTests`.
+- `Sources/PageLumenCore/Models.swift`: document, page, block, table, figure, outline, and export data models.
+- `Sources/PageLumenCore/LayoutAnalyzer.swift`: reading-order sorting, layout classification, heading/table/figure heuristics.
+- `Sources/PageLumenCore/ExplanationEngine.swift`: grounded table/chart explanations and audio-friendly summaries.
+- `Sources/PageLumenCore/ExportEngine.swift`: Markdown, TXT, semantic HTML, and basic accessible PDF export.
+- `Sources/PageLumenCore/DocumentProcessor.swift`: PDF/image loading, embedded PDF text extraction, Vision OCR fallback, page thumbnails.
+- `Sources/PageLumenCore/SampleData.swift`: demo document used on first launch and tests.
+- `Tests/PageLumenCoreTests/*`: focused tests for reading order, summaries, and exports.
+- `Sources/PageLumenReader/App/PageLumenReaderApp.swift`: `@main` app and activation delegate.
+- `Sources/PageLumenReader/App/DocumentStore.swift`: main-window state and import/process/export actions.
+- `Sources/PageLumenReader/Views/*.swift`: sidebar, home, processing, review, summary, export, preview, and reusable UI.
+- `Sources/PageLumenReader/Support/SpeechEngine.swift`: AVFoundation text-to-speech wrapper.
 - `script/build_and_run.sh`: Codex Run button build/launch entrypoint.
 - `.codex/environments/environment.toml`: Codex app run action.
 
@@ -33,14 +33,14 @@
 
 **Files:**
 - Create: `Package.swift`
-- Create: `Tests/SightlineCoreTests/LayoutAnalyzerTests.swift`
-- Create: `Tests/SightlineCoreTests/ExportEngineTests.swift`
-- Create: `Tests/SightlineCoreTests/ExplanationEngineTests.swift`
+- Create: `Tests/PageLumenCoreTests/LayoutAnalyzerTests.swift`
+- Create: `Tests/PageLumenCoreTests/ExportEngineTests.swift`
+- Create: `Tests/PageLumenCoreTests/ExplanationEngineTests.swift`
 
 - [x] **Step 1: Create package manifest**
 
 ```swift
-// Defines SightlineCore, SightlineReader, and SightlineCoreTests.
+// Defines PageLumenCore, PageLumenReader, and PageLumenCoreTests.
 ```
 
 - [x] **Step 2: Write failing tests for reading order, summaries, and exports**
@@ -57,11 +57,11 @@ Expected: FAIL because core types do not exist yet.
 ### Task 2: Core Models and Services
 
 **Files:**
-- Create: `Sources/SightlineCore/Models.swift`
-- Create: `Sources/SightlineCore/LayoutAnalyzer.swift`
-- Create: `Sources/SightlineCore/ExplanationEngine.swift`
-- Create: `Sources/SightlineCore/ExportEngine.swift`
-- Create: `Sources/SightlineCore/SampleData.swift`
+- Create: `Sources/PageLumenCore/Models.swift`
+- Create: `Sources/PageLumenCore/LayoutAnalyzer.swift`
+- Create: `Sources/PageLumenCore/ExplanationEngine.swift`
+- Create: `Sources/PageLumenCore/ExportEngine.swift`
+- Create: `Sources/PageLumenCore/SampleData.swift`
 
 - [x] **Step 1: Implement minimal models**
 
@@ -95,8 +95,8 @@ Expected: PASS.
 ### Task 3: Document Processing Pipeline
 
 **Files:**
-- Create: `Sources/SightlineCore/DocumentProcessor.swift`
-- Modify: `Sources/SightlineCore/Models.swift`
+- Create: `Sources/PageLumenCore/DocumentProcessor.swift`
+- Modify: `Sources/PageLumenCore/Models.swift`
 - Add tests where pure behavior is exposed.
 
 - [x] **Step 1: Implement import source detection**
@@ -120,16 +120,16 @@ Expected: PASS.
 ### Task 4: Native SwiftUI App
 
 **Files:**
-- Create: `Sources/SightlineReader/App/SightlineReaderApp.swift`
-- Create: `Sources/SightlineReader/App/DocumentStore.swift`
-- Create: `Sources/SightlineReader/Views/ContentView.swift`
-- Create: `Sources/SightlineReader/Views/SidebarView.swift`
-- Create: `Sources/SightlineReader/Views/HomeView.swift`
-- Create: `Sources/SightlineReader/Views/ProcessingView.swift`
-- Create: `Sources/SightlineReader/Views/ReviewView.swift`
-- Create: `Sources/SightlineReader/Views/SummaryExportView.swift`
-- Create: `Sources/SightlineReader/Views/PreviewPane.swift`
-- Create: `Sources/SightlineReader/Support/SpeechEngine.swift`
+- Create: `Sources/PageLumenReader/App/PageLumenReaderApp.swift`
+- Create: `Sources/PageLumenReader/App/DocumentStore.swift`
+- Create: `Sources/PageLumenReader/Views/ContentView.swift`
+- Create: `Sources/PageLumenReader/Views/SidebarView.swift`
+- Create: `Sources/PageLumenReader/Views/HomeView.swift`
+- Create: `Sources/PageLumenReader/Views/ProcessingView.swift`
+- Create: `Sources/PageLumenReader/Views/ReviewView.swift`
+- Create: `Sources/PageLumenReader/Views/SummaryExportView.swift`
+- Create: `Sources/PageLumenReader/Views/PreviewPane.swift`
+- Create: `Sources/PageLumenReader/Support/SpeechEngine.swift`
 
 - [x] **Step 1: Build native shell**
 

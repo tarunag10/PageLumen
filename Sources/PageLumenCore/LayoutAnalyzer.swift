@@ -121,7 +121,7 @@ public struct LayoutAnalyzer: Sendable {
                 text: text,
                 bounds: bounds,
                 confidence: blocks.map(\.confidence).min() ?? 0.8,
-                metadata: ["source": "receipt-profile", "profile": profile.rawValue]
+                metadata: ["source": BlockSource.receiptProfile.metadataValue, "profile": profile.rawValue]
             )
         ]
     }
@@ -189,8 +189,7 @@ public struct LayoutAnalyzer: Sendable {
         guard block.type == .paragraph || block.type == .unknown else {
             return false
         }
-        let source = block.metadata["source"] ?? ""
-        return source == "vision-ocr" || source == "embedded-pdf"
+        return block.blockSource == .visionOCR || block.blockSource == .embeddedPDF
     }
 
     private func shouldMerge(_ block: TextBlock, after previous: TextBlock, pageWidth: Double) -> Bool {

@@ -4,7 +4,7 @@
 
 **Goal:** Add the PRD P1 feature “Batch import multiple PDFs or images” so users can open or drop several supported files, watch queue progress, and select processed documents for review/export.
 
-**Architecture:** Add a small testable queue model in `SightlineCore`, then use it from `DocumentStore` to process URLs sequentially with per-item status. Keep the app single-document review focused by making the selected batch item set the active `ReaderDocument`.
+**Architecture:** Add a small testable queue model in `PageLumenCore`, then use it from `DocumentStore` to process URLs sequentially with per-item status. Keep the app single-document review focused by making the selected batch item set the active `ReaderDocument`.
 
 **Tech Stack:** SwiftPM, XCTest, SwiftUI, AppKit `NSOpenPanel`, Swift concurrency, existing `DocumentProcessor`.
 
@@ -12,20 +12,20 @@
 
 ## File Structure
 
-- Create `Sources/SightlineCore/BatchImportQueue.swift`: pure queue/status model for pending, processing, completed, and failed batch items.
-- Create `Tests/SightlineCoreTests/BatchImportQueueTests.swift`: red/green tests for enqueueing, starting, completing, failing, and supported extensions.
-- Modify `Sources/SightlineReader/App/DocumentStore.swift`: allow multi-select import, process batches sequentially, expose queue to sidebar/home.
-- Modify `Sources/SightlineReader/Views/HomeView.swift`: update drop zone copy and handle multiple dropped file URLs.
-- Modify `Sources/SightlineReader/Views/SidebarView.swift`: add batch queue section with status and document selection.
-- Modify `Sources/SightlineReader/Views/ContentView.swift` and `Sources/SightlineReader/App/SightlineReaderApp.swift`: rename open actions to batch-aware labels.
+- Create `Sources/PageLumenCore/BatchImportQueue.swift`: pure queue/status model for pending, processing, completed, and failed batch items.
+- Create `Tests/PageLumenCoreTests/BatchImportQueueTests.swift`: red/green tests for enqueueing, starting, completing, failing, and supported extensions.
+- Modify `Sources/PageLumenReader/App/DocumentStore.swift`: allow multi-select import, process batches sequentially, expose queue to sidebar/home.
+- Modify `Sources/PageLumenReader/Views/HomeView.swift`: update drop zone copy and handle multiple dropped file URLs.
+- Modify `Sources/PageLumenReader/Views/SidebarView.swift`: add batch queue section with status and document selection.
+- Modify `Sources/PageLumenReader/Views/ContentView.swift` and `Sources/PageLumenReader/App/PageLumenReaderApp.swift`: rename open actions to batch-aware labels.
 
 ## Tasks
 
 ### Task 1: Queue Model
 
 **Files:**
-- Create: `Tests/SightlineCoreTests/BatchImportQueueTests.swift`
-- Create: `Sources/SightlineCore/BatchImportQueue.swift`
+- Create: `Tests/PageLumenCoreTests/BatchImportQueueTests.swift`
+- Create: `Sources/PageLumenCore/BatchImportQueue.swift`
 
 - [ ] **Step 1: Write failing tests**
 
@@ -55,11 +55,11 @@ Expected: PASS.
 ### Task 2: App Integration
 
 **Files:**
-- Modify: `Sources/SightlineReader/App/DocumentStore.swift`
-- Modify: `Sources/SightlineReader/Views/HomeView.swift`
-- Modify: `Sources/SightlineReader/Views/SidebarView.swift`
-- Modify: `Sources/SightlineReader/Views/ContentView.swift`
-- Modify: `Sources/SightlineReader/App/SightlineReaderApp.swift`
+- Modify: `Sources/PageLumenReader/App/DocumentStore.swift`
+- Modify: `Sources/PageLumenReader/Views/HomeView.swift`
+- Modify: `Sources/PageLumenReader/Views/SidebarView.swift`
+- Modify: `Sources/PageLumenReader/Views/ContentView.swift`
+- Modify: `Sources/PageLumenReader/App/PageLumenReaderApp.swift`
 
 - [ ] **Step 1: Add batch state to `DocumentStore`**
 
@@ -98,7 +98,7 @@ Expected: PASS.
 
 - [ ] **Step 2: Build app**
 
-Run: `swift build --product SightlineReader`
+Run: `swift build --product PageLumenReader`
 Expected: PASS.
 
 - [ ] **Step 3: Launch verify**

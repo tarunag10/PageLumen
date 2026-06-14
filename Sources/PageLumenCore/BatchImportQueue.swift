@@ -129,7 +129,7 @@ public struct BatchImportQueue: Equatable, Sendable {
     }
 
     public static func isSupportedURL(_ url: URL) -> Bool {
-        ["pdf", "png", "jpg", "jpeg", "tif", "tiff", "heic"].contains(url.pathExtension.lowercased())
+        DocumentProcessor.supportedExtensions.contains(url.pathExtension.lowercased())
     }
 
     private mutating func update(_ id: UUID, mutate: (inout BatchImportItem) -> Void) {

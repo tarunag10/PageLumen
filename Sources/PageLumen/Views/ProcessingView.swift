@@ -134,16 +134,16 @@ private struct ProcessingPageCard: View {
 
                 Spacer()
 
-                Label(page.ocrStatus.label, systemImage: page.ocrStatus.systemImage)
+                Label(page.ocrStatus.statusDescriptor.label, systemImage: page.ocrStatus.statusDescriptor.systemImage)
                     .font(.caption)
-                    .foregroundStyle(page.ocrStatus.tint)
+                    .foregroundStyle(page.ocrStatus.statusDescriptor.tint)
                     .labelStyle(.titleAndIcon)
             }
         }
         .padding(12)
         .accessiblePanel()
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Page \(page.pageNumber), \(page.ocrStatus.label)")
+        .accessibilityLabel("Page \(page.pageNumber), \(page.ocrStatus.statusDescriptor.label)")
     }
 
     @ViewBuilder
@@ -174,8 +174,8 @@ private struct ProcessingPageCard: View {
                 ProgressView()
                     .controlSize(.small)
             } else {
-                Image(systemName: page.ocrStatus.systemImage)
-                    .foregroundStyle(page.ocrStatus.tint)
+                Image(systemName: page.ocrStatus.statusDescriptor.systemImage)
+                    .foregroundStyle(page.ocrStatus.statusDescriptor.tint)
             }
         }
         .frame(width: 24, height: 24)
@@ -183,47 +183,6 @@ private struct ProcessingPageCard: View {
         .overlay {
             Circle()
                 .stroke(AccessibleStyle.border)
-        }
-    }
-}
-
-private extension OCRStatus {
-    var label: String {
-        switch self {
-        case .pending:
-            return "Pending"
-        case .processing:
-            return "OCR"
-        case .complete:
-            return "Done"
-        case .failed:
-            return "Failed"
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case .pending:
-            return "circle"
-        case .processing:
-            return "text.viewfinder"
-        case .complete:
-            return "checkmark.circle.fill"
-        case .failed:
-            return "exclamationmark.triangle.fill"
-        }
-    }
-
-    var tint: Color {
-        switch self {
-        case .pending:
-            return .secondary
-        case .processing:
-            return .accentColor
-        case .complete:
-            return .green
-        case .failed:
-            return .orange
         }
     }
 }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01D582EFBC3861DFF9EAAC7D /* StatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 555134BE2841CFA4E241DA08 /* StatusBadge.swift */; };
 		1B1721DBB436523081F536D3 /* PageLumenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9E4B58A0FC934C9DC62F3754 /* PageLumenCore.framework */; };
 		2175D7BFE55280C57309D783 /* AdvancedExportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBE16865324D47B5AD434E1C /* AdvancedExportTests.swift */; };
 		2906FC2FA4187E33DF68DEDD /* ExplanationEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FF3DCCB16D8AC6195018D83 /* ExplanationEngineTests.swift */; };
@@ -94,6 +95,7 @@
 		2FBBBD0641D444BB6CB3CE4E /* BatchImportQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchImportQueue.swift; sourceTree = "<group>"; };
 		3AAD2F542CDB20DB572FD697 /* ExplanationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplanationEngine.swift; sourceTree = "<group>"; };
 		51ED10D17EEF3D8A5A4C74B0 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		555134BE2841CFA4E241DA08 /* StatusBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBadge.swift; sourceTree = "<group>"; };
 		672E6D23DE829F90478ECDFC /* BatchImportQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchImportQueueTests.swift; sourceTree = "<group>"; };
 		6A0993F9EF955B4BE8A1529A /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		6FF3DCCB16D8AC6195018D83 /* ExplanationEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplanationEngineTests.swift; sourceTree = "<group>"; };
@@ -242,6 +244,7 @@
 				F948AD3CC70357D53F87F901 /* AccessibleStyle.swift */,
 				7C98EC0673308A4B4EA560D4 /* ScreenshotCaptureService.swift */,
 				D1BE8CE264BD58F722F55395 /* SpeechEngine.swift */,
+				555134BE2841CFA4E241DA08 /* StatusBadge.swift */,
 			);
 			path = Support;
 			sourceTree = "<group>";
@@ -364,6 +367,7 @@
 				E7D21747C6852107B466D8AF /* SettingsView.swift in Sources */,
 				4EEFFD310568017D015251D4 /* SidebarView.swift in Sources */,
 				879DCD4FD0AFC056A27FAEED /* SpeechEngine.swift in Sources */,
+				01D582EFBC3861DFF9EAAC7D /* StatusBadge.swift in Sources */,
 				2CAB5FDB46724B42B176621B /* SummaryExportView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

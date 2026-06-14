@@ -75,8 +75,13 @@ private struct ReadingOrderOverlay: View {
                 }
                 .frame(width: max(rect.width, 24), height: max(rect.height, 20))
                 .position(x: rect.midX, y: rect.midY)
+                .accessibilityElement()
+                .accessibilityLabel("Block \(block.readingOrderIndex + 1)")
+                .accessibilityValue(block.text.prefix(80))
             }
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Reading order overlay, \(page.blocks.count) blocks")
     }
 
     private func scaled(_ bounds: BoundingBox, in size: CGSize) -> CGRect {

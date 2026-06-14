@@ -56,4 +56,16 @@ final class BatchImportQueueTests: XCTestCase {
         XCTAssertFalse(queue.isActive)
         XCTAssertNil(queue.pendingItem)
     }
+
+    func testIsSupportedURLMatchesDocumentProcessorSupportedExtensions() {
+        let expected = Set(DocumentProcessor.supportedExtensions)
+        let candidates = ["pdf", "png", "jpg", "jpeg", "tif", "tiff", "heic", "txt", "docx", "gif", "bmp", ""]
+
+        for ext in candidates {
+            let url = URL(fileURLWithPath: "/tmp/sample.\(ext)")
+            let viaQueue = BatchImportQueue.isSupportedURL(url)
+            let viaProcessor = expected.contains(ext)
+            XCTAssertEqual(viaQueue, viaProcessor, "Disagreement for extension '\(ext)'")
+        }
+    }
 }

@@ -269,6 +269,7 @@ private struct EditableBlockRow: View {
     @EnvironmentObject private var store: DocumentStore
     let block: TextBlock
     @State private var draft: String = ""
+    @State private var commitTask: Task<Void, Never>?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -316,19 +317,46 @@ private struct EditableBlockRow: View {
             TextEditor(text: $draft)
                 .font(block.type == .heading ? .title3.weight(.semibold) : .body)
                 .frame(minHeight: block.type == .paragraph ? 74 : 44)
+                .accessibilityValue(block.text)
                 .onAppear { draft = block.text }
                 .onChange(of: block.id) { _, _ in
                     draft = block.text
                 }
                 .onChange(of: draft) { _, newValue in
-                    store.updateBlock(block, text: newValue)
+                    scheduleCommit(newValue)
                 }
         }
         .padding(12)
         .accessiblePanel(borderColor: block.confidence < 0.7 ? AccessibleStyle.warning : AccessibleStyle.border)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(block.type.rawValue), confidence \(Int(block.confidence * 100)) percent")
-        .accessibilityHint(block.confidence < 0.7 ? "This block needs review before export." : "Edit text, type, order, or review status.")
+        .accessibilityLabel("\(block.type.rawValue.capitalized) block, confidence \(Int(block.confidence * 100)) percent")
+        .accessibilityHint("Edit text, change type, or toggle reviewed.")
+        .onDisappear {
+            flushPendingCommit()
+        }
+    }
+
+    // Debounce: writing on every keystroke re-derives the page filter and re-runs the summary
+    // on the main actor, which is wasteful for fast typists. Wait 250 ms after the last edit.
+    private func scheduleCommit(_ newValue: String) {
+        commitTask?.cancel()
+        commitTask = Task { @MainActor in
+            do {
+                try await Task.sleep(for: .milliseconds(250))
+            } catch {
+                return
+            }
+            if Task.isCancelled { return }
+            store.updateBlock(block, text: newValue)
+        }
+    }
+
+    private func flushPendingCommit() {
+        commitTask?.cancel()
+        commitTask = nil
+        if draft != block.text {
+            store.updateBlock(block, text: draft)
+        }
     }
 
     private var blockTypeBinding: Binding<BlockType> {

@@ -33,6 +33,10 @@ public final class DocumentProcessor: @unchecked Sendable {
         static let maxPDFPageArea: CGFloat = 80_000_000
     }
 
+    public static let supportedExtensions: [String] = [
+        "pdf", "png", "jpg", "jpeg", "tif", "tiff", "heic"
+    ]
+
     private let analyzer: LayoutAnalyzer
 
     public init(profile: OCRProfile = .general) {
@@ -53,7 +57,7 @@ public final class DocumentProcessor: @unchecked Sendable {
             return try await processPDF(url: url, onProgress: onProgress)
         }
 
-        if ["png", "jpg", "jpeg", "tif", "tiff", "heic"].contains(ext) {
+        if Self.supportedExtensions.contains(ext) {
             try validateFileBudget(url)
             let image = try loadImage(from: url)
             return try await process(image: image, title: url.deletingPathExtension().lastPathComponent, sourceType: .image, sourceURL: url, onProgress: onProgress)
@@ -101,6 +105,7 @@ public final class DocumentProcessor: @unchecked Sendable {
             let bounds = pdfPage.bounds(for: .mediaBox)
             if let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == pageNumber }) {
                 document.pages[pageIndex].ocrStatus = .processing
+                if Task.isCancelled { return analyzedDocument(document) }
                 await onProgress?(document)
             }
 
@@ -108,7 +113,7 @@ public final class DocumentProcessor: @unchecked Sendable {
 
             let blocks: [TextBlock]
             if !embeddedText.isEmpty {
-                blocks = makeBlocks(from: embeddedText, pageNumber: pageNumber, pageSize: bounds.size, source: "embedded-pdf", confidence: 0.98)
+                blocks = makeBlocks(from: embeddedText, pageNumber: pageNumber, pageSize: bounds.size, source: BlockSource.embeddedPDF.metadataValue, confidence: 0.98)
             } else if let image = render(pdfPage: pdfPage), let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) {
                 blocks = try await recognizeText(in: cgImage, pageNumber: pageNumber, pageSize: bounds.size)
             } else {
@@ -126,13 +131,18 @@ public final class DocumentProcessor: @unchecked Sendable {
             if let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == pageNumber }) {
                 document.pages[pageIndex].ocrStatus = .complete
                 document.pages[pageIndex].blocks = blocks
+                if Task.isCancelled { return analyzedDocument(document) }
                 await onProgress?(document)
             }
         }
 
-        document.processingStatus = .complete
-        let analyzed = analyzer.analyze(document: document)
-        await onProgress?(analyzed)
+        return analyzedDocument(document)
+    }
+
+    private func analyzedDocument(_ document: ReaderDocument) -> ReaderDocument {
+        var completed = document
+        completed.processingStatus = .complete
+        let analyzed = analyzer.analyze(document: completed)
         return analyzed
     }
 
@@ -202,7 +212,7 @@ public final class DocumentProcessor: @unchecked Sendable {
                         bounds: bounds,
                         confidence: Double(candidate.confidence),
                         readingOrderIndex: index,
-                        metadata: ["source": "vision-ocr"]
+                        metadata: ["source": BlockSource.visionOCR.metadataValue]
                     )
                 }
                 continuation.resume(returning: blocks)

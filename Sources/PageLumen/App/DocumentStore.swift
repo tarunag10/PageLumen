@@ -41,8 +41,10 @@ final class DocumentStore: ObservableObject {
     private let screenshotCaptureService = ScreenshotCaptureService()
     private var importTask: Task<Void, Never>?
 
+    private var processorInstance: DocumentProcessor = DocumentProcessor()
+
     private var processor: DocumentProcessor {
-        DocumentProcessor(profile: currentOCRProfile)
+        processorInstance
     }
 
     private var currentOCRProfile: OCRProfile {
@@ -415,7 +417,60 @@ final class DocumentStore: ObservableObject {
     }
 
     func exportPreviewText(limit: Int = 4_000) -> String {
-        DocumentEditing.exportPreview(for: document, format: exportPreviewFormat, options: exportOptions, maxCharacters: limit)
+        let format = exportPreviewFormat
+        let options = exportOptions
+        let optionsHash = Self.optionsHash(options)
+        let version = currentDocumentVersion
+
+        if let cached = previewCache,
+           cached.format == format,
+           cached.optionsHash == optionsHash,
+           cached.documentVersion == version,
+           cached.limit == limit {
+            return cached.text
+        }
+
+        let text = DocumentEditing.exportPreview(for: document, format: format, options: options, maxCharacters: limit)
+        previewCache = PreviewCache(format: format, optionsHash: optionsHash, documentVersion: version, limit: limit, text: text)
+        return text
+    }
+
+    // Cache key intentionally covers only the inputs that change the rendered
+    // preview (format + the six option booleans + a content fingerprint).
+    // Bumping the fingerprint on every document mutation keeps the cache fresh
+    // without invalidating on every SwiftUI re-render.
+    private struct PreviewCache {
+        let format: ExportFormat
+        let optionsHash: Int
+        let documentVersion: Int
+        let limit: Int
+        let text: String
+    }
+
+    private var previewCache: PreviewCache?
+
+    private var currentDocumentVersion: Int {
+        var hasher = Hasher()
+        hasher.combine(document.id)
+        hasher.combine(document.pageCount)
+        hasher.combine(document.allBlocks.count)
+        for page in document.pages {
+            for block in page.blocks {
+                hasher.combine(block.id)
+            }
+        }
+        return hasher.finalize()
+    }
+
+    private static func optionsHash(_ options: ExportOptions) -> Int {
+        var hasher = Hasher()
+        hasher.combine(options.includeHeadings)
+        hasher.combine(options.includeTables)
+        hasher.combine(options.includeFigures)
+        hasher.combine(options.includePageReferences)
+        hasher.combine(options.includeConfidenceNotes)
+        hasher.combine(options.includeHeadersAndFooters)
+        return hasher.finalize()
     }
 
     func fullExtractedText() -> String {
