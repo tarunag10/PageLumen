@@ -2,7 +2,7 @@ import PageLumenCore
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject private var store: DocumentStore
+    @Environment(DocumentStore.self) private var store
     // Re-render when the high-contrast toggle changes so AccessibleStyle tokens
     // (border, selected, elevatedBackground, appBackground) pick up the new
     // value.
@@ -61,7 +61,7 @@ struct ContentView: View {
 }
 
 private struct WorkflowHeader: View {
-    @EnvironmentObject private var store: DocumentStore
+    @Environment(DocumentStore.self) private var store
     @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
@@ -112,7 +112,7 @@ private struct WorkflowHeader: View {
 }
 
 private struct StepPill: View {
-    @EnvironmentObject private var store: DocumentStore
+    @Environment(DocumentStore.self) private var store
     let number: Int
     let title: String
     let destination: DocumentStore.Destination

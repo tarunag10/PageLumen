@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 import SwiftUI
 
 struct HomeView: View {
-    @EnvironmentObject private var store: DocumentStore
+    @Environment(DocumentStore.self) private var store
     @State private var isTargeted = false
     // Re-render when the high-contrast toggle changes so AccessibleStyle.border
     // and AccessibleStyle.panelBackground pick up the new value.

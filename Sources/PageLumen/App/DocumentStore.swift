@@ -5,7 +5,8 @@ import PageLumenCore
 import UniformTypeIdentifiers
 
 @MainActor
-final class DocumentStore: ObservableObject {
+@Observable
+final class DocumentStore {
     enum Destination: Hashable {
         case home
         case processing
@@ -22,20 +23,20 @@ final class DocumentStore: ObservableObject {
         var id: String { rawValue }
     }
 
-    @Published var document: ReaderDocument = DocumentStore.makeInitialDocument()
-    @Published var selectedDestination: Destination? = .home
-    @Published var selectedPageNumber: Int = 1
-    @Published var isProcessing = false
-    @Published var statusMessage = "Ready"
-    @Published var exportOptions = ExportOptions.full
-    @Published var summaryLength: SummaryLength = .short
-    @Published var batchQueue = BatchImportQueue()
-    @Published var recentDocuments: [ReaderDocument] = []
-    @Published var processingDocument: ReaderDocument?
-    @Published var processingFileName = ""
-    @Published var reviewSearchQuery = ""
-    @Published var reviewFilter: ReviewFilter = .all
-    @Published var exportPreviewFormat: ExportFormat = .markdown
+    var document: ReaderDocument = DocumentStore.makeInitialDocument()
+    var selectedDestination: Destination? = .home
+    var selectedPageNumber: Int = 1
+    var isProcessing = false
+    var statusMessage = "Ready"
+    var exportOptions = ExportOptions.full
+    var summaryLength: SummaryLength = .short
+    var batchQueue = BatchImportQueue()
+    var recentDocuments: [ReaderDocument] = []
+    var processingDocument: ReaderDocument?
+    var processingFileName = ""
+    var reviewSearchQuery = ""
+    var reviewFilter: ReviewFilter = .all
+    var exportPreviewFormat: ExportFormat = .markdown
 
     private let exportEngine = ExportEngine()
     private let explanationEngine = ExplanationEngine()

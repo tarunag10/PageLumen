@@ -4,7 +4,7 @@ import SwiftUI
 import TipKit
 
 struct SettingsView: View {
-    @EnvironmentObject private var store: DocumentStore
+    @Environment(DocumentStore.self) private var store
     @AppStorage("privacyMode") private var privacyMode = true
     @AppStorage("ocrProfile") private var ocrProfile = "General"
     @AppStorage("languageHint") private var languageHint = "Automatic"

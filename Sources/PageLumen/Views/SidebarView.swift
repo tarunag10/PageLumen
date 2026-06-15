@@ -2,12 +2,13 @@ import PageLumenCore
 import SwiftUI
 
 struct SidebarView: View {
-    @EnvironmentObject private var store: DocumentStore
+    @Environment(DocumentStore.self) private var store
     // Re-render when the high-contrast toggle changes so AccessibleStyle tokens
     // (border, elevatedBackground) pick up the new value.
     @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
+        @Bindable var store = store
         List(selection: $store.selectedDestination) {
             Section("Steps") {
                 Label("1. Add Document", systemImage: "tray.and.arrow.down")

@@ -3,7 +3,7 @@ import PageLumenCore
 import SwiftUI
 
 struct ProcessingView: View {
-    @EnvironmentObject private var store: DocumentStore
+    @Environment(DocumentStore.self) private var store
     // Re-render when the high-contrast toggle changes so AccessibleStyle tokens
     // (border, panelBackground) pick up the new value.
     @AppStorage("boostContrast") private var boostContrast = false

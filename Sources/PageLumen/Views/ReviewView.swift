@@ -4,7 +4,7 @@ import TipKit
 import UniformTypeIdentifiers
 
 struct ReviewView: View {
-    @EnvironmentObject private var store: DocumentStore
+    @Environment(DocumentStore.self) private var store
     @State private var showReadingOrder = true
 
     var body: some View {
@@ -28,7 +28,7 @@ struct ReviewView: View {
 }
 
 private struct ProcessingBanner: View {
-    @EnvironmentObject private var store: DocumentStore
+    @Environment(DocumentStore.self) private var store
     // Re-render when the high-contrast toggle changes so AccessibleStyle tokens
     // (border, warning, panelBackground) pick up the new value.
     @AppStorage("boostContrast") private var boostContrast = false
@@ -50,11 +50,12 @@ private struct ProcessingBanner: View {
 }
 
 private struct ReviewHeader: View {
-    @EnvironmentObject private var store: DocumentStore
+    @Environment(DocumentStore.self) private var store
     @Binding var showReadingOrder: Bool
     @State private var showConfidenceChart = false
 
     var body: some View {
+        @Bindable var store = store
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
@@ -144,7 +145,7 @@ private struct ReviewHeader: View {
 }
 
 private struct ReviewTrustBar: View {
-    @EnvironmentObject private var store: DocumentStore
+    @Environment(DocumentStore.self) private var store
     @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
@@ -236,7 +237,7 @@ private struct TrustMetric: View {
 }
 
 private struct StructuredOutputView: View {
-    @EnvironmentObject private var store: DocumentStore
+    @Environment(DocumentStore.self) private var store
     @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
@@ -285,7 +286,7 @@ private struct StructuredOutputView: View {
 }
 
 private struct EditableBlockRow: View {
-    @EnvironmentObject private var store: DocumentStore
+    @Environment(DocumentStore.self) private var store
     let block: TextBlock
     @State private var draft: String = ""
     @State private var commitTask: Task<Void, Never>?

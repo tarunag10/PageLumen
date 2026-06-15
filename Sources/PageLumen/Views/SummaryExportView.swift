@@ -3,7 +3,7 @@ import SwiftUI
 import TipKit
 
 struct SummaryExportView: View {
-    @EnvironmentObject private var store: DocumentStore
+    @Environment(DocumentStore.self) private var store
     @StateObject private var speech = SpeechEngine()
     // Re-render when the high-contrast toggle changes so AccessibleStyle tokens
     // (border, elevatedBackground) pick up the new value.
@@ -14,6 +14,7 @@ struct SummaryExportView: View {
     }
 
     var body: some View {
+        @Bindable var store = store
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 VStack(alignment: .leading, spacing: 8) {
