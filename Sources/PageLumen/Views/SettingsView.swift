@@ -1,6 +1,7 @@
 import AVFoundation
 import PageLumenCore
 import SwiftUI
+import TipKit
 
 struct SettingsView: View {
     @EnvironmentObject private var store: DocumentStore
@@ -64,6 +65,7 @@ struct SettingsView: View {
                     .font(.callout)
                     .foregroundStyle(.primary)
             }
+            .popoverTip(BoostContrastTip(), arrowEdge: .top)
 
             Section("Onboarding") {
                 Toggle("Show welcome screen on launch", isOn: showOnLaunchBinding)

@@ -1,5 +1,6 @@
 import PageLumenCore
 import SwiftUI
+import TipKit
 
 struct SummaryExportView: View {
     @EnvironmentObject private var store: DocumentStore
@@ -122,6 +123,8 @@ struct SummaryExportView: View {
 
                     Text("Save as")
                         .font(.headline)
+
+                    TipView(ExportAccessibilityTip())
 
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 116), spacing: 10)], alignment: .leading, spacing: 10) {
                         ForEach(ExportFormat.allCases) { format in

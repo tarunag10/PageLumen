@@ -1,5 +1,6 @@
 import PageLumenCore
 import SwiftUI
+import TipKit
 import UniformTypeIdentifiers
 
 struct ReviewView: View {
@@ -51,6 +52,7 @@ private struct ProcessingBanner: View {
 private struct ReviewHeader: View {
     @EnvironmentObject private var store: DocumentStore
     @Binding var showReadingOrder: Bool
+    @State private var showConfidenceChart = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -74,6 +76,16 @@ private struct ReviewHeader: View {
 
                 Toggle("Show order", isOn: $showReadingOrder)
                     .toggleStyle(.switch)
+
+                Button {
+                    showConfidenceChart = true
+                } label: {
+                    Label("Confidence", systemImage: "chart.bar.doc.horizontal")
+                }
+                .popover(isPresented: $showConfidenceChart) {
+                    ConfidenceChartView(document: store.document)
+                        .frame(minWidth: 400, minHeight: 300)
+                }
 
                 if let page = store.selectedPage {
                     Text(page.layoutType.rawValue)
@@ -181,6 +193,7 @@ private struct ReviewTrustBar: View {
             } label: {
                 Label("Review Issues", systemImage: "scope")
             }
+            .popoverTip(ReviewIssueTip(), arrowEdge: .top)
             .disabled(store.reviewIssueCount == 0)
 
             Button {

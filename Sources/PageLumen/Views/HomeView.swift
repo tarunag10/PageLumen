@@ -1,4 +1,5 @@
 import AppKit
+import TipKit
 import UniformTypeIdentifiers
 import SwiftUI
 
@@ -73,6 +74,7 @@ struct HomeView: View {
                     }
                 }
             }
+            .popoverTip(DropZoneTip(), arrowEdge: .top)
             .frame(maxWidth: .infinity, minHeight: 300)
             .background(AccessibleStyle.panelBackground, in: RoundedRectangle(cornerRadius: 10))
             .overlay {
@@ -117,6 +119,7 @@ struct HomeView: View {
             Spacer()
         }
         .padding(32)
+        .liquidGlassIfAvailable(boostContrast: boostContrast)
     }
 
     private func announceDropResult(count: Int) {

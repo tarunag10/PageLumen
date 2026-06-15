@@ -111,6 +111,7 @@ struct SidebarView: View {
             }
         }
         .listStyle(.sidebar)
+        .liquidGlassIfAvailable(boostContrast: boostContrast)
         .safeAreaInset(edge: .bottom) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(store.document.title)

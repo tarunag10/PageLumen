@@ -89,4 +89,16 @@ extension View {
     func accessibleToolbarSurface() -> some View {
         modifier(AccessibleToolbarSurface())
     }
+
+    /// Applies Liquid Glass material on macOS 26+ when accessibility settings allow.
+    /// Falls back to the existing solid panel background on older macOS or when
+    /// the user has Boost Contrast enabled or Reduce Transparency turned on.
+    @ViewBuilder
+    func liquidGlassIfAvailable(boostContrast: Bool = false, reduceTransparency: Bool = false) -> some View {
+        if #available(macOS 26.0, *), !boostContrast, !reduceTransparency {
+            self.background(.regularMaterial)
+        } else {
+            self
+        }
+    }
 }

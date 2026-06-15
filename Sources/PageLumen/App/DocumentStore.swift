@@ -56,10 +56,16 @@ final class DocumentStore: ObservableObject {
 
     init(
         processor: any DocumentImporting = DocumentProcessor(),
-        persisting: any DocumentPersisting = FilePersisting()
+        persisting: (any DocumentPersisting)? = nil
     ) {
         self.processor = processor
-        self.persisting = persisting
+        if let persisting {
+            self.persisting = persisting
+        } else if #available(macOS 14.0, *) {
+            self.persisting = SwiftDataPersisting()
+        } else {
+            self.persisting = FilePersisting()
+        }
         exportOptions = ExportOptions(
             includeHeadings: UserDefaults.standard.object(forKey: "includeHeadings") as? Bool ?? true,
             includeTables: UserDefaults.standard.object(forKey: "includeTables") as? Bool ?? true,
@@ -68,7 +74,7 @@ final class DocumentStore: ObservableObject {
             includeConfidenceNotes: UserDefaults.standard.object(forKey: "includeConfidenceNotes") as? Bool ?? true,
             includeHeadersAndFooters: UserDefaults.standard.object(forKey: "includeHeadersAndFooters") as? Bool ?? true
         )
-        if let stored = try? persisting.recentDocuments(), let first = stored.first {
+        if let stored = try? self.persisting.recentDocuments(), let first = stored.first {
             self.recentDocuments = stored
             self.document = first
             self.selectedDestination = .review

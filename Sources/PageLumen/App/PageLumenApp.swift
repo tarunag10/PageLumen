@@ -1,6 +1,7 @@
 import AppKit
 import PageLumenCore
 import SwiftUI
+import TipKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -32,6 +33,12 @@ struct PageLumenApp: App {
                 .onReceive(NotificationCenter.default.publisher(for: .pageLumenShowOnboardingRequest)) { _ in
                     isShowingOnboarding = true
                 }
+                .task {
+                    try? Tips.configure([
+                        .displayFrequency(.immediate),
+                        .datastoreLocation(.applicationDefault)
+                    ])
+                }
         }
         .commands {
             CommandGroup(after: .newItem) {
@@ -60,6 +67,19 @@ struct PageLumenApp: App {
         Settings {
             SettingsView()
                 .environmentObject(store)
+        }
+
+        MenuBarExtra("PageLumen", systemImage: "doc.text.magnifyingglass") {
+            Button("Capture Selected Region") {
+                store.captureSelectedRegion()
+            }
+            Button("Capture Window") {
+                store.captureWindow()
+            }
+            Divider()
+            Button("Open PageLumen Window") {
+                NSApp.activate(ignoringOtherApps: true)
+            }
         }
     }
 }
