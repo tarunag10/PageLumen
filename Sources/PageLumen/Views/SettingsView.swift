@@ -7,6 +7,7 @@ struct SettingsView: View {
     @AppStorage("ocrProfile") private var ocrProfile = "General"
     @AppStorage("languageHint") private var languageHint = "Automatic"
     @AppStorage("boostContrast") private var boostContrast = false
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var isShowingForgetConfirmation = false
 
     var body: some View {
@@ -59,6 +60,18 @@ struct SettingsView: View {
                         AccessibleStyle.boostContrast = newValue
                     }
                 Text("Boosts border and panel contrast for low-vision users.")
+                    .font(.callout)
+                    .foregroundStyle(.primary)
+            }
+
+            Section("Onboarding") {
+                Toggle("Show welcome screen on launch", isOn: showOnLaunchBinding)
+                Button {
+                    NotificationCenter.default.post(name: .pageLumenShowOnboardingRequest, object: nil)
+                } label: {
+                    Label("Show welcome screen now", systemImage: "hand.wave")
+                }
+                Text("Uncheck \"Show welcome screen on launch\" to see the introduction again the next time you open PageLumen.")
                     .font(.callout)
                     .foregroundStyle(.primary)
             }
@@ -137,5 +150,12 @@ struct SettingsView: View {
             store.exportOptions[keyPath: keyPath] = newValue
             store.persistExportDefaults()
         }
+    }
+
+    private var showOnLaunchBinding: Binding<Bool> {
+        Binding(
+            get: { !hasSeenOnboarding },
+            set: { newValue in hasSeenOnboarding = !newValue }
+        )
     }
 }

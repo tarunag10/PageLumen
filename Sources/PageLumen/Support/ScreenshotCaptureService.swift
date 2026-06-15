@@ -1,3 +1,5 @@
+import AppKit
+import CoreGraphics
 import Foundation
 
 enum ScreenshotCaptureMode {
@@ -30,13 +32,24 @@ enum ScreenshotCaptureError: LocalizedError {
 
 struct ScreenshotCaptureService {
     func capture(mode: ScreenshotCaptureMode) async throws -> URL {
+        // Prompt the system for screen-capture access on first use. The
+        // `screencapture` binary requires this TCC permission; calling the
+        // accessor surfaces the standard system prompt the first time the
+        // user invokes capture. Subsequent invocations are no-ops if access
+        // has already been granted.
+        _ = CGRequestScreenCaptureAccess()
+
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("\(mode.filePrefix)-\(UUID().uuidString)")
             .appendingPathExtension("png")
 
+        return try await legacyCapture(mode: mode, outputURL: url)
+    }
+
+    private func legacyCapture(mode: ScreenshotCaptureMode, outputURL: URL) async throws -> URL {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = arguments(for: mode, output: url)
+        process.arguments = arguments(for: mode, output: outputURL)
 
         try process.run()
         process.waitUntilExit()
@@ -45,11 +58,11 @@ struct ScreenshotCaptureService {
             throw ScreenshotCaptureError.commandFailed(process.terminationStatus)
         }
 
-        guard FileManager.default.fileExists(atPath: url.path) else {
+        guard FileManager.default.fileExists(atPath: outputURL.path) else {
             throw ScreenshotCaptureError.missingOutput
         }
 
-        return url
+        return outputURL
     }
 
     private func arguments(for mode: ScreenshotCaptureMode, output: URL) -> [String] {

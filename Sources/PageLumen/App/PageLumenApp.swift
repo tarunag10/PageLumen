@@ -13,12 +13,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 struct PageLumenApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var store = DocumentStore()
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @State private var isShowingOnboarding = false
 
     var body: some Scene {
         WindowGroup("PageLumen", id: "main") {
             ContentView()
                 .environmentObject(store)
                 .frame(minWidth: 1_120, minHeight: 720)
+                .sheet(isPresented: $isShowingOnboarding) {
+                    OnboardingView(isPresented: $isShowingOnboarding)
+                }
+                .onAppear {
+                    if !hasSeenOnboarding {
+                        isShowingOnboarding = true
+                    }
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .pageLumenShowOnboardingRequest)) { _ in
+                    isShowingOnboarding = true
+                }
         }
         .commands {
             CommandGroup(after: .newItem) {
