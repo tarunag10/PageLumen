@@ -176,6 +176,11 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
             return (input.pageNumber, blocks)
         }
         if let cgImage = input.cgImage {
+            if #available(macOS 26.0, *),
+               let structuredBlocks = try? await recognizeStructured(in: cgImage, pageNumber: input.pageNumber, pageSize: input.pageSize),
+               !structuredBlocks.isEmpty {
+                return (input.pageNumber, structuredBlocks)
+            }
             do {
                 let blocks = try await recognizeText(in: cgImage, pageNumber: input.pageNumber, pageSize: input.pageSize)
                 return (input.pageNumber, blocks)
@@ -234,7 +239,14 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         await onProgress?(document)
         try Task.checkCancellation()
 
-        let blocks = try await recognizeText(in: cgImage, pageNumber: 1, pageSize: pageSize)
+        let blocks: [TextBlock]
+        if #available(macOS 26.0, *),
+           let structuredBlocks = try? await recognizeStructured(in: cgImage, pageNumber: 1, pageSize: pageSize),
+           !structuredBlocks.isEmpty {
+            blocks = structuredBlocks
+        } else {
+            blocks = try await recognizeText(in: cgImage, pageNumber: 1, pageSize: pageSize)
+        }
         document.pages[0].ocrStatus = .complete
         document.pages[0].blocks = blocks
         document.processingStatus = .complete
@@ -242,6 +254,84 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         let analyzed = analyzer.analyze(document: document)
         await onProgress?(analyzed)
         return analyzed
+    }
+
+    @available(macOS 26.0, *)
+    private func recognizeStructured(in cgImage: CGImage, pageNumber: Int, pageSize: CGSize) async throws -> [TextBlock] {
+        var request = Vision.RecognizeDocumentsRequest()
+        request.textRecognitionOptions.automaticallyDetectLanguage = true
+        request.textRecognitionOptions.useLanguageCorrection = true
+
+        let observations = try await request.perform(on: cgImage, orientation: .up)
+
+        var blocks: [TextBlock] = []
+        var index = 0
+        for observation in observations {
+            let container = observation.document
+
+            if let title = container.title {
+                let text = title.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !text.isEmpty {
+                    blocks.append(TextBlock(
+                        pageNumber: pageNumber,
+                        type: .heading,
+                        text: text,
+                        bounds: boundingBox(for: title.boundingRegion, pageSize: pageSize),
+                        confidence: Double(observation.confidence),
+                        readingOrderIndex: index,
+                        metadata: [
+                            "source": BlockSource.visionOCR.metadataValue,
+                            "structured-recognition": "title"
+                        ]
+                    ))
+                    index += 1
+                }
+            }
+
+            for paragraph in container.paragraphs {
+                let text = paragraph.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !text.isEmpty else { continue }
+                blocks.append(TextBlock(
+                    pageNumber: pageNumber,
+                    type: .paragraph,
+                    text: text,
+                    bounds: boundingBox(for: paragraph.boundingRegion, pageSize: pageSize),
+                    confidence: Double(observation.confidence),
+                    readingOrderIndex: index,
+                    metadata: [
+                        "source": BlockSource.visionOCR.metadataValue,
+                        "structured-recognition": "paragraph"
+                    ]
+                ))
+                index += 1
+            }
+        }
+
+        return blocks
+    }
+
+    @available(macOS 26.0, *)
+    private func boundingBox(for region: Vision.NormalizedRegion, pageSize: CGSize) -> BoundingBox {
+        let points = region.normalizedPoints
+        guard !points.isEmpty else {
+            return BoundingBox(x: 0, y: 0, width: 0, height: 0)
+        }
+        var minX: Float = .greatestFiniteMagnitude
+        var minY: Float = .greatestFiniteMagnitude
+        var maxX: Float = -.greatestFiniteMagnitude
+        var maxY: Float = -.greatestFiniteMagnitude
+        for point in points {
+            minX = min(minX, point.x)
+            minY = min(minY, point.y)
+            maxX = max(maxX, point.x)
+            maxY = max(maxY, point.y)
+        }
+        return BoundingBox(
+            x: CGFloat(minX) * pageSize.width,
+            y: CGFloat(1 - maxY) * pageSize.height,
+            width: CGFloat(maxX - minX) * pageSize.width,
+            height: CGFloat(maxY - minY) * pageSize.height
+        )
     }
 
     private func recognizeText(in cgImage: CGImage, pageNumber: Int, pageSize: CGSize) async throws -> [TextBlock] {

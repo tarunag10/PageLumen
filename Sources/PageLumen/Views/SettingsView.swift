@@ -1,3 +1,4 @@
+import AVFoundation
 import PageLumenCore
 import SwiftUI
 
@@ -138,6 +139,47 @@ struct SettingsView: View {
                     .font(.callout)
                     .foregroundStyle(.primary)
             }
+
+            Section("Translation") {
+                Picker("Target language", selection: translationLanguageBinding) {
+                    Text("English").tag("en")
+                    Text("Spanish").tag("es")
+                    Text("French").tag("fr")
+                    Text("Hindi").tag("hi")
+                    Text("German").tag("de")
+                    Text("Japanese").tag("ja")
+                    Text("Chinese (Simplified)").tag("zh-Hans")
+                }
+                .disabled(!translationAvailable)
+
+                if !translationAvailable {
+                    Label("Requires macOS 15 or later", systemImage: "exclamationmark.triangle")
+                        .font(.caption)
+                        .foregroundStyle(.primary)
+                }
+
+                Text("On-device translation, private and free. The selected language is used by the Translate & Export action.")
+                    .font(.callout)
+                    .foregroundStyle(.primary)
+            }
+
+            Section("Speech") {
+                Toggle("Use Personal Voice if available", isOn: usePersonalVoiceBinding)
+                if !personalVoiceAvailable {
+                    Label("Personal Voice is not enrolled on this Mac. Set it up in System Settings > Accessibility > Personal Voice.", systemImage: "info.circle")
+                        .font(.caption)
+                        .foregroundStyle(.primary)
+                }
+                Picker("Voice", selection: speechVoiceBinding) {
+                    Text("Default").tag("default")
+                    if personalVoiceAvailable {
+                        Text("Personal Voice").tag("personal")
+                    }
+                    ForEach(AVSpeechSynthesisVoice.speechVoices().filter { $0.language.starts(with: "en") }, id: \.identifier) { voice in
+                        Text("\(voice.name) (\(voice.language))").tag(voice.identifier)
+                    }
+                }
+            }
         }
         .padding(24)
         .frame(width: 580)
@@ -157,5 +199,35 @@ struct SettingsView: View {
             get: { !hasSeenOnboarding },
             set: { newValue in hasSeenOnboarding = !newValue }
         )
+    }
+
+    private var translationLanguageBinding: Binding<String> {
+        Binding(
+            get: { UserDefaults.standard.string(forKey: "translationTargetLanguage") ?? "en" },
+            set: { UserDefaults.standard.set($0, forKey: "translationTargetLanguage") }
+        )
+    }
+
+    private var usePersonalVoiceBinding: Binding<Bool> {
+        Binding(
+            get: { UserDefaults.standard.object(forKey: "usePersonalVoice") as? Bool ?? true },
+            set: { UserDefaults.standard.set($0, forKey: "usePersonalVoice") }
+        )
+    }
+
+    private var speechVoiceBinding: Binding<String> {
+        Binding(
+            get: { UserDefaults.standard.string(forKey: "speechVoiceIdentifier") ?? "default" },
+            set: { UserDefaults.standard.set($0, forKey: "speechVoiceIdentifier") }
+        )
+    }
+
+    private var translationAvailable: Bool {
+        if #available(macOS 15.0, *) { return true }
+        return false
+    }
+
+    private var personalVoiceAvailable: Bool {
+        AVSpeechSynthesisVoice.speechVoices().contains { $0.voiceTraits.contains(.isPersonalVoice) }
     }
 }

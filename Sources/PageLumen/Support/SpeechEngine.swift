@@ -17,8 +17,24 @@ final class SpeechEngine: NSObject, ObservableObject, AVSpeechSynthesizerDelegat
         let utterance = AVSpeechUtterance(string: text)
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.92
         utterance.pitchMultiplier = 1.0
+        utterance.voice = selectedVoice()
         synthesizer.speak(utterance)
         isSpeaking = true
+    }
+
+    private func selectedVoice() -> AVSpeechSynthesisVoice? {
+        let defaults = UserDefaults.standard
+        let usePersonalVoice = defaults.object(forKey: "usePersonalVoice") as? Bool ?? true
+        if usePersonalVoice,
+           let personalVoice = AVSpeechSynthesisVoice.speechVoices().first(where: { $0.voiceTraits.contains(.isPersonalVoice) }) {
+            return personalVoice
+        }
+        if let selectedID = defaults.string(forKey: "speechVoiceIdentifier"),
+           let selectedVoice = AVSpeechSynthesisVoice(identifier: selectedID),
+           !selectedVoice.voiceTraits.contains(.isPersonalVoice) {
+            return selectedVoice
+        }
+        return AVSpeechSynthesisVoice(language: "en-US")
     }
 
     func stop() {

@@ -529,9 +529,43 @@ final class DocumentStore: ObservableObject {
             exportAudio()
         case .docx:
             exportDOCX()
+        case .translated:
+            exportTranslated()
         default:
             exportData(format: format)
         }
+    }
+
+    private func exportTranslated() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = []
+        panel.nameFieldStringValue = "\(document.title).md"
+        panel.message = "Translate the document to the language chosen in Settings, then export as Markdown."
+
+        guard panel.runModal() == .OK, let url = panel.url else {
+            return
+        }
+
+        let targetLanguage = Self.targetLanguageFromDefaults()
+        let options = exportOptions
+        let sourceDocument = document
+
+        Task { @MainActor in
+            do {
+                let translatedDoc = try await TranslationService().translate(document: sourceDocument, to: targetLanguage)
+                let markdown = ExportEngine().markdown(for: translatedDoc, options: options)
+                let data = Data(markdown.utf8)
+                try data.write(to: url, options: .atomic)
+                statusMessage = "Exported Translated Markdown to \(url.lastPathComponent)"
+            } catch {
+                statusMessage = "Translation export failed: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    private static func targetLanguageFromDefaults() -> Locale.Language {
+        let code = UserDefaults.standard.string(forKey: "translationTargetLanguage") ?? "en"
+        return Locale.Language(identifier: code)
     }
 
     private func exportData(format: ExportFormat) {

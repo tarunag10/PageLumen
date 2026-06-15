@@ -81,6 +81,33 @@ final class DocumentProcessorTests: XCTestCase {
     }
 
     @MainActor
+    func testStructuredRecognitionProducesBlocks() async throws {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("png")
+        let size = CGSize(width: 400, height: 200)
+        let image = NSImage(size: size)
+        image.lockFocus()
+        NSColor.white.setFill()
+        NSRect(origin: .zero, size: size).fill()
+        let attrs: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 24), .foregroundColor: NSColor.black]
+        NSAttributedString(string: "Structured test text", attributes: attrs).draw(at: CGPoint(x: 20, y: 100))
+        image.unlockFocus()
+        guard let tiff = image.tiffRepresentation,
+              let bitmap = NSBitmapImageRep(data: tiff),
+              let data = bitmap.representation(using: .png, properties: [:]) else {
+            XCTFail("Could not create test image")
+            return
+        }
+        try data.write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let document = try await DocumentProcessor().process(url: url)
+        let allText = document.allBlocks.map(\.text).joined(separator: " ")
+        XCTAssertTrue(allText.contains("Structured") || allText.contains("test"), "Expected some recognized text, got: \(allText)")
+    }
+
+    @MainActor
     private func makePDF(containing text: String) throws -> URL {
         try makePDF(containingPages: [text])
     }

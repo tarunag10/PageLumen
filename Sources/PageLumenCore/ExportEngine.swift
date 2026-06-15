@@ -12,6 +12,7 @@ public enum ExportFormat: String, CaseIterable, Identifiable, Sendable {
     case accessibilityReport = "Accessibility Report"
     case audio = "Audio"
     case docx = "DOCX"
+    case translated = "Translated"
 
     public var id: String { rawValue }
 
@@ -26,6 +27,7 @@ public enum ExportFormat: String, CaseIterable, Identifiable, Sendable {
         case .accessibilityReport: return "md"
         case .audio: return "m4a"
         case .docx: return "docx"
+        case .translated: return "md"
         }
     }
 }
@@ -414,6 +416,8 @@ public struct ExportEngine: Sendable {
             return Data(audioPlaceholder(for: document, options: options).utf8)
         case .docx:
             return Data(docxPlaceholder(for: document, options: options).utf8)
+        case .translated:
+            return Data()
         }
     }
 

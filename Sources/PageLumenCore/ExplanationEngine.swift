@@ -1,5 +1,17 @@
 import Foundation
 
+public struct SummaryOptions: Equatable, Sendable {
+    public var useIntelligence: Bool
+    public var maxSentences: Int
+
+    public init(useIntelligence: Bool = false, maxSentences: Int = 0) {
+        self.useIntelligence = useIntelligence
+        self.maxSentences = maxSentences
+    }
+
+    public static let `default` = SummaryOptions(useIntelligence: false, maxSentences: 0)
+}
+
 public struct ExplanationEngine: Sendable {
     public init() {}
 
@@ -55,6 +67,20 @@ public struct ExplanationEngine: Sendable {
             summary += " Some pages include confidence warnings, so review the source before sharing."
         }
         return summary
+    }
+
+    public func summary(for document: ReaderDocument, length: SummaryLength, options: SummaryOptions) async -> String {
+        let fallback = self.summary(for: document, length: length)
+        guard options.useIntelligence else { return fallback }
+
+        let explainer = IntelligentExplainer()
+        guard case .available = explainer.availability else { return fallback }
+
+        let intelligent = await explainer.summary(for: document, length: length)
+        if intelligent.isEmpty {
+            return fallback
+        }
+        return intelligent
     }
 
     public func betterSummary(for document: ReaderDocument, length: SummaryLength) -> String {
