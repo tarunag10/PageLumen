@@ -9,37 +9,49 @@ struct OnboardingView: View {
     @ScaledMetric(relativeTo: .title) private var cardIconSize: CGFloat = 36
 
     var body: some View {
-        VStack(spacing: 24) {
-            VStack(spacing: 6) {
+        VStack(spacing: 26) {
+            VStack(spacing: 8) {
+                ZStack {
+                    Circle()
+                        .fill(AccessibleStyle.accent.opacity(0.16))
+                        .frame(width: 92, height: 92)
+                        .blur(radius: 6)
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .font(.system(size: 44, weight: .semibold))
+                        .foregroundStyle(AccessibleStyle.accentGradient)
+                }
+
                 Text("Welcome to PageLumen")
                     .font(.largeTitle.weight(.bold))
+                    .foregroundStyle(AccessibleStyle.primaryText)
                     .multilineTextAlignment(.center)
+
                 Text("Turn any PDF, image, scan, or slide into a clean, readable, accessible document — all on your Mac.")
                     .font(.title3)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.top, 8)
+            .padding(.top, 4)
 
-            VStack(spacing: 16) {
+            VStack(spacing: 14) {
                 OnboardingCard(
                     icon: "lock.shield",
                     title: "Privacy first",
                     message: "Documents stay on this Mac. There is no cloud upload, no telemetry, and no third-party SDK.",
-                    tint: .green
+                    tint: AccessibleStyle.success
                 )
                 OnboardingCard(
                     icon: "rectangle.stack.badge.person.crop",
                     title: "Four-step workflow",
                     message: "Add a document, let PageLumen extract and order the text, review anything that needs a second look, then export to Markdown, HTML, PDF, DOCX, or audio.",
-                    tint: .accentColor
+                    tint: AccessibleStyle.accentBright
                 )
                 OnboardingCard(
                     icon: "accessibility",
                     title: "Built for accessibility",
                     message: "High-contrast mode, VoiceOver labels, scalable type, and an in-app speech engine are on by default.",
-                    tint: .blue
+                    tint: AccessibleStyle.info
                 )
             }
 
@@ -50,7 +62,7 @@ struct OnboardingView: View {
                 Text("Get Started")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
+                    .padding(.vertical, 7)
             }
             .keyboardShortcut(.defaultAction)
             .controlSize(.large)
@@ -64,9 +76,13 @@ struct OnboardingView: View {
             .buttonStyle(.link)
             .accessibilityHint("Dismiss the welcome screen now. You can reopen it from Settings.")
         }
-        .padding(32)
-        .frame(width: 520)
+        .padding(36)
+        .frame(width: 540)
         .background(AccessibleStyle.appBackground)
+        .overlay {
+            RoundedRectangle(cornerRadius: AccessibleStyle.cornerRadius)
+                .stroke(AccessibleStyle.border, lineWidth: 1)
+        }
     }
 }
 
@@ -80,26 +96,33 @@ private struct OnboardingCard: View {
     let tint: Color
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image(systemName: icon)
-                .font(.system(size: cardIconSize, weight: .regular))
-                .foregroundStyle(tint)
-                .frame(width: 48, height: 48)
-                .background(tint.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
-                .accessibilityHidden(true)
+        HStack(alignment: .top, spacing: 16) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(tint.opacity(0.16))
+                Image(systemName: icon)
+                    .font(.system(size: cardIconSize, weight: .regular))
+                    .foregroundStyle(tint)
+            }
+            .frame(width: 52, height: 52)
+            .overlay {
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(tint.opacity(0.35), lineWidth: 1)
+            }
+            .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.headline)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.primaryText)
                 Text(message)
                     .font(.callout)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(16)
+        .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(AccessibleStyle.panelBackground, in: RoundedRectangle(cornerRadius: AccessibleStyle.cornerRadius))
         .overlay {

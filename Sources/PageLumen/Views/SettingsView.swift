@@ -19,7 +19,7 @@ struct SettingsView: View {
                     Label("PageLumen Preferences", systemImage: "slider.horizontal.3")
                         .font(.title2.weight(.semibold))
                     Text("Tune recognition, export defaults, and release-readiness checks for the current native workflow.")
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(AccessibleStyle.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(.vertical, 4)
@@ -29,7 +29,7 @@ struct SettingsView: View {
                 Toggle("Privacy mode", isOn: $privacyMode)
                 Text("Privacy mode keeps the MVP workflow local and disables future network-assisted processing by default.")
                     .font(.callout)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
             }
 
             Section("Library") {
@@ -53,7 +53,7 @@ struct SettingsView: View {
                 }
                 Text("Recent documents are stored only in this Mac's memory. Use Forget all to clear them when sharing the device.")
                     .font(.callout)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
             }
 
             Section("Display") {
@@ -63,7 +63,7 @@ struct SettingsView: View {
                     }
                 Text("Boosts border and panel contrast for low-vision users.")
                     .font(.callout)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
             }
             .popoverTip(BoostContrastTip(), arrowEdge: .top)
 
@@ -76,7 +76,7 @@ struct SettingsView: View {
                 }
                 Text("Uncheck \"Show welcome screen on launch\" to see the introduction again the next time you open PageLumen.")
                     .font(.callout)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
             }
 
             Section("Recognition") {
@@ -112,7 +112,7 @@ struct SettingsView: View {
 
                 Text("These defaults are used by the export screen and saved for future sessions.")
                     .font(.callout)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
             }
 
             Section("Review Status") {
@@ -120,7 +120,7 @@ struct SettingsView: View {
                     Label(store.extractionReadinessLabel, systemImage: store.reviewIssueCount == 0 ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
                     Spacer()
                     Text("\(store.document.pageCount) page\(store.document.pageCount == 1 ? "" : "s")")
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(AccessibleStyle.secondaryText)
                 }
 
                 if store.reviewIssueCount > 0 {
@@ -135,11 +135,11 @@ struct SettingsView: View {
             Section("PRD Coverage") {
                 Text("Implemented locally: PDF/image import, paste image, batch import, screenshot capture, OCR, reading order, outline, editing, header/footer filtering, summaries, speech playback, Markdown/TXT/HTML/PDF/CSV/JSON exports, and privacy/profile settings.")
                     .font(.callout)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
 
                 Text("Longer-term roadmap: scanner/browser imports, trained layout models, full PDF/UA validation, advanced chart data extraction, audio-file export, EPUB/LMS/integration exports, and enterprise administration.")
                     .font(.callout)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
             }
 
             Section("Translation") {
@@ -157,12 +157,12 @@ struct SettingsView: View {
                 if !translationAvailable {
                     Label("Requires macOS 15 or later", systemImage: "exclamationmark.triangle")
                         .font(.caption)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(AccessibleStyle.secondaryText)
                 }
 
                 Text("On-device translation, private and free. The selected language is used by the Translate & Export action.")
                     .font(.callout)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
             }
 
             Section("Speech") {
@@ -170,7 +170,7 @@ struct SettingsView: View {
                 if !personalVoiceAvailable {
                     Label("Personal Voice is not enrolled on this Mac. Set it up in System Settings > Accessibility > Personal Voice.", systemImage: "info.circle")
                         .font(.caption)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(AccessibleStyle.secondaryText)
                 }
                 Picker("Voice", selection: speechVoiceBinding) {
                     Text("Default").tag("default")

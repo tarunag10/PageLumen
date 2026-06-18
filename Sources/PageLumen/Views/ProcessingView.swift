@@ -41,12 +41,12 @@ struct ProcessingView: View {
 
             if let activeDocument {
                 ScrollView {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 172), spacing: 14)], spacing: 14) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 180), spacing: 16)], spacing: 16) {
                         ForEach(activeDocument.pages) { page in
                             ProcessingPageCard(page: page)
                         }
                     }
-                    .padding(20)
+                    .padding(24)
                 }
             } else {
                 ContentUnavailableView {
@@ -57,17 +57,29 @@ struct ProcessingView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
+        .background(AccessibleStyle.appBackground)
     }
 
     private var header: some View {
-        HStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 5) {
+        HStack(spacing: 18) {
+            ZStack {
+                Circle()
+                    .fill(AccessibleStyle.accent.opacity(0.14))
+                    .frame(width: 44, height: 44)
+                Image(systemName: "text.viewfinder")
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(AccessibleStyle.accentBright)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.title3.weight(.semibold))
+                    .foregroundStyle(AccessibleStyle.primaryText)
                     .lineLimit(1)
 
                 Text(store.statusMessage)
-                    .foregroundStyle(.primary)
+                    .font(.callout)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
                     .lineLimit(2)
             }
 
@@ -75,11 +87,12 @@ struct ProcessingView: View {
 
             VStack(alignment: .trailing, spacing: 6) {
                 ProgressView(value: pageProgress)
-                    .frame(width: 180)
+                    .frame(width: 200)
+                    .tint(AccessibleStyle.accentBright)
 
                 Text(progressLabel)
                     .font(.caption)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
             }
 
             Button(role: .cancel) {
@@ -89,7 +102,7 @@ struct ProcessingView: View {
             }
             .disabled(!store.isProcessing)
         }
-        .padding(20)
+        .padding(22)
         .accessibleToolbarSurface()
     }
 
@@ -117,10 +130,10 @@ private struct ProcessingPageCard: View {
     @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(.background)
+                RoundedRectangle(cornerRadius: AccessibleStyle.innerCornerRadius)
+                    .fill(AccessibleStyle.elevatedBackground)
 
                 thumbnail
                     .padding(10)
@@ -128,23 +141,24 @@ private struct ProcessingPageCard: View {
             .aspectRatio(0.74, contentMode: .fit)
             .overlay(alignment: .topTrailing) {
                 statusBadge
-                    .padding(8)
+                    .padding(10)
             }
 
             HStack(spacing: 8) {
                 Text("Page \(page.pageNumber)")
                     .font(.headline)
+                    .foregroundStyle(AccessibleStyle.primaryText)
                     .lineLimit(1)
 
                 Spacer()
 
                 Label(page.ocrStatus.statusDescriptor.label, systemImage: page.ocrStatus.statusDescriptor.systemImage)
-                    .font(.caption)
+                    .font(.caption.weight(.medium))
                     .foregroundStyle(page.ocrStatus.statusDescriptor.tint)
                     .labelStyle(.titleAndIcon)
             }
         }
-        .padding(12)
+        .padding(14)
         .accessiblePanel()
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Page \(page.pageNumber), \(page.ocrStatus.statusDescriptor.label)")
@@ -156,9 +170,9 @@ private struct ProcessingPageCard: View {
             Image(nsImage: image)
                 .resizable()
                 .scaledToFit()
-                .clipShape(RoundedRectangle(cornerRadius: 5))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
                 .overlay {
-                    RoundedRectangle(cornerRadius: 5)
+                    RoundedRectangle(cornerRadius: 6)
                         .stroke(AccessibleStyle.border)
                 }
         } else {
@@ -168,10 +182,11 @@ private struct ProcessingPageCard: View {
                 // change with text-size settings.
                 Image(systemName: "doc.text.image")
                     .font(.system(size: 30))
+                    .foregroundStyle(AccessibleStyle.tertiaryText)
                 Text("Thumbnail pending")
                     .font(.caption)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
             }
-            .foregroundStyle(.primary)
         }
     }
 
@@ -180,13 +195,14 @@ private struct ProcessingPageCard: View {
             if page.ocrStatus == .processing {
                 ProgressView()
                     .controlSize(.small)
+                    .tint(AccessibleStyle.accentBright)
             } else {
                 Image(systemName: page.ocrStatus.statusDescriptor.systemImage)
                     .foregroundStyle(page.ocrStatus.statusDescriptor.tint)
             }
         }
-        .frame(width: 24, height: 24)
-        .background(AccessibleStyle.panelBackground, in: Circle())
+        .frame(width: 26, height: 26)
+        .background(AccessibleStyle.floatingBackground, in: Circle())
         .overlay {
             Circle()
                 .stroke(AccessibleStyle.border)

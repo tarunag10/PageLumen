@@ -22,8 +22,12 @@ struct PageLumenApp: App {
             ContentView()
                 .environment(store)
                 .frame(minWidth: 1_120, minHeight: 720)
+                .tint(AccessibleStyle.accent)
+                .preferredColorScheme(.dark)
                 .sheet(isPresented: $isShowingOnboarding) {
                     OnboardingView(isPresented: $isShowingOnboarding)
+                        .preferredColorScheme(.dark)
+                        .tint(AccessibleStyle.accent)
                 }
                 .onAppear {
                     if !hasSeenOnboarding {
@@ -67,6 +71,8 @@ struct PageLumenApp: App {
         Settings {
             SettingsView()
                 .environment(store)
+                .preferredColorScheme(.dark)
+                .tint(AccessibleStyle.accent)
         }
 
         MenuBarExtra("PageLumen", systemImage: "doc.text.magnifyingglass") {

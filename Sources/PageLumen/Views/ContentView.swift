@@ -11,14 +11,10 @@ struct ContentView: View {
     var body: some View {
         HStack(spacing: 0) {
             SidebarView()
-                .frame(width: 280)
-
-            Divider()
+                .frame(width: 264)
 
             VStack(spacing: 0) {
                 WorkflowHeader()
-
-                Divider()
 
                 Group {
                     switch store.selectedDestination ?? .home {
@@ -37,6 +33,7 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .background(AccessibleStyle.appBackground)
         .toolbar {
             ToolbarItemGroup {
                 Button {
@@ -54,6 +51,7 @@ struct ContentView: View {
                 if store.isProcessing {
                     ProgressView()
                         .controlSize(.small)
+                        .tint(AccessibleStyle.accentBright)
                 }
             }
         }
@@ -65,16 +63,13 @@ private struct WorkflowHeader: View {
     @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             StepPill(number: 1, title: "Add", destination: .home)
-            Divider()
-                .frame(height: 18)
+            StepConnector()
             StepPill(number: 2, title: "Process", destination: .processing)
-            Divider()
-                .frame(height: 18)
+            StepConnector()
             StepPill(number: 3, title: "Review", destination: .review)
-            Divider()
-                .frame(height: 18)
+            StepConnector()
             StepPill(number: 4, title: "Export", destination: .summaryExport)
 
             Spacer()
@@ -82,18 +77,19 @@ private struct WorkflowHeader: View {
             if store.isProcessing {
                 ProgressView()
                     .controlSize(.small)
+                    .tint(AccessibleStyle.accentBright)
                 Text("Processing locally")
                     .font(.callout)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
             } else {
                 Text(nextStepText)
                     .font(.callout)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
                     .lineLimit(1)
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 22)
+        .padding(.vertical, 14)
         .accessibleToolbarSurface()
     }
 
@@ -111,6 +107,14 @@ private struct WorkflowHeader: View {
     }
 }
 
+private struct StepConnector: View {
+    var body: some View {
+        Rectangle()
+            .fill(AccessibleStyle.border)
+            .frame(width: 18, height: 1)
+    }
+}
+
 private struct StepPill: View {
     @Environment(DocumentStore.self) private var store
     let number: Int
@@ -118,8 +122,8 @@ private struct StepPill: View {
     let destination: DocumentStore.Destination
     @AppStorage("boostContrast") private var boostContrast = false
     // ScaledMetric keeps the step indicator circle readable when the user
-    // increases text size. The base 22 pt is the default at standard sizes.
-    @ScaledMetric(relativeTo: .body) private var stepCircleSize: CGFloat = 22
+    // increases text size. The base 24 pt is the default at standard sizes.
+    @ScaledMetric(relativeTo: .body) private var stepCircleSize: CGFloat = 24
 
     private var isSelected: Bool {
         (store.selectedDestination ?? .home) == destination
@@ -129,20 +133,33 @@ private struct StepPill: View {
         Button {
             store.selectedDestination = destination
         } label: {
-            HStack(spacing: 8) {
-                Text("\(number)")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(isSelected ? .white : .primary)
-                    .frame(width: stepCircleSize, height: stepCircleSize)
-                    .background(isSelected ? AccessibleStyle.selected : AccessibleStyle.elevatedBackground, in: Circle())
-                    .overlay {
+            HStack(spacing: 9) {
+                ZStack {
+                    if isSelected {
                         Circle()
-                            .stroke(AccessibleStyle.border)
+                            .fill(AccessibleStyle.accentGradient)
+                        Circle()
+                            .fill(AccessibleStyle.accentBright.opacity(0.35))
+                            .blur(radius: 6)
+                            .scaleEffect(1.25)
+                    } else {
+                        Circle()
+                            .fill(AccessibleStyle.elevatedBackground)
                     }
+
+                    Text("\(number)")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(isSelected ? .white : AccessibleStyle.secondaryText)
+                }
+                .frame(width: stepCircleSize, height: stepCircleSize)
+                .overlay {
+                    Circle()
+                        .stroke(isSelected ? Color.clear : AccessibleStyle.border)
+                }
 
                 Text(title)
                     .font(.headline)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(isSelected ? AccessibleStyle.primaryText : AccessibleStyle.secondaryText)
             }
             .contentShape(Rectangle())
         }

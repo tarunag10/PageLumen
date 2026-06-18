@@ -16,11 +16,12 @@ struct PreviewPane: View {
                     ZStack(alignment: .topLeading) {
                         PreviewImage(data: page.thumbnailData)
                             .frame(width: 360, height: 470)
-                            .background(AccessibleStyle.panelBackground, in: RoundedRectangle(cornerRadius: 8))
+                            .background(AccessibleStyle.panelBackground, in: RoundedRectangle(cornerRadius: AccessibleStyle.innerCornerRadius))
                             .overlay {
-                                RoundedRectangle(cornerRadius: 8)
+                                RoundedRectangle(cornerRadius: AccessibleStyle.innerCornerRadius)
                                     .stroke(AccessibleStyle.border)
                             }
+                            .shadow(color: .black.opacity(0.3), radius: 14, y: 6)
 
                         if showReadingOrder {
                             ReadingOrderOverlay(page: page)
@@ -53,9 +54,10 @@ private struct PreviewImage: View {
                 // with text-size settings.
                 Image(systemName: "doc.text.image")
                     .font(.system(size: 48))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.tertiaryText)
                 Text("Source preview")
-                    .foregroundStyle(.primary)
+                    .font(.callout)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
             }
         }
     }
@@ -70,15 +72,15 @@ private struct ReadingOrderOverlay: View {
             ForEach(page.blocks) { block in
                 let rect = scaled(block.bounds, in: proxy.size)
                 ZStack(alignment: .topLeading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(AccessibleStyle.selected, lineWidth: 2)
-                        .background(AccessibleStyle.panelBackground)
+                    RoundedRectangle(cornerRadius: 5)
+                        .stroke(AccessibleStyle.accentBright, lineWidth: 2)
+                        .background(AccessibleStyle.accent.opacity(0.08))
                     Text("\(block.readingOrderIndex + 1)")
                         .font(.caption2.bold())
-                        .padding(4)
-                        .background(AccessibleStyle.selected, in: Circle())
+                        .padding(5)
+                        .background(AccessibleStyle.accentGradient, in: Circle())
                         .foregroundStyle(.white)
-                        .offset(x: -6, y: -6)
+                        .offset(x: -8, y: -8)
                 }
                 .frame(width: max(rect.width, 24), height: max(rect.height, 20))
                 .position(x: rect.midX, y: rect.midY)

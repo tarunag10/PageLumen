@@ -24,6 +24,7 @@ struct ReviewView: View {
                 .frame(minWidth: 460)
             }
         }
+        .background(AccessibleStyle.appBackground)
     }
 }
 
@@ -37,13 +38,14 @@ private struct ProcessingBanner: View {
         if store.isProcessing || store.document.pages.contains(where: { $0.warning != nil }) {
             HStack(spacing: 10) {
                 Image(systemName: store.isProcessing ? "hourglass" : "exclamationmark.triangle")
-                    .foregroundStyle(store.isProcessing ? Color.primary : AccessibleStyle.warning)
+                    .foregroundStyle(store.isProcessing ? AccessibleStyle.secondaryText : AccessibleStyle.warning)
                 Text(store.isProcessing ? "Processing locally..." : "Some OCR or reading-order confidence is low. Review before export.")
                     .font(.callout)
+                    .foregroundStyle(store.isProcessing ? AccessibleStyle.secondaryText : AccessibleStyle.primaryText)
                 Spacer()
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 11)
             .accessibleToolbarSurface()
         }
     }
@@ -58,12 +60,13 @@ private struct ReviewHeader: View {
         @Bindable var store = store
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text("Step 3: Review text")
                         .font(.headline)
+                        .foregroundStyle(AccessibleStyle.primaryText)
                     Text("Compare the preview with extracted blocks, then resolve anything marked for review.")
                         .font(.caption)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(AccessibleStyle.secondaryText)
                 }
 
                 Spacer()
@@ -90,8 +93,11 @@ private struct ReviewHeader: View {
 
                 if let page = store.selectedPage {
                     Text(page.layoutType.rawValue)
-                        .font(.caption)
-                        .foregroundStyle(.primary)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(AccessibleStyle.secondaryText)
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 4)
+                        .background(AccessibleStyle.elevatedBackground, in: Capsule())
                 }
 
                 Button {
@@ -129,10 +135,10 @@ private struct ReviewHeader: View {
 
                 Text(searchSummary)
                     .font(.caption)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
             }
         }
-        .padding(12)
+        .padding(14)
     }
 
     private var searchSummary: String {
@@ -161,14 +167,14 @@ private struct ReviewTrustBar: View {
                 title: "Pages",
                 value: "\(store.document.pageCount)",
                 systemImage: "doc.richtext",
-                tint: AccessibleStyle.selected
+                tint: AccessibleStyle.accentBright
             )
 
             TrustMetric(
                 title: "Reviewed",
                 value: "\(Int(store.reviewProgress.fractionComplete * 100))%",
                 systemImage: "checklist.checked",
-                tint: store.reviewProgress.fractionComplete >= 1 ? AccessibleStyle.success : AccessibleStyle.selected
+                tint: store.reviewProgress.fractionComplete >= 1 ? AccessibleStyle.success : AccessibleStyle.accentBright
             )
 
             Spacer()
@@ -203,8 +209,8 @@ private struct ReviewTrustBar: View {
                 Label("Mark Page Reviewed", systemImage: "checkmark.circle")
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 11)
         .accessibleToolbarSurface()
     }
 }
@@ -216,22 +222,29 @@ private struct TrustMetric: View {
     let tint: Color
 
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: systemImage)
-                .foregroundStyle(tint)
-                .frame(width: 18)
+        HStack(spacing: 10) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(tint.opacity(0.16))
+                Image(systemName: systemImage)
+                    .foregroundStyle(tint)
+                    .font(.system(size: 12, weight: .semibold))
+            }
+            .frame(width: 26, height: 26)
+
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
                     .font(.caption2)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
                 Text(value)
                     .font(.caption.weight(.semibold))
+                    .foregroundStyle(AccessibleStyle.primaryText)
                     .lineLimit(1)
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .accessiblePanel()
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .accessiblePanel(paddedShadow: false)
         .accessibilityElement(children: .combine)
     }
 }
@@ -280,8 +293,9 @@ private struct StructuredOutputView: View {
                     }
                 }
             }
-            .padding(20)
+            .padding(22)
         }
+        .background(AccessibleStyle.appBackground)
     }
 }
 
@@ -332,11 +346,12 @@ private struct EditableBlockRow: View {
 
                 Text("\(Int(block.confidence * 100))%")
                     .font(.caption)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
             }
 
             TextEditor(text: $draft)
                 .font(block.type == .heading ? .title3.weight(.semibold) : .body)
+                .foregroundStyle(AccessibleStyle.primaryText)
                 .frame(minHeight: block.type == .paragraph ? 74 : 44)
                 .accessibilityValue(block.text)
                 .onAppear { draft = block.text }
@@ -347,7 +362,7 @@ private struct EditableBlockRow: View {
                     scheduleCommit(newValue)
                 }
         }
-        .padding(12)
+        .padding(14)
         .accessiblePanel(borderColor: block.confidence < 0.7 ? AccessibleStyle.warning : AccessibleStyle.border)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(block.type.rawValue.capitalized) block, confidence \(Int(block.confidence * 100)) percent")
@@ -425,11 +440,23 @@ private struct EditableGeneratedNote: View {
     @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Label(title, systemImage: systemImage)
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 7)
+                        .fill(AccessibleStyle.accent.opacity(0.16))
+                    Image(systemName: systemImage)
+                        .foregroundStyle(AccessibleStyle.accentBright)
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                .frame(width: 24, height: 24)
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(AccessibleStyle.primaryText)
+            }
             TextEditor(text: $draft)
                 .font(.body)
+                .foregroundStyle(AccessibleStyle.primaryText)
                 .frame(minHeight: 72)
                 .onAppear { draft = text }
                 .onChange(of: text) { _, newValue in
@@ -439,8 +466,8 @@ private struct EditableGeneratedNote: View {
                     onChange(newValue)
                 }
         }
-        .padding(12)
-        .accessiblePanel(borderColor: AccessibleStyle.selected)
+        .padding(14)
+        .accessiblePanel(borderColor: AccessibleStyle.accent.opacity(0.5))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(title)
         .accessibilityHint("Edit the generated description before export.")

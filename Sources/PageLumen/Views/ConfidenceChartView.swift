@@ -10,12 +10,14 @@ struct ConfidenceChartView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Per-page OCR confidence")
                 .font(.headline)
+                .foregroundStyle(AccessibleStyle.primaryText)
             Chart(pageAverages) { entry in
                 BarMark(
                     x: .value("Page", entry.pageNumber),
                     y: .value("Confidence", entry.averageConfidence)
                 )
                 .foregroundStyle(entry.averageConfidence < lowConfidenceThreshold ? AccessibleStyle.warning : AccessibleStyle.success)
+                .cornerRadius(4)
             }
             .chartYScale(domain: 0...1)
             .chartYAxis {
@@ -26,9 +28,14 @@ struct ConfidenceChartView: View {
             .accessibilityChartDescriptor(self)
             Text("Bars below \(Int(lowConfidenceThreshold * 100))% are highlighted as low-confidence pages.")
                 .font(.caption)
-                .foregroundStyle(.primary)
+                .foregroundStyle(AccessibleStyle.secondaryText)
         }
-        .padding()
+        .padding(20)
+        .background(AccessibleStyle.panelBackground, in: RoundedRectangle(cornerRadius: AccessibleStyle.cornerRadius))
+        .overlay {
+            RoundedRectangle(cornerRadius: AccessibleStyle.cornerRadius)
+                .stroke(AccessibleStyle.border)
+        }
     }
 
     private struct PageAverage: Identifiable {
