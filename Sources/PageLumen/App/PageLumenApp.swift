@@ -35,6 +35,10 @@ struct PageLumenApp: App {
                 .onReceive(NotificationCenter.default.publisher(for: .pageLumenShowOnboardingRequest)) { _ in
                     isShowingOnboarding = true
                 }
+                .onReceive(NotificationCenter.default.publisher(for: .pageLumenOpenLibraryDocumentRequest)) { notification in
+                    guard let id = notification.userInfo?["id"] as? UUID else { return }
+                    store.openRecentDocument(id: id)
+                }
                 .task {
                     try? Tips.configure([
                         .displayFrequency(.immediate),

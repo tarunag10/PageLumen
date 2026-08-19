@@ -422,6 +422,15 @@ final class DocumentStore {
         statusMessage = "Viewing \(selectedDocument.title)"
     }
 
+    func openRecentDocument(id: UUID) {
+        guard let selected = recentDocuments.first(where: { $0.id == id })
+                ?? (try? persisting.load(id: id)) ?? nil else {
+            statusMessage = "That document is no longer in the local library."
+            return
+        }
+        selectRecentDocument(selected)
+    }
+
     func updateBlock(_ block: TextBlock, text: String) {
         guard let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == block.pageNumber }),
               let blockIndex = document.pages[pageIndex].blocks.firstIndex(where: { $0.id == block.id }) else {
