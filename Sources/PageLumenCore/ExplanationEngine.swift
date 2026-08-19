@@ -12,6 +12,32 @@ public struct SummaryOptions: Equatable, Sendable {
     public static let `default` = SummaryOptions(useIntelligence: false, maxSentences: 0)
 }
 
+public struct SummaryCitation: Codable, Equatable, Sendable, Identifiable {
+    public let id: String
+    public let pageNumber: Int
+    public let blockID: UUID
+    public let excerpt: String
+
+    public init(pageNumber: Int, blockID: UUID, excerpt: String) {
+        self.id = "page-\(pageNumber)-\(blockID.uuidString)"
+        self.pageNumber = pageNumber
+        self.blockID = blockID
+        self.excerpt = excerpt
+    }
+}
+
+public struct GroundedSummary: Codable, Equatable, Sendable {
+    public let text: String
+    public let citations: [SummaryCitation]
+    public let groundingWarning: String?
+
+    public init(text: String, citations: [SummaryCitation], groundingWarning: String? = nil) {
+        self.text = text
+        self.citations = citations
+        self.groundingWarning = groundingWarning
+    }
+}
+
 public struct ExplanationEngine: Sendable {
     public init() {}
 
@@ -147,6 +173,36 @@ public struct ExplanationEngine: Sendable {
             result += " Some pages include confidence warnings, so review the source before sharing."
         }
         return result
+    }
+
+    /// Produces the user-facing summary together with the exact extracted
+    /// blocks that support it. This is the contract used by AI and export
+    /// surfaces: a result is either cited or explicitly marked as needing
+    /// source verification.
+    public func groundedSummary(for document: ReaderDocument, length: SummaryLength) -> GroundedSummary {
+        let blocks = document.pages
+            .flatMap { DocumentEditing.exportableBlocks(on: $0, includeHeadersAndFooters: false) }
+        let text = betterSummary(for: document, length: length)
+        let selected = Array(blocks.prefix(maxCitationBlocks(for: length)))
+        let citations = selected.map {
+            SummaryCitation(
+                pageNumber: $0.pageNumber,
+                blockID: $0.id,
+                excerpt: String(cleanText($0.text).prefix(240))
+            )
+        }
+        let warning = citations.isEmpty || document.pages.contains(where: { $0.warning != nil })
+            ? "Verify this summary against the original source before relying on it."
+            : nil
+        return GroundedSummary(text: text, citations: citations, groundingWarning: warning)
+    }
+
+    private func maxCitationBlocks(for length: SummaryLength) -> Int {
+        switch length {
+        case .short: return 3
+        case .medium: return 8
+        case .detailed: return 24
+        }
     }
 
     private func budgets(for length: SummaryLength) -> (headings: Int, bodies: Int) {

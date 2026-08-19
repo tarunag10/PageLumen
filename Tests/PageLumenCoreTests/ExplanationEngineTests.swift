@@ -83,6 +83,26 @@ final class ExplanationEngineTests: XCTestCase {
         XCTAssertTrue(summary.contains("in another section"))
     }
 
+    func testGroundedSummaryCitesSourceBlocksAndPassesEvaluation() {
+        let document = SampleDataFactory.makeDemoDocument()
+        let grounded = ExplanationEngine().groundedSummary(for: document, length: .short)
+
+        XCTAssertFalse(grounded.text.isEmpty)
+        XCTAssertFalse(grounded.citations.isEmpty)
+        XCTAssertEqual(SummaryEvaluator.evaluate(grounded, against: document).citationCoverage, 1)
+        XCTAssertTrue(SummaryEvaluator.evaluate(grounded, against: document).passed)
+    }
+
+    func testGroundedSummaryWarnsWhenSourceHasPageWarning() {
+        var document = SampleDataFactory.makeDemoDocument()
+        document.pages[0].warning = "OCR confidence is limited"
+
+        let grounded = ExplanationEngine().groundedSummary(for: document, length: .short)
+
+        XCTAssertNotNil(grounded.groundingWarning)
+        XCTAssertTrue(SummaryEvaluator.evaluate(grounded, against: document).passed)
+    }
+
     private func makeMultiSectionDocument() -> ReaderDocument {
         let introHeading = TextBlock(pageNumber: 1, type: .heading, text: "Introduction", bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20), confidence: 0.95, readingOrderIndex: 0)
         let introBody = TextBlock(pageNumber: 1, type: .paragraph, text: "This document summarizes the audit findings.", bounds: BoundingBox(x: 0, y: 40, width: 100, height: 20), confidence: 0.95, readingOrderIndex: 1)
