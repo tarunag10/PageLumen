@@ -15,6 +15,7 @@ final class DocumentStoreTests: XCTestCase {
         UserDefaults.standard.removeObject(forKey: "includePageReferences")
         UserDefaults.standard.removeObject(forKey: "includeConfidenceNotes")
         UserDefaults.standard.removeObject(forKey: "includeHeadersAndFooters")
+        UserDefaults.standard.removeObject(forKey: "privacyMode")
         try await super.tearDown()
     }
 
@@ -31,6 +32,15 @@ final class DocumentStoreTests: XCTestCase {
         let store = DocumentStore(persisting: InMemoryPersisting())
 
         XCTAssertEqual(store.persistenceStatus, .available)
+    }
+
+    func testExportAvailabilityBlocksTranslationInPrivacyMode() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        UserDefaults.standard.set(true, forKey: "privacyMode")
+
+        XCTAssertTrue(store.canExport(.markdown))
+        XCTAssertFalse(store.canExport(.translated))
+        XCTAssertTrue(store.exportAvailabilityMessage(for: .translated).contains("Privacy"))
     }
 
     func testMoveBlockUpdatesReadingOrder() {

@@ -660,6 +660,22 @@ final class DocumentStore {
         }
     }
 
+    func canExport(_ format: ExportFormat) -> Bool {
+        guard format == .translated else { return !document.pages.isEmpty && !isProcessing }
+        guard !privacyMode, !document.pages.isEmpty, !isProcessing else { return false }
+        if #available(macOS 26.0, *) { return true }
+        return false
+    }
+
+    func exportAvailabilityMessage(for format: ExportFormat) -> String {
+        guard format == .translated else {
+            return canExport(format) ? "Save (format.rawValue)" : "Import and finish processing a document first"
+        }
+        if privacyMode { return "Disable Privacy mode to use translation export" }
+        if #available(macOS 26.0, *) { return "Translate the document and save Markdown" }
+        return "Translation export requires macOS 26 or later with an available language model"
+    }
+
     private func exportTranslated() {
         guard !privacyMode else {
             statusMessage = "Translated export is disabled in Privacy mode."

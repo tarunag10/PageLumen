@@ -170,6 +170,8 @@ struct SummaryExportView: View {
                                     .padding(.vertical, 8)
                             }
                             .buttonStyle(.bordered)
+                            .disabled(!store.canExport(format))
+                            .help(store.exportAvailabilityMessage(for: format))
                         }
                     }
                     .tint(AccessibleStyle.accent)
