@@ -5,6 +5,25 @@ import XCTest
 
 final class DocumentProcessorTests: XCTestCase {
     @MainActor
+    func testPNGDataUsesBoundedImageIOThumbnail() throws {
+        let image = NSImage(size: CGSize(width: 1_200, height: 800))
+        image.lockFocus()
+        NSColor.systemBlue.setFill()
+        NSRect(origin: .zero, size: image.size).fill()
+        image.unlockFocus()
+
+        guard let data = image.pngData(maxPixelSize: 160),
+              let thumbnail = NSImage(data: data) else {
+            XCTFail("Expected PNG thumbnail data")
+            return
+        }
+
+        XCTAssertLessThanOrEqual(thumbnail.size.width, 160)
+        XCTAssertLessThanOrEqual(thumbnail.size.height, 160)
+        XCTAssertGreaterThan(data.count, 0)
+    }
+
+    @MainActor
     func testEmbeddedPDFTextIsExtractedWithoutOCRFallback() async throws {
         let url = try makePDF(containing: "Embedded PDF text for PageLumen")
         defer { try? FileManager.default.removeItem(at: url) }

@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import ImageIO
 import PDFKit
 import Vision
 
@@ -442,24 +443,30 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
 
 public extension NSImage {
     func pngData(maxPixelSize: CGFloat? = nil) -> Data? {
-        let source: NSImage
-        if let maxPixelSize {
-            // TODO: Replace lockFocus-based resize with a CGImageSourceCreateThumbnailAtIndex
-            // + CGImageDestination path so we can avoid retaining a backing bitmap the size of
-            // the page and skip the main-thread AppKit round-trip.
-            let scale = min(maxPixelSize / max(size.width, size.height), 1)
-            source = NSImage(size: CGSize(width: size.width * scale, height: size.height * scale))
-            source.lockFocus()
-            draw(in: NSRect(origin: .zero, size: source.size))
-            source.unlockFocus()
-        } else {
-            source = self
-        }
-
-        guard let tiff = source.tiffRepresentation,
-              let bitmap = NSBitmapImageRep(data: tiff) else {
+        guard let tiff = tiffRepresentation,
+              let imageSource = CGImageSourceCreateWithData(tiff as CFData, nil) else {
             return nil
         }
-        return bitmap.representation(using: .png, properties: [:])
+
+        let source: CGImage?
+        if let maxPixelSize {
+            let options: [CFString: Any] = [
+                kCGImageSourceCreateThumbnailFromImageAlways: true,
+                kCGImageSourceCreateThumbnailWithTransform: true,
+                kCGImageSourceThumbnailMaxPixelSize: max(1, Int(maxPixelSize.rounded()))
+            ]
+            source = CGImageSourceCreateThumbnailAtIndex(imageSource, 0, options as CFDictionary)
+        } else {
+            source = CGImageSourceCreateImageAtIndex(imageSource, 0, nil)
+        }
+
+        guard let source,
+              let destinationData = CFDataCreateMutable(nil, 0),
+              let destination = CGImageDestinationCreateWithData(destinationData, "public.png" as CFString, 1, nil) else {
+            return nil
+        }
+        CGImageDestinationAddImage(destination, source, nil)
+        guard CGImageDestinationFinalize(destination) else { return nil }
+        return destinationData as Data
     }
 }

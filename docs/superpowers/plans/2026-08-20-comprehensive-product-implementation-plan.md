@@ -1,7 +1,7 @@
 # PageLumen Comprehensive Product Implementation Plan
 
 **Date:** 2026-08-20  
-**Status:** Proposed — no implementation work has started  
+**Status:** In progress — baseline, export, accessibility, UI/UX, and selected processing safeguards shipped; remaining gates are tracked explicitly below
 **Owner:** PageLumen product and engineering team  
 **Supersedes:** The prioritization and completion claims in `2026-06-15-audit-implementation-plan.md` and `2026-06-15-phase-8-modern-macos-features-plan.md` where they conflict with the current source. The earlier plans remain useful historical context.
 
@@ -180,7 +180,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [ ] Render only scanned/no-embedded-text pages, downsample to a documented OCR target DPI, and release each bitmap immediately after recognition.
 - [ ] Cap in-flight renders/OCR tasks using device capacity and a user-visible “processing pages x of y” state; permit cancellation at page boundaries.
 - [ ] Apply both pixel and estimated-memory budgets. Provide a user choice to reduce quality or import a page range rather than only rejecting a large document.
-- [ ] Replace the remaining `lockFocus` thumbnail path with ImageIO thumbnail generation.
+- [x] Replace the remaining `lockFocus` thumbnail path with ImageIO thumbnail generation. `NSImage.pngData(maxPixelSize:)` now uses `CGImageSourceCreateThumbnailAtIndex` and `CGImageDestination`, with a bounded-thumbnail regression test.
 - [ ] Add performance tests for a 10-page scan, a 50-page mixed PDF, and oversized/damaged PDFs. Record wall time and peak resident-memory target on reference hardware.
 
 **Initial quality targets:** no unbounded bitmap retention; cancellation latency under two seconds between pages; reference 50-page scan completes within a documented device-dependent budget without exceeding an agreed memory ceiling.
