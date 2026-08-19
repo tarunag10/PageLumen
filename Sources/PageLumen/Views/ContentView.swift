@@ -41,12 +41,14 @@ struct ContentView: View {
                 } label: {
                     Label("Open Files", systemImage: "doc.badge.plus")
                 }
+                .help("Open PDFs, scans, screenshots, or images")
 
                 Button {
                     store.pasteImageFromClipboard()
                 } label: {
                     Label("Paste Image", systemImage: "doc.on.clipboard")
                 }
+                .help("Import an image from the clipboard")
 
                 if store.isProcessing {
                     ProgressView()
@@ -131,6 +133,7 @@ private struct StepPill: View {
 
     var body: some View {
         Button {
+            guard store.canNavigate(to: destination) else { return }
             store.selectedDestination = destination
         } label: {
             HStack(spacing: 9) {
@@ -164,6 +167,9 @@ private struct StepPill: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .disabled(!store.canNavigate(to: destination))
         .accessibilityLabel("Step \(number), \(title)")
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
+        .accessibilityHint(store.canNavigate(to: destination) ? "Show the \(title.lowercased()) step." : "Complete an import before opening this step.")
     }
 }

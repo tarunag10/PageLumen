@@ -42,6 +42,21 @@ final class DocumentStore {
         UserDefaults.standard.bool(forKey: "useOnDeviceAI")
     }
 
+    var privacyMode: Bool {
+        UserDefaults.standard.object(forKey: "privacyMode") as? Bool ?? true
+    }
+
+    func canNavigate(to destination: Destination) -> Bool {
+        switch destination {
+        case .home, .processing:
+            return true
+        case .review:
+            return !document.pages.isEmpty
+        case .summaryExport:
+            return !document.pages.isEmpty && !isProcessing
+        }
+    }
+
     private let exportEngine = ExportEngine()
     private let explanationEngine = ExplanationEngine()
     private let screenshotCaptureService = ScreenshotCaptureService()
@@ -187,6 +202,14 @@ final class DocumentStore {
     }
 
     func jumpToNextSearchMatch() {
+        jumpToSearchMatch(direction: 1)
+    }
+
+    func jumpToPreviousSearchMatch() {
+        jumpToSearchMatch(direction: -1)
+    }
+
+    private func jumpToSearchMatch(direction: Int) {
         let query = reviewSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else {
             return
@@ -197,9 +220,11 @@ final class DocumentStore {
             return
         }
 
-        let next = matches.first { $0.pageNumber > selectedPageNumber } ?? matches.first
-        if let next {
-            selectedPageNumber = next.pageNumber
+        let match = direction > 0
+            ? (matches.first { $0.pageNumber > selectedPageNumber } ?? matches.first)
+            : (matches.reversed().first { $0.pageNumber < selectedPageNumber } ?? matches.last)
+        if let match {
+            selectedPageNumber = match.pageNumber
             selectedDestination = .review
         }
     }
@@ -603,6 +628,10 @@ final class DocumentStore {
     }
 
     private func exportTranslated() {
+        guard !privacyMode else {
+            statusMessage = "Translated export is disabled in Privacy mode."
+            return
+        }
         let panel = NSSavePanel()
         panel.allowedContentTypes = []
         panel.nameFieldStringValue = "\(document.title).md"

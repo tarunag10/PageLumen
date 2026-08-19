@@ -66,6 +66,21 @@ struct SummaryExportView: View {
                     }
                 }
 
+                if !store.statusMessage.isEmpty, store.statusMessage != "Ready" {
+                    Label(store.statusMessage, systemImage: statusSymbol)
+                        .font(.callout)
+                        .foregroundStyle(statusTint)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(statusTint.opacity(0.12), in: RoundedRectangle(cornerRadius: AccessibleStyle.innerCornerRadius))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: AccessibleStyle.innerCornerRadius)
+                                .stroke(statusTint.opacity(0.45))
+                        }
+                        .accessibilityElement(children: .combine)
+                }
+
                 Text(store.document.summary)
                     .font(.title3)
                     .foregroundStyle(AccessibleStyle.primaryText)
@@ -214,5 +229,15 @@ struct SummaryExportView: View {
     private func findingTitle(_ finding: AccessibilityFinding) -> String {
         let page = finding.pageNumber.map { "Page \($0): " } ?? ""
         return "\(finding.severity.rawValue) - \(page)\(finding.message)"
+    }
+
+    private var statusSymbol: String {
+        store.statusMessage.localizedCaseInsensitiveContains("failed") || store.statusMessage.localizedCaseInsensitiveContains("error")
+            ? "exclamationmark.triangle.fill"
+            : "checkmark.circle.fill"
+    }
+
+    private var statusTint: Color {
+        statusSymbol == "exclamationmark.triangle.fill" ? AccessibleStyle.warning : AccessibleStyle.success
     }
 }

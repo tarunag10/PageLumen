@@ -28,7 +28,10 @@ struct SettingsView: View {
 
             Section("Privacy") {
                 Toggle("Privacy mode", isOn: $privacyMode)
-                Text("Privacy mode keeps the MVP workflow local and disables future network-assisted processing by default.")
+                    .onChange(of: privacyMode) { _, enabled in
+                        store.statusMessage = enabled ? "Privacy mode enabled; translated export is disabled" : "Privacy mode disabled"
+                    }
+                Text("Privacy mode keeps imports local and disables translation export, which may use a network-assisted service.")
                     .font(.callout)
                     .foregroundStyle(AccessibleStyle.secondaryText)
             }

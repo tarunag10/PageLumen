@@ -87,16 +87,27 @@ struct PageLumenApp: App {
         }
 
         MenuBarExtra("PageLumen", systemImage: "doc.text.magnifyingglass") {
-            Button("Capture Selected Region") {
-                store.captureSelectedRegion()
-            }
-            Button("Capture Window") {
-                store.captureWindow()
-            }
-            Divider()
-            Button("Open PageLumen Window") {
-                NSApp.activate(ignoringOtherApps: true)
-            }
+            MenuBarActions()
+                .environment(store)
+        }
+    }
+}
+
+private struct MenuBarActions: View {
+    @Environment(DocumentStore.self) private var store
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Button("Capture Selected Region") {
+            store.captureSelectedRegion()
+        }
+        Button("Capture Window") {
+            store.captureWindow()
+        }
+        Divider()
+        Button("Open PageLumen Window") {
+            openWindow(id: "main")
+            NSApp.activate(ignoringOtherApps: true)
         }
     }
 }

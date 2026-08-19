@@ -137,6 +137,7 @@ struct HomeView: View {
         .accessibilityHint("Drop supported files here, or use the Open Files, Paste Image, Capture Screen, or Try Demo buttons.")
         .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
             var urls: [URL] = []
+            let lock = NSLock()
             let group = DispatchGroup()
 
             for provider in providers {
@@ -148,13 +149,16 @@ struct HomeView: View {
                           let url = URL(string: string) else {
                         return
                     }
+                    lock.lock()
                     urls.append(url)
+                    lock.unlock()
                 }
             }
 
             group.notify(queue: .main) {
-                store.startImport(urls: urls)
-                announceDropResult(count: urls.count)
+                let sortedURLs = urls.sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+                store.startImport(urls: sortedURLs)
+                announceDropResult(count: sortedURLs.count)
             }
 
             return true
@@ -173,7 +177,7 @@ struct HomeView: View {
     private func announceDropResult(count: Int) {
         guard count > 0 else { return }
         let announcement = "Imported \(count) file\(count == 1 ? "" : "s")"
-        let target: Any = NSApp.mainWindow ?? NSApp.mainMenu?.items.first?.view ?? NSApp
+        let target: Any = (NSApp.mainWindow ?? NSApp.mainMenu?.items.first?.view ?? NSApp) as Any
         NSAccessibility.post(
             element: target,
             notification: .announcementRequested,

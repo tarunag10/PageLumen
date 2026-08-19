@@ -217,6 +217,38 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertEqual(store.filteredSelectedPageBlocks.map(\.id).sorted(), expected.map(\.id).sorted())
     }
 
+    func testSearchNavigationMovesBackwardAndWraps() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        var document = makeSearchableDocument()
+        document.pages.append(ReaderPage(
+            pageNumber: 2,
+            size: PageSize(width: 400, height: 600),
+            blocks: [TextBlock(
+                pageNumber: 2,
+                type: .paragraph,
+                text: "A second import reference.",
+                bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20),
+                confidence: 0.9,
+                readingOrderIndex: 0
+            )]
+        ))
+        store.document = document
+        store.reviewSearchQuery = "import"
+
+        let matchingPages = Set(store.document.allBlocks
+            .filter { $0.text.localizedCaseInsensitiveContains("import") }
+            .map(\.pageNumber))
+        XCTAssertGreaterThanOrEqual(matchingPages.count, 2)
+
+        store.selectedPageNumber = matchingPages.max() ?? 1
+        store.jumpToPreviousSearchMatch()
+        XCTAssertEqual(store.selectedPageNumber, 1)
+
+        store.jumpToPreviousSearchMatch()
+        XCTAssertEqual(store.selectedPageNumber, 2)
+        XCTAssertEqual(store.selectedDestination, .review)
+    }
+
     func testSearchIndexInvalidatesOnDocumentChange() {
         let store = DocumentStore(persisting: InMemoryPersisting())
         store.document = makeSearchableDocument()

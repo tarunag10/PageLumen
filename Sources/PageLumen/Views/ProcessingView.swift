@@ -43,7 +43,10 @@ struct ProcessingView: View {
                 ScrollView {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 180), spacing: 16)], spacing: 16) {
                         ForEach(activeDocument.pages) { page in
-                            ProcessingPageCard(page: page)
+                            ProcessingPageCard(page: page) {
+                                store.selectedPageNumber = page.pageNumber
+                                store.selectedDestination = .review
+                            }
                         }
                     }
                     .padding(24)
@@ -127,10 +130,12 @@ struct ProcessingView: View {
 
 private struct ProcessingPageCard: View {
     let page: ReaderPage
+    let action: () -> Void
     @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: AccessibleStyle.innerCornerRadius)
                     .fill(AccessibleStyle.elevatedBackground)
@@ -157,11 +162,14 @@ private struct ProcessingPageCard: View {
                     .foregroundStyle(page.ocrStatus.statusDescriptor.tint)
                     .labelStyle(.titleAndIcon)
             }
+            }
+            .padding(14)
+            .accessiblePanel()
         }
-        .padding(14)
-        .accessiblePanel()
+        .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Page \(page.pageNumber), \(page.ocrStatus.statusDescriptor.label)")
+        .accessibilityHint("Open this page in Review.")
     }
 
     @ViewBuilder

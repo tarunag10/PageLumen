@@ -106,6 +106,8 @@ private struct ReviewHeader: View {
                     Label("Continue", systemImage: "arrow.right")
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(!store.canNavigate(to: .summaryExport))
+                .help(store.isProcessing ? "Finish processing before exporting" : "Open summary and export options")
             }
 
             HStack(spacing: 10) {
@@ -120,6 +122,13 @@ private struct ReviewHeader: View {
                     store.jumpToNextSearchMatch()
                 } label: {
                     Label("Next Match", systemImage: "arrow.down.doc")
+                }
+                .disabled(store.reviewSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                Button {
+                    store.jumpToPreviousSearchMatch()
+                } label: {
+                    Label("Previous Match", systemImage: "arrow.up.doc")
                 }
                 .disabled(store.reviewSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
