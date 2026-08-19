@@ -38,6 +38,7 @@ let package = Package(
                 "PageLumenCore",
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
             ],
+            exclude: ["__Snapshots__"],
             swiftSettings: [
                 .swiftLanguageMode(.v5)
             ]

@@ -1,0 +1,16 @@
+# PageLumen Demo
+
+## Page 1
+
+### IMPORT FLOW
+
+PageLumen turns inaccessible visual documents into readable, structured, audio-friendly, and exportable content.
+
+| Item | Status |
+| --- | --- |
+| PDF import | Ready |
+| OCR confidence | Visible |
+
+> This table appears to contain 3 rows and 2 columns. The visible header or first row reads: Item, Status.
+
+Figure: The chart appears to show the app workflow moving from extraction to review and export.

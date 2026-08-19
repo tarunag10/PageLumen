@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en" data-pagelumen-export="tagged-html">
+<head>
+<meta charset="utf-8">
+<meta name="generator" content="PageLumen">
+<title>PageLumen Demo</title>
+</head>
+<body>
+<a href="#content">Skip to content</a>
+<main id="content">
+<h1>PageLumen Demo</h1>
+<aside aria-label="Accessibility export status">
+<p>Ready for tagged export. No structural issues were found by PageLumen's automated checks.</p>
+</aside>
+<section aria-labelledby="page-1-heading" data-page="1">
+<h2 id="page-1-heading">Page 1</h2>
+<h3 id="block-UUID" data-page="1">IMPORT FLOW</h3>
+<p id="block-UUID" data-page="1" data-confidence="0.95">PageLumen turns inaccessible visual documents into readable, structured, audio-friendly, and exportable content.</p>
+<table data-page="1">
+<thead><tr><th scope="col">Item</th><th scope="col">Status</th></tr></thead>
+<tbody>
+<tr><td>PDF import</td><td>Ready</td></tr>
+<tr><td>OCR confidence</td><td>Visible</td></tr>
+</tbody></table>
+<p><strong>Table note:</strong> This table appears to contain 3 rows and 2 columns. The visible header or first row reads: Item, Status.</p>
+<figure id="block-UUID" data-page="1"><div role="img" aria-label="The chart appears to show the app workflow moving from extraction to review and export."></div><figcaption>The chart appears to show the app workflow moving from extraction to review and export.</figcaption></figure>
+</section>
+</main>
+</body>
+</html>
