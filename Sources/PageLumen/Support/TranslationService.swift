@@ -56,10 +56,19 @@ public final class TranslationService {
             installedSource: Locale.Language(identifier: "en"),
             target: target
         )
-        try await session.prepareTranslation()
-        let response = try await session.translate(text)
-        guard !response.targetText.isEmpty else { throw TranslationError.emptyResult }
-        return response.targetText
+        do {
+            try await session.prepareTranslation()
+            let response = try await session.translate(text)
+            guard !response.targetText.isEmpty else { throw TranslationError.emptyResult }
+            return response.targetText
+        } catch let error as TranslationError {
+            throw error
+        } catch {
+            // Normalize framework errors (for example, a language model that
+            // is not installed) so the UI and tests never depend on private
+            // Translation framework error types.
+            throw TranslationError.unavailable
+        }
         #else
         throw TranslationError.unavailable
         #endif
