@@ -15,6 +15,9 @@ packages:
   SnapshotTesting:
     url: https://github.com/pointfreeco/swift-snapshot-testing.git
     from: 1.17.0
+  Markdown:
+    url: https://github.com/swiftlang/swift-markdown.git
+    exactVersion: 0.8.0
 targets:
   PageLumenCore:
     type: framework
@@ -75,6 +78,7 @@ targets:
       - target: PageLumen
       - package: ZIPFoundation
       - package: SnapshotTesting
+      - package: Markdown
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.PageLumenCoreTests

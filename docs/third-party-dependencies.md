@@ -12,6 +12,22 @@ accessibility testing. Current golden tests cover the demo Markdown and tagged
 HTML exports in
 `Tests/PageLumenCoreTests/__Snapshots__/ExportSnapshotTests/`.
 
+## swift-markdown
+
+`swift-markdown` is pinned to `0.8.0` and is test-target-only. The focused
+`MarkdownContractTests` suite parses representative PageLumen Markdown output
+with Apple's/Swift.org's GitHub-Flavored Markdown AST and checks headings,
+tables, and block quotes. It does not change the production export path or
+send document data outside the local test process. If the package is removed,
+remove its single test dependency and contract suite; the production exporter
+continues to use its existing deterministic string writer.
+
+Run the focused parser contract with:
+
+```sh
+swift test --filter MarkdownContractTests
+```
+
 Run the focused tests with:
 
 ```sh

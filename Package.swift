@@ -13,7 +13,10 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.20"),
-        .package(url: "https://github.com/pointfreeco/swift-snapshot-testing.git", from: "1.17.0")
+        .package(url: "https://github.com/pointfreeco/swift-snapshot-testing.git", from: "1.17.0"),
+        // Test-only Markdown AST validation. Keep this exact so parser behavior
+        // cannot change without an intentional dependency review.
+        .package(url: "https://github.com/swiftlang/swift-markdown.git", exact: "0.8.0")
     ],
     targets: [
         .target(
@@ -36,7 +39,8 @@ let package = Package(
             name: "PageLumenCoreTests",
             dependencies: [
                 "PageLumenCore",
-                .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
+                .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
+                .product(name: "Markdown", package: "swift-markdown")
             ],
             exclude: ["__Snapshots__"],
             swiftSettings: [
