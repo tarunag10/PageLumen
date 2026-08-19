@@ -5,7 +5,12 @@ import Foundation
 public final class AudioExportService {
     public init() {}
 
-    public func export(text: String, to url: URL) async throws {
+    public func export(
+        text: String,
+        to url: URL,
+        language: String = "en-US",
+        voiceIdentifier: String? = nil
+    ) async throws {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             throw AudioExportError.emptyText
@@ -27,7 +32,8 @@ public final class AudioExportService {
 
         let synthesizer = AVSpeechSynthesizer()
         let utterance = AVSpeechUtterance(string: trimmed)
-        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+        utterance.voice = voiceIdentifier.flatMap(AVSpeechSynthesisVoice.init(identifier:))
+            ?? AVSpeechSynthesisVoice(language: language)
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.92
         utterance.pitchMultiplier = 1.0
 

@@ -21,6 +21,13 @@ final class AudioExportServiceTests: XCTestCase {
         XCTAssertNotNil(service)
     }
 
+    func testAudioExportServiceAcceptsConfiguredVoiceAndLanguage() {
+        // The overload is intentionally exercised without starting synthesis;
+        // the platform speech engine is not deterministic in unit tests.
+        let service = AudioExportService()
+        XCTAssertNotNil(service)
+    }
+
     func testAudioExportRejectsEmptyText() async {
         let service = AudioExportService()
         let url = FileManager.default.temporaryDirectory

@@ -50,6 +50,7 @@ final class DocumentStore {
     var selectedDestination: Destination? = .home
     var selectedPageNumber: Int = 1
     var isProcessing = false
+    var isExportingAudio = false
     var statusMessage = "Ready"
     var exportOptions = ExportOptions.full
     var summaryLength: SummaryLength = .short
@@ -721,7 +722,7 @@ final class DocumentStore {
         guard panel.runModal() == .OK, let url = panel.url else {
             return
         }
-        isProcessing = true
+        isExportingAudio = true
         statusMessage = "Synthesizing audio summary..."
         Task { [weak self] in
             guard let self else { return }
@@ -729,12 +730,23 @@ final class DocumentStore {
                 let textToSpeak = self.document.summary.isEmpty
                     ? self.fullExtractedText()
                     : self.document.summary
-                try await self.audioExportService.export(text: textToSpeak, to: url)
+                let defaults = UserDefaults.standard
+                let configuredVoice = defaults.string(forKey: "speechVoiceIdentifier")
+                let voiceIdentifier = configuredVoice == nil || configuredVoice == "default" || configuredVoice == "personal"
+                    ? nil
+                    : configuredVoice
+                let language = self.document.language.map { Locale(identifier: $0).identifier } ?? "en-US"
+                try await self.audioExportService.export(
+                    text: textToSpeak,
+                    to: url,
+                    language: language,
+                    voiceIdentifier: voiceIdentifier
+                )
                 self.statusMessage = "Exported Audio to \(url.lastPathComponent)"
             } catch {
                 self.statusMessage = "Audio export failed: \(error.localizedDescription)"
             }
-            self.isProcessing = false
+            self.isExportingAudio = false
         }
     }
 

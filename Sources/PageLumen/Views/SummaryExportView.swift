@@ -224,6 +224,9 @@ struct SummaryExportView: View {
             .frame(maxWidth: .infinity)
         }
         .background(AccessibleStyle.appBackground)
+        .onDisappear {
+            speech.stop()
+        }
     }
 
     private func findingTitle(_ finding: AccessibilityFinding) -> String {
