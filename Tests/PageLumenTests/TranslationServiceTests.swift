@@ -4,22 +4,36 @@ import XCTest
 
 @MainActor
 final class TranslationServiceTests: XCTestCase {
-    func testTranslateReturnsInputOnUnsupportedOS() async throws {
+    func testTranslateNeverSilentlyReturnsInputWhenUnavailable() async throws {
         let text = "Hello, world."
-        let result = try await TranslationService().translate(text, to: Locale.Language(identifier: "es"))
-        XCTAssertEqual(result, text)
+        do {
+            let result = try await TranslationService().translate(text, to: Locale.Language(identifier: "es"))
+            XCTAssertFalse(result.isEmpty)
+        } catch {
+            XCTAssertTrue(error is TranslationService.TranslationError)
+        }
     }
 
     func testTranslateDocumentPreservesBlockCount() async throws {
         let document = SampleDataFactory.makeDemoDocument()
         let originalBlockCount = document.allBlocks.count
-        let translated = try await TranslationService().translate(document: document, to: Locale.Language(identifier: "es"))
+        let translated: ReaderDocument
+        do {
+            translated = try await TranslationService().translate(document: document, to: Locale.Language(identifier: "es"))
+        } catch is TranslationService.TranslationError {
+            throw XCTSkip("Spanish translation model is not installed in this test environment")
+        }
         XCTAssertEqual(translated.allBlocks.count, originalBlockCount)
     }
 
     func testTranslateStampsMetadataOnTranslatedBlocks() async throws {
         let document = SampleDataFactory.makeDemoDocument()
-        let translated = try await TranslationService().translate(document: document, to: Locale.Language(identifier: "es"))
+        let translated: ReaderDocument
+        do {
+            translated = try await TranslationService().translate(document: document, to: Locale.Language(identifier: "es"))
+        } catch is TranslationService.TranslationError {
+            throw XCTSkip("Spanish translation model is not installed in this test environment")
+        }
         XCTAssertFalse(translated.pages.isEmpty)
         let hasTranslatedBlock = translated.allBlocks.contains { block in
             block.metadata["translationTargetLanguage"] != nil

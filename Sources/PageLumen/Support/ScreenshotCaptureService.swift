@@ -55,26 +55,16 @@ struct ScreenshotCaptureService {
         // accessor surfaces the standard system prompt the first time the
         // user invokes capture. Subsequent invocations are no-ops if access
         // has already been granted.
-        _ = CGRequestScreenCaptureAccess()
+        guard CGPreflightScreenCaptureAccess() || CGRequestScreenCaptureAccess() else {
+            throw ScreenshotCaptureError.permissionDenied
+        }
 
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("\(mode.filePrefix)-\(UUID().uuidString)")
             .appendingPathExtension("png")
 
-        // Try the modern ScreenCaptureKit path first. On any failure (the
-        // modern API is unavailable, returns an error, the user denies the
-        // picker, etc.) we fall through to the legacy `screencapture`
-        // shell-out so the feature still works everywhere.
-        if #available(macOS 14.0, *) {
-            do {
-                return try await captureWithScreenshotManager(mode: mode, outputURL: url)
-            } catch {
-                // Fall through to the legacy path so the user still gets a
-                // working capture even when the modern path can't deliver
-                // (missing permission, picker dismissed, etc.).
-            }
-        }
-
+        // `screencapture -i/-w` presents Apple's interactive region/window
+        // picker. Never silently choose the first on-screen window.
         return try await legacyCapture(mode: mode, outputURL: url)
     }
 

@@ -225,7 +225,7 @@ struct SettingsView: View {
     }
 
     private var translationAvailable: Bool {
-        if #available(macOS 15.0, *) { return true }
+        if #available(macOS 26.0, *) { return true }
         return false
     }
 

@@ -5,7 +5,7 @@ import SwiftData
 public final class SwiftDataPersisting: DocumentPersisting, @unchecked Sendable {
     private let modelContainer: ModelContainer
 
-    public init() {
+    public init() throws {
         let appSupportDir = FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)
             .first!
@@ -13,18 +13,10 @@ public final class SwiftDataPersisting: DocumentPersisting, @unchecked Sendable 
         try? FileManager.default.createDirectory(at: appDir, withIntermediateDirectories: true)
         let storeURL = appDir.appendingPathComponent("recents.store")
         let config = ModelConfiguration(url: storeURL)
-        // SwiftData must be able to initialize the on-disk store. If it
-        // cannot, the app cannot persist recents, so we surface a clear
-        // fatal error. DocumentStore.init falls back to FilePersisting on
-        // macOS versions that cannot import SwiftData at all.
-        do {
-            self.modelContainer = try ModelContainer(
-                for: PersistedDocument.self,
-                configurations: config
-            )
-        } catch {
-            fatalError("Failed to initialize SwiftData container: \(error)")
-        }
+        self.modelContainer = try ModelContainer(
+            for: PersistedDocument.self,
+            configurations: config
+        )
     }
 
     public init(configuration: ModelConfiguration) throws {

@@ -63,7 +63,7 @@ final class DocumentStore {
         if let persisting {
             self.persisting = persisting
         } else if #available(macOS 14.0, *) {
-            self.persisting = SwiftDataPersisting()
+            self.persisting = (try? SwiftDataPersisting()) ?? FilePersisting()
         } else {
             self.persisting = FilePersisting()
         }

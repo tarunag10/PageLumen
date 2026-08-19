@@ -159,7 +159,7 @@ struct SummaryExportView: View {
                     }
                     .tint(AccessibleStyle.accent)
 
-                    Text("Tagged HTML and Accessibility Report are the review-ready accessibility outputs. Accessible PDF is readable/selectable text, not full PDF/UA validation yet.")
+                    Text("Tagged HTML and Accessibility Report are the review-ready accessibility outputs. Readable PDF is selectable text, not full PDF/UA validation yet.")
                         .font(.callout)
                         .foregroundStyle(AccessibleStyle.secondaryText)
                 }

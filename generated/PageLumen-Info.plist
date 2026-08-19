@@ -28,5 +28,7 @@
 	<string></string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSScreenCaptureUsageDescription</key>
+	<string>PageLumen captures a selected screen region or window so it can be made readable and searchable on this Mac.</string>
 </dict>
 </plist>
