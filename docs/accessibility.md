@@ -24,7 +24,7 @@ The reading-order overlay is fully accessible:
 ## Tagged Export for Screen-Reader Users
 
 - The **Tagged HTML** export writes a structurally valid HTML document with `<h1>`…`<h6>`, lists, table headers, figure captions, and ARIA landmarks. It is the recommended format for users who want to take the document into another tool.
-- The **Accessible PDF** export goes through PDFKit and is designed to be more accessible than a flat text PDF. It is **not** PDF/UA compliant. See the limitations below.
+- The **Readable PDF** export goes through PDFKit and is designed to be more accessible than a flat text PDF. It is **not** PDF/UA compliant. See the limitations below.
 
 ## Known Limitations
 

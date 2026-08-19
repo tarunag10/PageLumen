@@ -8,10 +8,10 @@ This page summarises the privacy commitments that PageLumen makes to its users. 
 - The macOS sandbox entitlements in `Config/PageLumen.entitlements` restrict the app to user-selected files and explicit screen-capture requests.
 - No document content leaves the machine unless the user explicitly opts in to a future cloud feature that is not present in the current build.
 
-## No Third-Party SDKs
+## Small, Audited Open-Source Surface
 
-- PageLumen links only first-party Apple frameworks and standard library code. There is no analytics SDK, no ad SDK, and no third-party document-processing dependency in the build graph.
-- The SwiftPM `Package.swift` and XcodeGen `project.yml` are the only dependency manifests. Both are reviewed as part of the build.
+- PageLumen has no analytics SDK, ad SDK, or cloud-processing dependency. It uses the audited open-source packages ZIPFoundation (DOCX archive writing) and swift-snapshot-testing (test-only regression coverage); versions are pinned in `Package.resolved` and licenses are recorded in `THIRD_PARTY_NOTICES.md`.
+- The SwiftPM `Package.swift` and XcodeGen `project.yml` are reviewed together. No package downloads models or sends document content over the network.
 
 ## No Network Calls Without Explicit Consent
 
