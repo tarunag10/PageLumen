@@ -52,3 +52,25 @@ script/validate_release.sh
 ```
 
 The validator prints bundle metadata, signing details, entitlements, strict code-sign verification, and Gatekeeper status.
+
+## Archive diagnostics and evidence boundaries
+
+When diagnosing an archive failure, use an isolated derived-data directory and
+keep the signing mode explicit:
+
+```sh
+xcodebuild -project PageLumen.xcodeproj -scheme PageLumen \
+  -configuration Release -destination 'generic/platform=macOS' \
+  -derivedDataPath /private/tmp/PageLumenArchiveDerived \
+  -archivePath /private/tmp/PageLumenAdHocArchive.xcarchive archive \
+  CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO \
+  SKIP_INSTALL=NO ENABLE_HARDENED_RUNTIME=NO
+```
+
+An ad-hoc archive can prove that compilation, packaging, privacy resources,
+entitlements, and strict on-disk validation work. It cannot prove Developer ID
+trust, notarization, Gatekeeper acceptance, or live distribution. A Developer
+ID archive must be separately produced with the installed identity and then
+validated with `script/validate_release.sh`; if Xcode stalls during a nested
+SwiftPM bundle signing step, record that as a signing/keychain diagnostic and
+do not relabel the ad-hoc artifact as a distribution build.
