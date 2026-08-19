@@ -20,6 +20,10 @@ The reading-order overlay is fully accessible:
 - Each overlay rectangle has a label, a value, and a hint.
 - The overlay reacts to keyboard focus so a VoiceOver user can step through the blocks in the same order a sighted user reads them.
 - Block move actions (up / down) keep the VoiceOver cursor on the moved block.
+- Each extracted block has a **Copy accessible excerpt** action. The clipboard
+  text is plain text for broad assistive-technology compatibility and includes
+  a page and reading-order block citation; source URLs and OCR metadata are not
+  copied.
 
 ## Tagged Export for Screen-Reader Users
 
@@ -30,7 +34,9 @@ The reading-order overlay is fully accessible:
 
 - **Not PDF/UA compliant.** The current PDF export does not claim PDF/UA conformance. We are tracking this in the audit plan; a tagged-PDF pass would require moving the export onto `PDFKit`'s `PDFDocument` / `PDFPage` APIs and adding structure-tree metadata.
 - **Dynamic Type is partial.** Most of the UI uses semantic font styles (`Font.body`, `Font.title3`, …) so it scales with the user's preferred text size. A few fixed-size affordances (workflow step pill numbers, the batch queue status dot) are intentionally fixed; they will move to `ScaledMetric` in a follow-up.
-- **Reduce-motion is not yet implemented.** No current view animates in a way that would trigger a motion sensitivity, but the `accessibilityReduceMotion` environment value is not yet threaded into the codebase. Any future animation work must gate on it.
+- **Reduce-motion is currently a no-animation workflow.** The review workflow
+  has no decorative transitions, and any future animation must be gated on
+  SwiftUI's `accessibilityReduceMotion` environment value.
 - **Onboarding flow for accessibility permissions is not yet present.** The first-time ScreenCaptureKit prompt (audit plan 1.3.2) is the next accessibility-facing change to land.
 
 ## Reporting Accessibility Issues

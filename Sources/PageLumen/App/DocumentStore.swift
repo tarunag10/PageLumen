@@ -450,6 +450,15 @@ final class DocumentStore {
         statusMessage = isReviewed ? "Marked page \(selectedPageNumber) reviewed" : "Marked page \(selectedPageNumber) for review"
     }
 
+    /// Copies only the requested block and a human-readable page/block
+    /// citation. Source URLs and OCR metadata are intentionally excluded.
+    func copyAccessibleExcerpt(_ block: TextBlock) {
+        let quote = DocumentQuote.from(document: document, block: block)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(quote.accessibleExcerpt, forType: .string)
+        statusMessage = "Copied accessible excerpt from page \(quote.pageNumber)"
+    }
+
     func changeBlockType(_ block: TextBlock, to type: BlockType) {
         DocumentEditing.changeBlockType(id: block.id, to: type, in: &document)
         document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)

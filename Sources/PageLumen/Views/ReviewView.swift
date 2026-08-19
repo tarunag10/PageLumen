@@ -334,6 +334,15 @@ private struct EditableBlockRow: View {
                 .buttonStyle(.borderless)
                 .help("Move later in reading order")
 
+                Button {
+                    store.copyAccessibleExcerpt(block)
+                } label: {
+                    Label("Copy accessible excerpt", systemImage: "quote.closing")
+                }
+                .buttonStyle(.borderless)
+                .help("Copy this block with its page and reading-order citation")
+                .accessibilityHint("Copies the block text and a page and block citation to the clipboard.")
+
                 Spacer()
                 if block.confidence < 0.7 {
                     Label("Needs review", systemImage: "exclamationmark.triangle.fill")
