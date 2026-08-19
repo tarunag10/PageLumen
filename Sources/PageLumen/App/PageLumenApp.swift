@@ -63,6 +63,16 @@ struct PageLumenApp: App {
                 }
                 .keyboardShortcut("r", modifiers: [.command, .shift])
 
+                Button("Next Review Issue") {
+                    store.jumpToNextReviewIssue()
+                }
+                .keyboardShortcut("]", modifiers: [.command, .shift])
+
+                Button("Previous Review Issue") {
+                    store.jumpToPreviousReviewIssue()
+                }
+                .keyboardShortcut("[", modifiers: [.command, .shift])
+
                 Button("Mark Page Reviewed") {
                     store.setSelectedPageReviewed(true)
                 }

@@ -162,6 +162,24 @@ final class DocumentStore {
         }
     }
 
+    func jumpToNextReviewIssue() {
+        jumpToReviewIssue(offset: 1)
+    }
+
+    func jumpToPreviousReviewIssue() {
+        jumpToReviewIssue(offset: -1)
+    }
+
+    private func jumpToReviewIssue(offset: Int) {
+        let issues = reviewIssues
+        guard !issues.isEmpty else { return }
+        let currentIndex = issues.firstIndex { issue in
+            issue.pageNumber == selectedPageNumber
+        } ?? (offset > 0 ? -1 : issues.count)
+        let nextIndex = (currentIndex + offset + issues.count) % issues.count
+        jumpToIssue(issues[nextIndex])
+    }
+
     func jumpToIssue(_ issue: ReviewIssue) {
         selectedPageNumber = issue.pageNumber
         selectedDestination = .review

@@ -62,6 +62,49 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertTrue(DocumentEditing.isReviewed(store.document.pages[0].blocks[0]))
     }
 
+    func testReviewIssueKeyboardNavigationWrapsAndSelectsReviewDestination() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        store.document = ReaderDocument(
+            title: "Issues",
+            sourceType: .sample,
+            pages: [
+                ReaderPage(
+                    pageNumber: 1,
+                    size: PageSize(width: 400, height: 600),
+                    blocks: [TextBlock(
+                        pageNumber: 1,
+                        type: .unknown,
+                        text: "First issue",
+                        bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20),
+                        confidence: 0.4
+                    )]
+                ),
+                ReaderPage(
+                    pageNumber: 2,
+                    size: PageSize(width: 400, height: 600),
+                    blocks: [TextBlock(
+                        pageNumber: 2,
+                        type: .unknown,
+                        text: "Second issue",
+                        bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20),
+                        confidence: 0.4
+                    )]
+                )
+            ]
+        )
+
+        store.selectedPageNumber = 1
+        store.jumpToNextReviewIssue()
+        XCTAssertEqual(store.selectedPageNumber, 2)
+        XCTAssertEqual(store.selectedDestination, .review)
+
+        store.jumpToNextReviewIssue()
+        XCTAssertEqual(store.selectedPageNumber, 1, "Next navigation should wrap to the first issue")
+
+        store.jumpToPreviousReviewIssue()
+        XCTAssertEqual(store.selectedPageNumber, 2, "Previous navigation should wrap to the last issue")
+    }
+
     func testExportPreviewTextCachesForSameInputs() {
         let store = DocumentStore(persisting: InMemoryPersisting())
 
