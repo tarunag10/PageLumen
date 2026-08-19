@@ -98,6 +98,18 @@ final class DocumentEditingTests: XCTestCase {
         XCTAssertEqual(DocumentEditing.reviewProgress(for: document).totalBlocks, 3)
     }
 
+    func testReviewFindingsNormalizeSeverityAndRemainUnresolved() {
+        var document = SampleDataFactory.makeDemoDocument()
+        document.pages[0].warning = "The page may be skewed."
+
+        let findings = DocumentEditing.reviewFindings(for: document)
+
+        XCTAssertFalse(findings.isEmpty)
+        XCTAssertTrue(findings.contains { $0.kind == .pageWarning && $0.severity == .blocker })
+        XCTAssertTrue(findings.allSatisfy { !$0.isResolved })
+        XCTAssertTrue(findings.allSatisfy { !$0.id.isEmpty })
+    }
+
     func testExportPreviewUsesSelectedFormatAndOptions() {
         let block = TextBlock(pageNumber: 1, type: .heading, text: "Introduction", bounds: BoundingBox(x: 10, y: 80, width: 300, height: 20), confidence: 0.9)
         let document = ReaderDocument(title: "Preview", sourceType: .sample, pages: [

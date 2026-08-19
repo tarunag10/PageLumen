@@ -12,6 +12,46 @@ public enum ReviewIssueKind: String, Codable, Equatable, Sendable {
     case unreviewedTableOrFigure
 }
 
+public enum ReviewFindingSeverity: String, Codable, Equatable, Sendable, CaseIterable {
+    case blocker
+    case warning
+    case info
+}
+
+/// A normalized review finding that can be persisted or rendered by any UI.
+/// `ReviewIssue` remains as the compatibility-facing view model used by the
+/// current SwiftUI shell.
+public struct ReviewFinding: Identifiable, Codable, Equatable, Sendable {
+    public var id: String
+    public var kind: ReviewIssueKind
+    public var severity: ReviewFindingSeverity
+    public var pageNumber: Int
+    public var blockID: UUID?
+    public var title: String
+    public var detail: String
+    public var isResolved: Bool
+
+    public init(
+        id: String,
+        kind: ReviewIssueKind,
+        severity: ReviewFindingSeverity,
+        pageNumber: Int,
+        blockID: UUID? = nil,
+        title: String,
+        detail: String,
+        isResolved: Bool = false
+    ) {
+        self.id = id
+        self.kind = kind
+        self.severity = severity
+        self.pageNumber = pageNumber
+        self.blockID = blockID
+        self.title = title
+        self.detail = detail
+        self.isResolved = isResolved
+    }
+}
+
 public struct ReviewIssue: Identifiable, Equatable, Sendable {
     public var id: String
     public var kind: ReviewIssueKind
@@ -151,6 +191,27 @@ public enum DocumentEditing {
                 }
             }
             return issues
+        }
+    }
+
+    public static func reviewFindings(for document: ReaderDocument) -> [ReviewFinding] {
+        reviewIssues(for: document).map { issue in
+            let severity: ReviewFindingSeverity
+            switch issue.kind {
+            case .pageWarning, .unknownBlockType:
+                severity = .blocker
+            case .lowConfidence, .unreviewedTableOrFigure:
+                severity = .warning
+            }
+            return ReviewFinding(
+                id: issue.id,
+                kind: issue.kind,
+                severity: severity,
+                pageNumber: issue.pageNumber,
+                blockID: issue.blockID,
+                title: issue.title,
+                detail: issue.detail
+            )
         }
     }
 
