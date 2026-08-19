@@ -4,9 +4,7 @@
 
 Please do not open public issues for vulnerabilities involving document privacy, local file handling, sandboxing, export integrity, or other security-sensitive behavior.
 
-Instead, report privately through GitHub's private vulnerability reporting if enabled for this repository. If private reporting is not available, email the maintainer at `[INSERT-MAINTAINER-EMAIL-HERE]` and include:
-
-<!-- TODO: Replace the placeholder above with the project's real security contact email before publishing. -->
+Instead, report privately through GitHub's private vulnerability reporting for this repository. If private reporting is unavailable, open a minimal public issue asking the maintainer to enable private reporting; do not include document contents, credentials, or exploit details. Include the following only through a private channel:
 
 - A short description of the issue
 - Steps to reproduce
