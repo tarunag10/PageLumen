@@ -23,6 +23,29 @@ final class DocumentStore {
         var id: String { rawValue }
     }
 
+    enum PersistenceStatus: Equatable {
+        case available
+        case degraded(String)
+
+        var label: String {
+            switch self {
+            case .available:
+                return "Local library available"
+            case .degraded(let reason):
+                return "Local library fallback: \(reason)"
+            }
+        }
+
+        var systemImage: String {
+            switch self {
+            case .available:
+                return "checkmark.circle.fill"
+            case .degraded:
+                return "exclamationmark.triangle.fill"
+            }
+        }
+    }
+
     var document: ReaderDocument = DocumentStore.makeInitialDocument()
     var selectedDestination: Destination? = .home
     var selectedPageNumber: Int = 1
@@ -32,6 +55,7 @@ final class DocumentStore {
     var summaryLength: SummaryLength = .short
     var batchQueue = BatchImportQueue()
     var recentDocuments: [ReaderDocument] = []
+    private(set) var persistenceStatus: PersistenceStatus = .available
     var processingDocument: ReaderDocument?
     var processingFileName = ""
     var reviewSearchQuery = ""
@@ -81,10 +105,18 @@ final class DocumentStore {
         self.processor = processor
         if let persisting {
             self.persisting = persisting
+            self.persistenceStatus = .available
         } else if #available(macOS 14.0, *) {
-            self.persisting = (try? SwiftDataPersisting()) ?? FilePersisting()
+            do {
+                self.persisting = try SwiftDataPersisting()
+                self.persistenceStatus = .available
+            } catch {
+                self.persisting = FilePersisting()
+                self.persistenceStatus = .degraded("SwiftData could not open; using JSON recents")
+            }
         } else {
             self.persisting = FilePersisting()
+            self.persistenceStatus = .degraded("SwiftData is unavailable on this macOS version")
         }
         exportOptions = ExportOptions(
             includeHeadings: UserDefaults.standard.object(forKey: "includeHeadings") as? Bool ?? true,

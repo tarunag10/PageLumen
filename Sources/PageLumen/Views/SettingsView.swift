@@ -58,6 +58,10 @@ struct SettingsView: View {
                 Text("Recent documents are stored only in this Mac's memory. Use Forget all to clear them when sharing the device.")
                     .font(.callout)
                     .foregroundStyle(AccessibleStyle.secondaryText)
+                Label(store.persistenceStatus.label, systemImage: store.persistenceStatus.systemImage)
+                    .font(.callout)
+                    .foregroundStyle(store.persistenceStatus == .available ? AccessibleStyle.success : AccessibleStyle.warning)
+                    .accessibilityHint("The active document remains usable if local recent-document storage is degraded.")
             }
 
             Section("Display") {

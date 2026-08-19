@@ -27,6 +27,12 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertEqual(store.selectedDestination, .review)
     }
 
+    func testInjectedPersistenceReportsAvailableLibrary() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+
+        XCTAssertEqual(store.persistenceStatus, .available)
+    }
+
     func testMoveBlockUpdatesReadingOrder() {
         let store = DocumentStore(persisting: InMemoryPersisting())
         let document = makeMoveDocument()
