@@ -10,6 +10,7 @@ struct SettingsView: View {
     @AppStorage("languageHint") private var languageHint = "Automatic"
     @AppStorage("boostContrast") private var boostContrast = false
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @AppStorage("useOnDeviceAI") private var useOnDeviceAI = false
     @State private var isShowingForgetConfirmation = false
 
     var body: some View {
@@ -100,6 +101,25 @@ struct SettingsView: View {
                     store.applyLanguagePreference()
                     store.statusMessage = languageHint == "Automatic" ? "Language detection set to automatic" : "Language hint set to \(languageHint)"
                 }
+            }
+
+            Section("On-device AI") {
+                Toggle("Use Apple Intelligence for summaries", isOn: $useOnDeviceAI)
+                let availability = IntelligentExplainer().availability
+                switch availability {
+                case .available:
+                    Label("Available on this Mac. Results stay on-device and remain drafts until reviewed.", systemImage: "checkmark.circle")
+                        .foregroundStyle(AccessibleStyle.success)
+                case .unavailable(let reason):
+                    Label("Unavailable: \(reason). PageLumen will use deterministic summaries.", systemImage: "info.circle")
+                        .foregroundStyle(AccessibleStyle.secondaryText)
+                case .notSupported:
+                    Label("Requires a newer macOS release. PageLumen will use deterministic summaries.", systemImage: "info.circle")
+                        .foregroundStyle(AccessibleStyle.secondaryText)
+                }
+                Text("Apple Intelligence is optional. It receives only the selected document text and must not be treated as a source of truth without checking the cited page.")
+                    .font(.callout)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
             }
 
             Section("Export Defaults") {

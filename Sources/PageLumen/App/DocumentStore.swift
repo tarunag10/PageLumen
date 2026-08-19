@@ -38,6 +38,10 @@ final class DocumentStore {
     var reviewFilter: ReviewFilter = .all
     var exportPreviewFormat: ExportFormat = .markdown
 
+    var useOnDeviceAI: Bool {
+        UserDefaults.standard.bool(forKey: "useOnDeviceAI")
+    }
+
     private let exportEngine = ExportEngine()
     private let explanationEngine = ExplanationEngine()
     private let screenshotCaptureService = ScreenshotCaptureService()
@@ -365,7 +369,26 @@ final class DocumentStore {
     }
 
     func regenerateSummary() {
-        document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
+        let source = document
+        let length = summaryLength
+        guard useOnDeviceAI else {
+            document.summary = explanationEngine.betterSummary(for: source, length: length)
+            return
+        }
+
+        // Foundation Models is asynchronous and availability varies by Mac.
+        // Keep the deterministic summary visible until an opted-in result is
+        // ready, and discard a late result if the document changed meanwhile.
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let result = await explanationEngine.summary(
+                for: source,
+                length: length,
+                options: SummaryOptions(useIntelligence: true)
+            )
+            guard self.document.id == source.id else { return }
+            self.document.summary = result
+        }
     }
 
     func persistExportDefaults() {
