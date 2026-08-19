@@ -8,7 +8,13 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     CODE_SIGN_STYLE: Automatic
-packages: {}
+packages:
+  ZIPFoundation:
+    url: https://github.com/weichsel/ZIPFoundation.git
+    from: 0.9.20
+  SnapshotTesting:
+    url: https://github.com/pointfreeco/swift-snapshot-testing.git
+    from: 1.17.0
 targets:
   PageLumenCore:
     type: framework
@@ -34,6 +40,7 @@ targets:
       - path: Assets.xcassets
     dependencies:
       - target: PageLumenCore
+      - package: ZIPFoundation
     settings:
       base:
         CODE_SIGN_ENTITLEMENTS: Config/PageLumen.entitlements
@@ -54,6 +61,7 @@ targets:
         LSMinimumSystemVersion: "14.0"
         LSApplicationCategoryType: public.app-category.productivity
         NSPrincipalClass: NSApplication
+        NSScreenCaptureUsageDescription: "PageLumen captures a selected screen region or window so it can be made readable and searchable on this Mac."
         NSHumanReadableCopyright: ""
   PageLumenCoreTests:
     type: bundle.unit-test
@@ -62,6 +70,9 @@ targets:
       - path: Tests/PageLumenCoreTests
     dependencies:
       - target: PageLumenCore
+      - target: PageLumen
+      - package: ZIPFoundation
+      - package: SnapshotTesting
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.PageLumenCoreTests
@@ -80,6 +91,7 @@ targets:
     dependencies:
       - target: PageLumen
       - target: PageLumenCore
+      - package: SnapshotTesting
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.PageLumenTests

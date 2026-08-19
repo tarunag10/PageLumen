@@ -1,12 +1,13 @@
 import AppKit
 import Foundation
 
-public enum ExportFormat: String, CaseIterable, Identifiable, Sendable {
+public enum ExportFormat: String, CaseIterable, Identifiable, Codable, Sendable {
     case markdown = "Markdown"
     case text = "TXT"
     case html = "HTML"
     case taggedHTML = "Tagged HTML"
-    case pdf = "Accessible PDF"
+    /// A selectable text PDF. This is not a claim of PDF/UA conformance.
+    case pdf = "Readable PDF"
     case csv = "CSV"
     case json = "JSON"
     case accessibilityReport = "Accessibility Report"
@@ -30,6 +31,58 @@ public enum ExportFormat: String, CaseIterable, Identifiable, Sendable {
         case .translated: return "md"
         }
     }
+}
+
+public enum ExportValidationStatus: String, Codable, Equatable, Sendable {
+    case ready
+    case reviewRequired
+    case unavailable
+}
+
+/// The capabilities and evidence behind an export format. Keeping this contract
+/// in the core model prevents UI copy and export behaviour from drifting apart.
+public struct ExportCapability: Codable, Equatable, Sendable {
+    public var format: ExportFormat
+    public var status: ExportValidationStatus
+    public var retainsStructure: Bool
+    public var retainsTables: Bool
+    public var retainsFigureDescriptions: Bool
+    public var includesSourceReferences: Bool
+    public var validationNotes: [String]
+
+    public init(
+        format: ExportFormat,
+        status: ExportValidationStatus,
+        retainsStructure: Bool,
+        retainsTables: Bool,
+        retainsFigureDescriptions: Bool,
+        includesSourceReferences: Bool,
+        validationNotes: [String]
+    ) {
+        self.format = format
+        self.status = status
+        self.retainsStructure = retainsStructure
+        self.retainsTables = retainsTables
+        self.retainsFigureDescriptions = retainsFigureDescriptions
+        self.includesSourceReferences = includesSourceReferences
+        self.validationNotes = validationNotes
+    }
+}
+
+public struct ExportValidationResult: Codable, Equatable, Sendable {
+    public var format: ExportFormat
+    public var status: ExportValidationStatus
+    public var capability: ExportCapability
+    public var findings: [String]
+
+    public init(format: ExportFormat, status: ExportValidationStatus, capability: ExportCapability, findings: [String]) {
+        self.format = format
+        self.status = status
+        self.capability = capability
+        self.findings = findings
+    }
+
+    public var canExport: Bool { status != .unavailable }
 }
 
 public enum AccessibilityFindingKind: String, Codable, Equatable, Sendable {
@@ -194,6 +247,50 @@ public struct AccessibilityAuditor: Sendable {
 
 public struct ExportEngine: Sendable {
     public init() {}
+
+    public func capability(for format: ExportFormat) -> ExportCapability {
+        switch format {
+        case .markdown:
+            return ExportCapability(format: format, status: .ready, retainsStructure: true, retainsTables: true, retainsFigureDescriptions: true, includesSourceReferences: true, validationNotes: ["Markdown is a portable, reviewable representation; rendered styling is controlled by the consumer."])
+        case .text:
+            return ExportCapability(format: format, status: .ready, retainsStructure: false, retainsTables: false, retainsFigureDescriptions: false, includesSourceReferences: true, validationNotes: ["Plain text intentionally discards semantic structure and table relationships."])
+        case .html, .taggedHTML:
+            return ExportCapability(format: format, status: .reviewRequired, retainsStructure: true, retainsTables: true, retainsFigureDescriptions: true, includesSourceReferences: true, validationNotes: ["Validate heading hierarchy, language, table headers, links, and figure descriptions before publishing."])
+        case .pdf:
+            return ExportCapability(format: format, status: .reviewRequired, retainsStructure: false, retainsTables: false, retainsFigureDescriptions: false, includesSourceReferences: true, validationNotes: ["Readable/selectable text PDF; PDF/UA conformance and tagging are not asserted."])
+        case .csv:
+            return ExportCapability(format: format, status: .ready, retainsStructure: false, retainsTables: true, retainsFigureDescriptions: false, includesSourceReferences: true, validationNotes: ["CSV contains table cells only and does not preserve document layout."])
+        case .json:
+            return ExportCapability(format: format, status: .ready, retainsStructure: true, retainsTables: true, retainsFigureDescriptions: true, includesSourceReferences: true, validationNotes: ["JSON is the versioned machine-readable representation of the reviewed document."])
+        case .accessibilityReport:
+            return ExportCapability(format: format, status: .ready, retainsStructure: false, retainsTables: false, retainsFigureDescriptions: false, includesSourceReferences: true, validationNotes: ["Report contains automated findings only; manual accessibility review remains required."])
+        case .audio:
+            return ExportCapability(format: format, status: .reviewRequired, retainsStructure: false, retainsTables: false, retainsFigureDescriptions: false, includesSourceReferences: false, validationNotes: ["Audio output is generated by the app-shell speech service and is not represented by core export data."])
+        case .docx:
+            return ExportCapability(format: format, status: .reviewRequired, retainsStructure: true, retainsTables: true, retainsFigureDescriptions: true, includesSourceReferences: true, validationNotes: ["DOCX is an Office Open XML package; open the generated archive with an independent consumer before delivery."])
+        case .translated:
+            return ExportCapability(format: format, status: .unavailable, retainsStructure: false, retainsTables: false, retainsFigureDescriptions: false, includesSourceReferences: false, validationNotes: ["Translation requires an available Translation framework provider and is not an ExportEngine operation."])
+        }
+    }
+
+    public func validate(document: ReaderDocument, format: ExportFormat, options: ExportOptions) -> ExportValidationResult {
+        let capability = capability(for: format)
+        guard capability.status != .unavailable else {
+            return ExportValidationResult(format: format, status: .unavailable, capability: capability, findings: capability.validationNotes)
+        }
+
+        var findings = capability.validationNotes
+        if format == .taggedHTML || format == .html || format == .pdf {
+            let audit = AccessibilityAuditor().audit(document: document, options: options)
+            findings.append(contentsOf: audit.findings.map { finding in
+                let page = finding.pageNumber.map { "Page \($0): " } ?? ""
+                return "[\(finding.severity.rawValue)] \(page)\(finding.message)"
+            })
+            let status: ExportValidationStatus = audit.isReadyForTaggedExport ? capability.status : .reviewRequired
+            return ExportValidationResult(format: format, status: status, capability: capability, findings: findings)
+        }
+        return ExportValidationResult(format: format, status: capability.status, capability: capability, findings: findings)
+    }
 
     public func markdown(for document: ReaderDocument, options: ExportOptions) -> String {
         var lines = ["# \(document.title)", ""]

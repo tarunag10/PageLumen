@@ -36,6 +36,33 @@ final class ExportEngineTests: XCTestCase {
         XCTAssertGreaterThan(data.count, 100)
     }
 
+    func testExportCapabilitiesUseTruthfulPDFLabelAndValidationContract() {
+        let engine = ExportEngine()
+        let document = SampleDataFactory.makeDemoDocument()
+
+        let capability = engine.capability(for: .pdf)
+        XCTAssertEqual(ExportFormat.pdf.rawValue, "Readable PDF")
+        XCTAssertEqual(capability.status, .reviewRequired)
+        XCTAssertFalse(capability.retainsStructure)
+        XCTAssertTrue(capability.validationNotes.contains { $0.contains("PDF/UA") })
+
+        let validation = engine.validate(document: document, format: .pdf, options: .full)
+        XCTAssertEqual(validation.format, .pdf)
+        XCTAssertTrue(validation.canExport)
+        XCTAssertFalse(validation.findings.isEmpty)
+    }
+
+    func testTranslationExportIsUnavailableUntilProviderProducesTranslation() {
+        let validation = ExportEngine().validate(
+            document: SampleDataFactory.makeDemoDocument(),
+            format: .translated,
+            options: .full
+        )
+
+        XCTAssertEqual(validation.status, .unavailable)
+        XCTAssertFalse(validation.canExport)
+    }
+
     func testPDFExportPaginatesLongReadableText() {
         let blocks = (1...90).map { index in
             TextBlock(

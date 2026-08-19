@@ -18,6 +18,7 @@
 		279655DA7AAB073AF474A8C6 /* SwiftDataPersistingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1122FAA9155AEFC4782A225F /* SwiftDataPersistingTests.swift */; };
 		2906FC2FA4187E33DF68DEDD /* ExplanationEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FF3DCCB16D8AC6195018D83 /* ExplanationEngineTests.swift */; };
 		2978CA55670E9D842798A5D3 /* AccessibilityStatusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EBCF1AACF66549302EC7427 /* AccessibilityStatusTests.swift */; };
+		2B8F1F3F67B6B30484BF1AB6 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 53ABF40599426B10C0EC0DB7 /* SnapshotTesting */; };
 		2CAB5FDB46724B42B176621B /* SummaryExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15F7B590F76D1072EDBADD14 /* SummaryExportView.swift */; };
 		2F2E208DEFCCD417E92C7145 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B1C3F3CF365A97DC8EE00D0 /* ContentView.swift */; };
 		30B74E61BC3ACA3DE3798FBF /* PreviewPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD0CB7CF25D3032E3EC19965 /* PreviewPane.swift */; };
@@ -39,6 +40,7 @@
 		8CE6A8FA43F6CBC88534DB5D /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C34F432A51C9DD416B5FC4 /* HomeView.swift */; };
 		8F7F7D75A226B002BDF56857 /* PersistedDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = C65BABD59FFBD2C7A825B919 /* PersistedDocument.swift */; };
 		917506230FA510527742510D /* FilePersisting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71B22B2730AC3F22993E02AC /* FilePersisting.swift */; };
+		9229D02CF746CDCEF09FCCD0 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = FB754BCE5405A063F876F568 /* ZIPFoundation */; };
 		925D49B3592958D424690066 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51ED10D17EEF3D8A5A4C74B0 /* Models.swift */; };
 		994F831FCCAAD4AFF874B8C4 /* TranslationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68E1FFE567A7A567DD135156 /* TranslationServiceTests.swift */; };
 		9BB2D8018274A4572D046759 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DE6C1C05D94652978F76FE97 /* Assets.xcassets */; };
@@ -53,6 +55,7 @@
 		BE044BB82DB542AC8C22CBC2 /* PageLumenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9E4B58A0FC934C9DC62F3754 /* PageLumenCore.framework */; };
 		CADBE13ACC4787DF896763E9 /* DocumentEditing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01C6609B23473073ABF51DAC /* DocumentEditing.swift */; };
 		CBC1BD0E7FAFEB750D94E4FA /* IntelligentExplainerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB8D8009AB88571A29CE5C53 /* IntelligentExplainerTests.swift */; };
+		CDD48FC500972BF6B68A8B15 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 0F9AC76C23CFBB2756E0860C /* ZIPFoundation */; };
 		D1CC83CD8B4C2C0D6505952E /* BatchImportQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 672E6D23DE829F90478ECDFC /* BatchImportQueueTests.swift */; };
 		D44054CFE4B2F78762D187BC /* DocumentStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7FC574618FEADA955CF48E5 /* DocumentStoreTests.swift */; };
 		D598D2065D90E8F63AA3244C /* AudioExportServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E18D53C06D5FC4A3E740772 /* AudioExportServiceTests.swift */; };
@@ -66,6 +69,7 @@
 		E1E032F78252E376FC0DEA64 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEEC4CA5A45CE5965F401DC5 /* OnboardingView.swift */; };
 		E7D21747C6852107B466D8AF /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B791BEC107B8BC347DCE28C /* SettingsView.swift */; };
 		E81380B83CD09BB36F9CD025 /* DocumentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCDA2E6EF46E0BCE1DECEC3A /* DocumentStore.swift */; };
+		EAE34F1A9F93DAA403215E81 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = A65F5EF5F246399265123B4B /* SnapshotTesting */; };
 		ECC4328F40B23404AE5729AA /* DocumentEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10425478B42934D73AD06316 /* DocumentEditingTests.swift */; };
 		FD46CBE946493DA910F2911D /* ExportEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 886CD365A83A6800A57934BF /* ExportEngineTests.swift */; };
 /* End PBXBuildFile section */
@@ -77,6 +81,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = E37F3AD401E59074552853CC;
 			remoteInfo = PageLumenCore;
+		};
+		AB6DFC7421744567BC065359 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CF4AE81689A39DBC166AFBB2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5C2657DF8BFEC120F22D2211;
+			remoteInfo = PageLumen;
 		};
 		B6B32FB405F40CB344FED497 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -205,6 +216,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				3886F26189A17E19BC3F719F /* PageLumenCore.framework in Frameworks */,
+				CDD48FC500972BF6B68A8B15 /* ZIPFoundation in Frameworks */,
+				2B8F1F3F67B6B30484BF1AB6 /* SnapshotTesting in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -213,6 +226,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1B1721DBB436523081F536D3 /* PageLumenCore.framework in Frameworks */,
+				9229D02CF746CDCEF09FCCD0 /* ZIPFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -221,6 +235,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BE044BB82DB542AC8C22CBC2 /* PageLumenCore.framework in Frameworks */,
+				EAE34F1A9F93DAA403215E81 /* SnapshotTesting in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -387,9 +402,12 @@
 			);
 			dependencies = (
 				8D232007A35AED2520CF0808 /* PBXTargetDependency */,
+				893B820A3FC12391E382207A /* PBXTargetDependency */,
 			);
 			name = PageLumenCoreTests;
 			packageProductDependencies = (
+				0F9AC76C23CFBB2756E0860C /* ZIPFoundation */,
+				53ABF40599426B10C0EC0DB7 /* SnapshotTesting */,
 			);
 			productName = PageLumenCoreTests;
 			productReference = EBC3669176703A82D1F69F41 /* PageLumenCoreTests.xctest */;
@@ -411,6 +429,7 @@
 			);
 			name = PageLumenTests;
 			packageProductDependencies = (
+				A65F5EF5F246399265123B4B /* SnapshotTesting */,
 			);
 			productName = PageLumenTests;
 			productReference = 7E8ABA7756F913A74F3BF5C1 /* PageLumenTests.xctest */;
@@ -432,6 +451,7 @@
 			);
 			name = PageLumen;
 			packageProductDependencies = (
+				FB754BCE5405A063F876F568 /* ZIPFoundation */,
 			);
 			productName = PageLumen;
 			productReference = 71EFCA7649331DDBB9F8204A /* PageLumen.app */;
@@ -486,6 +506,10 @@
 			);
 			mainGroup = 579607021E3A004C56CCAF82;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				291A2434798DCB23AEF73F38 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */,
+				ACA1500D337847B5AD5B19AA /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A33572BA4217C31FDE5EADE1 /* Products */;
 			projectDirPath = "";
@@ -606,6 +630,11 @@
 			target = E37F3AD401E59074552853CC /* PageLumenCore */;
 			targetProxy = FDBD04D25FCE8185B14F29D7 /* PBXContainerItemProxy */;
 		};
+		893B820A3FC12391E382207A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5C2657DF8BFEC120F22D2211 /* PageLumen */;
+			targetProxy = AB6DFC7421744567BC065359 /* PBXContainerItemProxy */;
+		};
 		8AD4D9D5C8A02AE06D58E5BB /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 5C2657DF8BFEC120F22D2211 /* PageLumen */;
@@ -696,6 +725,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.pagelumen.PageLumenCoreTests;
 				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PageLumen.app/Contents/MacOS/PageLumen";
 			};
 			name = Debug;
 		};
@@ -868,6 +898,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.pagelumen.PageLumenCoreTests;
 				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PageLumen.app/Contents/MacOS/PageLumen";
 			};
 			name = Release;
 		};
@@ -943,6 +974,48 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		291A2434798DCB23AEF73F38 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-snapshot-testing.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.17.0;
+			};
+		};
+		ACA1500D337847B5AD5B19AA /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/weichsel/ZIPFoundation.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.20;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0F9AC76C23CFBB2756E0860C /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACA1500D337847B5AD5B19AA /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
+		};
+		53ABF40599426B10C0EC0DB7 /* SnapshotTesting */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 291A2434798DCB23AEF73F38 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */;
+			productName = SnapshotTesting;
+		};
+		A65F5EF5F246399265123B4B /* SnapshotTesting */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 291A2434798DCB23AEF73F38 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */;
+			productName = SnapshotTesting;
+		};
+		FB754BCE5405A063F876F568 /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACA1500D337847B5AD5B19AA /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = CF4AE81689A39DBC166AFBB2 /* Project object */;
 }

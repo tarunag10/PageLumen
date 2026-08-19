@@ -1,6 +1,6 @@
-import Compression
 import Foundation
 import PageLumenCore
+import ZIPFoundation
 
 public struct DOCXWriter: Sendable {
     public init() {}
@@ -121,23 +121,35 @@ public struct DOCXWriter: Sendable {
     }
 
     private func zipStore(archive: [String: Data]) -> Data {
-        var centralDirectory = ZipCentralDirectory()
-        var output = Data()
-        for (path, fileData) in archive.sorted(by: { $0.key < $1.key }) {
-            let entry = ZipStoreEntry(name: path, payload: fileData)
-            let localHeader = entry.localHeader()
-            output.append(localHeader)
-            output.append(entry.compressedPayload())
-            centralDirectory.add(entry: entry, offset: UInt32(output.count - fileData.count - localHeader.count))
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pagelumen-\(UUID().uuidString)", isDirectory: false)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        do {
+            guard let destination = Archive(url: url, accessMode: .create) else { return Data() }
+            for (path, payload) in archive.sorted(by: { $0.key < $1.key }) {
+                try destination.addEntry(
+                    with: path,
+                    type: .file,
+                    uncompressedSize: UInt32(payload.count),
+                    // Keep OOXML parts uncompressed so independent lightweight
+                    // inspectors can validate package contents without a
+                    // decompressor. ZIPFoundation still owns archive framing,
+                    // CRCs, and path safety.
+                    compressionMethod: .none
+                ) { position, size in
+                    let start = Int(position)
+                    let end = min(start + size, payload.count)
+                    return start < end ? payload.subdata(in: start..<end) : Data()
+                }
+            }
+            return try Data(contentsOf: url)
+        } catch {
+            // Export APIs are intentionally non-throwing for compatibility with
+            // the existing save-panel flow. The caller receives an empty result
+            // and can surface a recoverable export error from the save layer.
+            return Data()
         }
-        let centralData = centralDirectory.data()
-        output.append(centralData)
-        var endOfCentralDirectory = ZipEndOfCentralDirectory()
-        endOfCentralDirectory.totalEntries = UInt16(centralDirectory.entries.count)
-        endOfCentralDirectory.centralDirectorySize = UInt32(centralData.count)
-        endOfCentralDirectory.centralDirectoryOffset = UInt32(output.count - centralData.count)
-        output.append(endOfCentralDirectory.data())
-        return output
     }
 }
 
