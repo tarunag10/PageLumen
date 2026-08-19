@@ -107,54 +107,25 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         )
         await onProgress?(document)
 
-        let pageInputs: [PageInput] = (0..<pdf.pageCount).compactMap { index in
-            guard let pdfPage = pdf.page(at: index) else { return nil }
-            let pageNumber = index + 1
-            let bounds = pdfPage.bounds(for: .mediaBox)
-            let embeddedText = pdfPage.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            let cgImage: CGImage? = embeddedText.isEmpty
-                ? render(pdfPage: pdfPage)?.cgImage(forProposedRect: nil, context: nil, hints: nil)
-                : nil
-            return PageInput(pageNumber: pageNumber, pageSize: bounds.size, embeddedText: embeddedText, cgImage: cgImage)
-        }
-        try Task.checkCancellation()
-
-        let results: [Int: [TextBlock]] = await withTaskGroup(of: (Int, [TextBlock]).self) { group in
-            let cap = max(1, ProcessInfo.processInfo.activeProcessorCount / 2)
-            var iterator = pageInputs.makeIterator()
-            var inFlight = 0
-
-            while inFlight < cap, let next = iterator.next() {
-                let capture = next
-                group.addTask { [weak self] in
-                    guard let self else { return (capture.pageNumber, [TextBlock]()) }
-                    return await self.extractBlocks(input: capture)
-                }
-                inFlight += 1
-            }
-
-            var collected: [Int: [TextBlock]] = [:]
-            for await result in group {
-                collected[result.0] = result.1
-                inFlight -= 1
-                if let next = iterator.next() {
-                    let capture = next
-                    group.addTask { [weak self] in
-                        guard let self else { return (capture.pageNumber, [TextBlock]()) }
-                        return await self.extractBlocks(input: capture)
-                    }
-                    inFlight += 1
-                }
-            }
-            return collected
-        }
-
         for (index, page) in document.pages.enumerated() {
             try Task.checkCancellation()
             document.pages[index].ocrStatus = .processing
             await onProgress?(document)
 
-            let blocks = results[page.pageNumber] ?? fallbackBlocks(pageNumber: page.pageNumber, pageSize: CGSize(width: page.size.width, height: page.size.height))
+            // Process one visual page at a time. Rendering every scanned page
+            // before OCR made a 50–100 page PDF retain many large CGImages at
+            // once. The bounded path keeps memory proportional to one page and
+            // still preserves deterministic page order and cancellation.
+            let embeddedText = pdf.page(at: index)?.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let pageInput = PageInput(
+                pageNumber: page.pageNumber,
+                pageSize: CGSize(width: page.size.width, height: page.size.height),
+                embeddedText: embeddedText,
+                cgImage: embeddedText.isEmpty
+                    ? pdf.page(at: index).flatMap { render(pdfPage: $0)?.cgImage(forProposedRect: nil, context: nil, hints: nil) }
+                    : nil
+            )
+            let blocks = await extractBlocks(input: pageInput).1
             document.pages[index].ocrStatus = .complete
             document.pages[index].blocks = blocks
             await onProgress?(document)
