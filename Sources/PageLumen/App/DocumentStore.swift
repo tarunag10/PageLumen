@@ -834,6 +834,14 @@ final class DocumentStore {
         guard document.pages[pageIndex].blocks[blockIndex].text != text else { return }
         recordEdit()
         document.pages[pageIndex].blocks[blockIndex].text = text
+        document.pages[pageIndex].blocks[blockIndex].provenance = BlockProvenance(
+            source: .userEdit,
+            pageNumber: block.pageNumber,
+            bounds: block.bounds,
+            confidence: document.pages[pageIndex].blocks[blockIndex].confidence,
+            parentBlockID: block.id,
+            engine: "PageLumen review editor"
+        )
         document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
     }
 
@@ -925,6 +933,17 @@ final class DocumentStore {
         guard block.type != type else { return }
         recordEdit()
         DocumentEditing.changeBlockType(id: block.id, to: type, in: &document)
+        if let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == block.pageNumber }),
+           let blockIndex = document.pages[pageIndex].blocks.firstIndex(where: { $0.id == block.id }) {
+            document.pages[pageIndex].blocks[blockIndex].provenance = BlockProvenance(
+                source: .userEdit,
+                pageNumber: block.pageNumber,
+                bounds: block.bounds,
+                confidence: document.pages[pageIndex].blocks[blockIndex].confidence,
+                parentBlockID: block.id,
+                engine: "PageLumen review editor"
+            )
+        }
         document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
         statusMessage = "Changed block type to \(type.rawValue)"
     }

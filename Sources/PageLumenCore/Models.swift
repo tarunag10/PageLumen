@@ -67,6 +67,44 @@ public enum BlockSource: String, Codable, Sendable {
     public var metadataValue: String { rawValue }
 }
 
+public enum ProvenanceSource: String, Codable, Sendable {
+    case embeddedPDF
+    case visionOCR
+    case userEdit
+    case appleIntelligence
+    case heuristic
+}
+
+/// Typed lineage for a derived text block. It records where the block came
+/// from without copying its source text into a second metadata field.
+public struct BlockProvenance: Codable, Equatable, Sendable {
+    public var source: ProvenanceSource
+    public var pageNumber: Int
+    public var bounds: BoundingBox?
+    public var confidence: Double?
+    public var createdAt: Date
+    public var parentBlockID: UUID?
+    public var engine: String?
+
+    public init(
+        source: ProvenanceSource,
+        pageNumber: Int,
+        bounds: BoundingBox? = nil,
+        confidence: Double? = nil,
+        createdAt: Date = Date(),
+        parentBlockID: UUID? = nil,
+        engine: String? = nil
+    ) {
+        self.source = source
+        self.pageNumber = pageNumber
+        self.bounds = bounds
+        self.confidence = confidence
+        self.createdAt = createdAt
+        self.parentBlockID = parentBlockID
+        self.engine = engine
+    }
+}
+
 public extension TextBlock {
     var blockSource: BlockSource? {
         guard let raw = metadata["source"] else { return nil }
@@ -123,6 +161,7 @@ public struct TextBlock: Identifiable, Codable, Equatable, Sendable {
     public var confidence: Double
     public var readingOrderIndex: Int
     public var metadata: [String: String]
+    public var provenance: BlockProvenance?
 
     public init(
         id: UUID = UUID(),
@@ -132,7 +171,8 @@ public struct TextBlock: Identifiable, Codable, Equatable, Sendable {
         bounds: BoundingBox,
         confidence: Double,
         readingOrderIndex: Int = 0,
-        metadata: [String: String] = [:]
+        metadata: [String: String] = [:],
+        provenance: BlockProvenance? = nil
     ) {
         self.id = id
         self.pageNumber = pageNumber
@@ -142,6 +182,7 @@ public struct TextBlock: Identifiable, Codable, Equatable, Sendable {
         self.confidence = confidence
         self.readingOrderIndex = readingOrderIndex
         self.metadata = metadata
+        self.provenance = provenance
     }
 }
 

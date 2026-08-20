@@ -359,17 +359,19 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
             if let title = container.title {
                 let text = title.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !text.isEmpty {
+                    let bounds = boundingBox(for: title.boundingRegion, pageSize: pageSize)
                     blocks.append(TextBlock(
                         pageNumber: pageNumber,
                         type: .heading,
                         text: text,
-                        bounds: boundingBox(for: title.boundingRegion, pageSize: pageSize),
+                        bounds: bounds,
                         confidence: Double(observation.confidence),
                         readingOrderIndex: index,
                         metadata: [
                             "source": BlockSource.visionOCR.metadataValue,
                             "structured-recognition": "title"
-                        ]
+                        ],
+                        provenance: BlockProvenance(source: .visionOCR, pageNumber: pageNumber, bounds: bounds, confidence: Double(observation.confidence), engine: "Vision structured document recognition")
                     ))
                     index += 1
                 }
@@ -378,17 +380,19 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
             for paragraph in container.paragraphs {
                 let text = paragraph.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !text.isEmpty else { continue }
+                let bounds = boundingBox(for: paragraph.boundingRegion, pageSize: pageSize)
                 blocks.append(TextBlock(
                     pageNumber: pageNumber,
                     type: .paragraph,
                     text: text,
-                    bounds: boundingBox(for: paragraph.boundingRegion, pageSize: pageSize),
+                    bounds: bounds,
                     confidence: Double(observation.confidence),
                     readingOrderIndex: index,
-                    metadata: [
-                        "source": BlockSource.visionOCR.metadataValue,
-                        "structured-recognition": "paragraph"
-                    ]
+                        metadata: [
+                            "source": BlockSource.visionOCR.metadataValue,
+                            "structured-recognition": "paragraph"
+                    ],
+                    provenance: BlockProvenance(source: .visionOCR, pageNumber: pageNumber, bounds: bounds, confidence: Double(observation.confidence), engine: "Vision structured document recognition")
                 ))
                 index += 1
             }
@@ -446,7 +450,8 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
                         bounds: bounds,
                         confidence: Double(candidate.confidence),
                         readingOrderIndex: index,
-                        metadata: ["source": BlockSource.visionOCR.metadataValue]
+                        metadata: ["source": BlockSource.visionOCR.metadataValue],
+                        provenance: BlockProvenance(source: .visionOCR, pageNumber: pageNumber, bounds: bounds, confidence: Double(candidate.confidence), engine: "Vision text recognition")
                     )
                 }
                 continuation.resume(returning: blocks)
@@ -478,14 +483,22 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
             .filter { !$0.isEmpty }
 
         return paragraphs.enumerated().map { index, paragraph in
-            TextBlock(
+            let bounds = BoundingBox(x: 48, y: 48 + Double(index * 56), width: max(100, pageSize.width - 96), height: 40)
+            return TextBlock(
                 pageNumber: pageNumber,
                 type: .paragraph,
                 text: paragraph,
-                bounds: BoundingBox(x: 48, y: 48 + Double(index * 56), width: max(100, pageSize.width - 96), height: 40),
+                bounds: bounds,
                 confidence: confidence,
                 readingOrderIndex: index,
-                metadata: ["source": source]
+                metadata: ["source": source],
+                provenance: BlockProvenance(
+                    source: source == BlockSource.embeddedPDF.metadataValue ? .embeddedPDF : .heuristic,
+                    pageNumber: pageNumber,
+                    bounds: bounds,
+                    confidence: confidence,
+                    engine: source == BlockSource.embeddedPDF.metadataValue ? "PDF embedded text" : "Layout text segmentation"
+                )
             )
         }
     }

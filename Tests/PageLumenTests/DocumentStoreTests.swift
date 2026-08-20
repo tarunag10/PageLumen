@@ -240,6 +240,7 @@ final class DocumentStoreTests: XCTestCase {
 
         store.updateBlock(block, text: "Edited text")
         XCTAssertEqual(store.document.pages[0].blocks[0].text, "Edited text")
+        XCTAssertEqual(store.document.pages[0].blocks[0].provenance?.source, .userEdit)
         XCTAssertTrue(store.canUndo)
         XCTAssertFalse(store.canRedo)
 

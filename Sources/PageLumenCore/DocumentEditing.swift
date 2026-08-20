@@ -273,6 +273,14 @@ public enum DocumentEditing {
             }
             let block = issue.blockID.flatMap { id in document.allBlocks.first { $0.id == id } }
             let source: ReviewFindingSource = {
+                if let provenance = block?.provenance {
+                    switch provenance.source {
+                    case .embeddedPDF: return .embeddedPDF
+                    case .visionOCR: return .visionOCR
+                    case .userEdit: return .userEdit
+                    case .appleIntelligence, .heuristic: return .heuristic
+                    }
+                }
                 switch block?.blockSource {
                 case .embeddedPDF: return .embeddedPDF
                 case .visionOCR: return .visionOCR
