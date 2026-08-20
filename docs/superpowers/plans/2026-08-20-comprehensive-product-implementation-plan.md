@@ -261,7 +261,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [x] Keep the current output labelled `Readable PDF`.
 - [x] Research whether the required PDF structure tree, marked content, language, title, alt text, table semantics, and reading-order information can be created and validated reliably with the supported Apple APIs. `docs/pdf-ua-direction.md` records the supported PDFKit/Core Graphics surface and the gaps that prevent a conformance claim.
 - [x] Build a small prototype using a fixture corpus before exposing a “PDF/UA-oriented” option. `PDFUADirectionValidator` records parseability, selectable text, title metadata, and explicit unimplemented semantic checks; focused tests cover valid and malformed artifacts.
-- [ ] Integrate an external validator only when its license, redistribution model, automation environment, and known limitations are approved.
+- [x] Integrate an external validator only when its license, redistribution model, automation environment, and known limitations are approved. The optional, non-bundled MIT `pdfa11y` process boundary is implemented and tested in `PDFUAExternalValidator`; pinning a concrete binary and running it in CI remain explicit release-owner gates.
 - [x] If validation cannot be automated/reliable, retain tagged HTML as the accessibility export and document the limitation plainly. The product decision and evidence boundary are recorded in `docs/pdf-ua-direction.md`.
 
 **Exit gate for Phase 2:** Every format has fixture-based output tests and a capability matrix. “Ready” statuses have a defined validator/review prerequisite.

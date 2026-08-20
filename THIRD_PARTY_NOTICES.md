@@ -14,6 +14,16 @@ can validate its own Markdown export boundary. Package resolution is recorded in
 Xcode project and must be reviewed before dependency updates. No package
 receives document data outside the local process.
 
+## Optional developer validator: pdfa11y
+
+PageLumen contains a process boundary for the optional MIT-licensed
+[`speedata/pdfa11y`](https://github.com/speedata/pdfa11y) command-line
+validator. The executable is not bundled, copied, linked, or invoked by the
+shipping application. It is used only when a developer or CI job explicitly
+provides a reviewed local binary; the temporary input PDF is removed after
+validation. See [`docs/pdfua-external-validator.md`](docs/pdfua-external-validator.md)
+for the scope, limitations, pinning, and removal procedure.
+
 Each dependency remains removable behind its target boundary: DOCX generation
 uses `ZIPFoundation` through `DOCXWriter`, SnapshotTesting remains test-only,
 and swift-markdown is isolated to `MarkdownExportContract`. Before a release, review upstream
