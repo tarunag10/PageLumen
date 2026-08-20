@@ -80,42 +80,11 @@ struct HomeView: View {
                     .multilineTextAlignment(.center)
             }
 
-            HStack(spacing: 12) {
-                Button {
-                    store.openDocumentPanel()
-                } label: {
-                    Label("Open Files", systemImage: "doc.badge.plus")
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 12) { importActions }
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
+                    importActions
                 }
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut("o", modifiers: [.command])
-                .accessibilityIdentifier("home.openFiles")
-
-                Button {
-                    store.pasteImageFromClipboard()
-                } label: {
-                    Label("Paste Image", systemImage: "doc.on.clipboard")
-                }
-                .accessibilityIdentifier("home.pasteImage")
-
-                Menu {
-                    Button("Capture Selected Region") {
-                        beginCapture(.selectedRegion)
-                    }
-
-                    Button("Capture Current Window") {
-                        beginCapture(.window)
-                    }
-                } label: {
-                    Label("Capture Screen", systemImage: "camera.viewfinder")
-                }
-                .accessibilityIdentifier("home.captureScreen")
-
-                Button {
-                    store.loadSample()
-                } label: {
-                    Label("Try Demo", systemImage: "play.circle")
-                }
-                .accessibilityIdentifier("home.tryDemo")
             }
 
             if uiTestingImportMode == .importFixture {
@@ -196,6 +165,40 @@ struct HomeView: View {
 
             return true
         }
+    }
+
+    @ViewBuilder
+    private var importActions: some View {
+        Button {
+            store.openDocumentPanel()
+        } label: {
+            Label("Open Files", systemImage: "doc.badge.plus")
+        }
+        .buttonStyle(.borderedProminent)
+        .keyboardShortcut("o", modifiers: [.command])
+        .accessibilityIdentifier("home.openFiles")
+
+        Button {
+            store.pasteImageFromClipboard()
+        } label: {
+            Label("Paste Image", systemImage: "doc.on.clipboard")
+        }
+        .accessibilityIdentifier("home.pasteImage")
+
+        Menu {
+            Button("Capture Selected Region") { beginCapture(.selectedRegion) }
+            Button("Capture Current Window") { beginCapture(.window) }
+        } label: {
+            Label("Capture Screen", systemImage: "camera.viewfinder")
+        }
+        .accessibilityIdentifier("home.captureScreen")
+
+        Button {
+            store.loadSample()
+        } label: {
+            Label("Try Demo", systemImage: "play.circle")
+        }
+        .accessibilityIdentifier("home.tryDemo")
     }
 
     private var capturePermissionHelp: some View {

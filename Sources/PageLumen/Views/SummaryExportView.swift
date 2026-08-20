@@ -38,6 +38,7 @@ struct SummaryExportView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
+                ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     Picker("Length", selection: $store.summaryLength) {
                         ForEach(SummaryLength.allCases) { length in
@@ -89,6 +90,8 @@ struct SummaryExportView: View {
                         Label("Back to Review", systemImage: "arrow.left")
                     }
                     .accessibilityIdentifier("export.backToReview")
+                }
+                .padding(.vertical, 2)
                 }
 
                 if !store.statusMessage.isEmpty, store.statusMessage != "Ready" {

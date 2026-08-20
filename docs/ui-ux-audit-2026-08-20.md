@@ -64,3 +64,17 @@ This phase makes design tokens appearance-aware, reduces split-view minimum widt
 - `swift test -Xswiftc -gnone`: 330 executed, 0 failures, 2 expected skips.
 
 Physical Light/Dark, VoiceOver, keyboard-only, large text, Increase Contrast, Reduce Transparency, and Reduce Motion checks remain open.
+
+## Responsive polish pass
+
+The follow-up visual review found two remaining overflow risks in compact
+windows: the Home import actions and the Listen & Export action row. Home now
+uses `ViewThatFits` to switch from a single action row to an adaptive grid;
+Listen & Export keeps its controls in a horizontal scroll region rather than
+clipping or wrapping labels into unreadable columns. This improves discoverability
+without changing any command or keyboard shortcut.
+
+The interface is not declared “perfect” from source inspection alone. A final
+quality bar still requires a clean physical run at compact and expanded window
+sizes, Light/Dark appearance, large text, VoiceOver, keyboard-only navigation,
+and the reduced-transparency/motion settings.
