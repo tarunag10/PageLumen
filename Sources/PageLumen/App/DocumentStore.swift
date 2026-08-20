@@ -77,6 +77,13 @@ final class DocumentStore {
         }
     }
 
+    var lastLibraryClearLabel: String {
+        guard let date = UserDefaults.standard.object(forKey: DocumentRepositorySettings.lastClearedAtKey) as? Date else {
+            return "Never"
+        }
+        return date.formatted(date: .abbreviated, time: .shortened)
+    }
+
     var useOnDeviceAI: Bool {
         UserDefaults.standard.bool(forKey: "useOnDeviceAI")
     }
@@ -318,6 +325,7 @@ final class DocumentStore {
         let count = recentDocuments.count
         recentDocuments.removeAll()
         try? persisting.forgetAll()
+        UserDefaults.standard.set(Date(), forKey: DocumentRepositorySettings.lastClearedAtKey)
         statusMessage = count == 0 ? "No recent documents to forget" : "Forgot \(count) recent document\(count == 1 ? "" : "s")"
     }
 

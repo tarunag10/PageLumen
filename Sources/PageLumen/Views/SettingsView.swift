@@ -71,6 +71,8 @@ struct SettingsView: View {
                     .foregroundStyle(AccessibleStyle.secondaryText)
                 LabeledContent("Library storage", value: store.libraryStorageSizeLabel)
                     .accessibilityHint("Size of PageLumen's local recent-document store. Source files are not included.")
+                LabeledContent("Last cleared", value: store.lastLibraryClearLabel)
+                    .accessibilityHint("The last time PageLumen cleared its retained local library copies")
                 Label(store.persistenceStatus.label, systemImage: store.persistenceStatus.systemImage)
                     .font(.callout)
                     .foregroundStyle(store.persistenceStatus == .available ? AccessibleStyle.success : AccessibleStyle.warning)

@@ -17,6 +17,7 @@ final class DocumentStoreTests: XCTestCase {
         UserDefaults.standard.removeObject(forKey: "includeHeadersAndFooters")
         UserDefaults.standard.removeObject(forKey: "privacyMode")
         UserDefaults.standard.removeObject(forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey)
+        UserDefaults.standard.removeObject(forKey: DocumentRepositorySettings.lastClearedAtKey)
         try await super.tearDown()
     }
 
@@ -217,6 +218,7 @@ final class DocumentStoreTests: XCTestCase {
         store.forgetAllRecentDocuments()
 
         XCTAssertTrue(store.recentDocuments.isEmpty)
+        XCTAssertNotNil(UserDefaults.standard.object(forKey: DocumentRepositorySettings.lastClearedAtKey) as? Date)
         XCTAssertTrue(try persisting.recentDocuments().isEmpty)
         XCTAssertNotEqual(store.recentDocuments.count, initial)
     }

@@ -132,6 +132,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
   recovery name, surface a degraded persistence status, and continue with an
   in-memory document. Read-only, no-space, and migration cases remain open.
 - [ ] Add `lastClearedAt` and a clear statement of what “Forget all” deletes; do not imply it deletes original user-selected source files.
+- [x] Persist and display `lastClearedAt`; the Settings copy explicitly describes retained local copies and source files remain untouched.
 
 **Acceptance:** A deliberately invalid SwiftData location launches, imports, reviews, and exports a document; Settings reports degraded recents storage.
 

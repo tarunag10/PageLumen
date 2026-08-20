@@ -2,6 +2,7 @@ import Foundation
 
 public enum DocumentRepositorySettings {
     public static let keepSearchableLocalCopiesKey = "keepSearchableLocalCopies"
+    public static let lastClearedAtKey = "documentLibrary.lastClearedAt"
 }
 
 /// A small repository boundary over the existing persistence adapters. It keeps
