@@ -22,7 +22,7 @@ enum ScreenshotCaptureMode {
     }
 }
 
-enum ScreenshotCaptureError: LocalizedError {
+enum ScreenshotCaptureError: LocalizedError, Equatable {
     case cancelled
     case commandFailed(Int32)
     case missingOutput
@@ -30,6 +30,20 @@ enum ScreenshotCaptureError: LocalizedError {
     case modernAPINotAvailable
     case noShareableContent
     case modernCaptureFailed(String)
+
+    static func legacyTerminationError(status: Int32, isCancelled: Bool = Task.isCancelled) -> Self {
+        if isCancelled || status == 1 {
+            return .cancelled
+        }
+        return .commandFailed(status)
+    }
+
+    static func modernCaptureError(_ error: Error, isCancelled: Bool = Task.isCancelled) -> Self {
+        if isCancelled || error is CancellationError {
+            return .cancelled
+        }
+        return .modernCaptureFailed(error.localizedDescription)
+    }
 
     var errorDescription: String? {
         switch self {
@@ -118,7 +132,7 @@ struct ScreenshotCaptureService {
         try await withCheckedThrowingContinuation { continuation in
             SCScreenshotManager.captureImage(contentFilter: filter, configuration: configuration) { cgImage, error in
                 if let error {
-                    continuation.resume(throwing: ScreenshotCaptureError.modernCaptureFailed(error.localizedDescription))
+                    continuation.resume(throwing: ScreenshotCaptureError.modernCaptureError(error))
                     return
                 }
                 guard let cgImage else {
@@ -146,7 +160,7 @@ struct ScreenshotCaptureService {
         return try await withCheckedThrowingContinuation { continuation in
             SCScreenshotManager.captureScreenshot(contentFilter: filter, configuration: screenshotConfig) { output, error in
                 if let error {
-                    continuation.resume(throwing: ScreenshotCaptureError.modernCaptureFailed(error.localizedDescription))
+                    continuation.resume(throwing: ScreenshotCaptureError.modernCaptureError(error))
                     return
                 }
                 guard output != nil else {
@@ -177,6 +191,10 @@ struct ScreenshotCaptureService {
     #endif
 
     private func legacyCapture(mode: ScreenshotCaptureMode, outputURL: URL) async throws -> URL {
+        guard !Task.isCancelled else {
+            throw ScreenshotCaptureError.cancelled
+        }
+
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
         process.arguments = arguments(for: mode, output: outputURL)
@@ -184,11 +202,13 @@ struct ScreenshotCaptureService {
         try process.run()
         process.waitUntilExit()
 
+        if Task.isCancelled {
+            try? FileManager.default.removeItem(at: outputURL)
+            throw ScreenshotCaptureError.cancelled
+        }
+
         guard process.terminationStatus == 0 else {
-            if process.terminationStatus == 1 {
-                throw ScreenshotCaptureError.cancelled
-            }
-            throw ScreenshotCaptureError.commandFailed(process.terminationStatus)
+            throw ScreenshotCaptureError.legacyTerminationError(status: process.terminationStatus)
         }
 
         guard FileManager.default.fileExists(atPath: outputURL.path) else {

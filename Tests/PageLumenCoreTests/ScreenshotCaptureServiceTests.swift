@@ -27,8 +27,42 @@ final class ScreenshotCaptureServiceTests: XCTestCase {
         XCTAssertNotNil(ScreenshotCaptureError.modernCaptureFailed("test").errorDescription)
     }
 
+    func testLegacyTerminationMapsCancellationSeparatelyFromCommandFailure() {
+        XCTAssertEqual(
+            ScreenshotCaptureError.legacyTerminationError(status: 1, isCancelled: false),
+            .cancelled
+        )
+        XCTAssertEqual(
+            ScreenshotCaptureError.legacyTerminationError(status: 2, isCancelled: false),
+            .commandFailed(2)
+        )
+        XCTAssertEqual(
+            ScreenshotCaptureError.legacyTerminationError(status: 0, isCancelled: true),
+            .cancelled
+        )
+    }
+
+    func testModernCancellationDoesNotBecomeGenericCaptureFailure() {
+        XCTAssertEqual(
+            ScreenshotCaptureError.modernCaptureError(CancellationError(), isCancelled: false),
+            .cancelled
+        )
+        XCTAssertEqual(
+            ScreenshotCaptureError.modernCaptureError(TestCaptureError(), isCancelled: false),
+            .modernCaptureFailed("test capture failure")
+        )
+        XCTAssertEqual(
+            ScreenshotCaptureError.modernCaptureError(TestCaptureError(), isCancelled: true),
+            .cancelled
+        )
+    }
+
     func testScreenshotCaptureModeFilePrefixes() {
         XCTAssertEqual(ScreenshotCaptureMode.selectedRegion.filePrefix, "PageLumen-Selection")
         XCTAssertEqual(ScreenshotCaptureMode.window.filePrefix, "PageLumen-Window")
     }
+}
+
+private struct TestCaptureError: LocalizedError {
+    var errorDescription: String? { "test capture failure" }
 }
