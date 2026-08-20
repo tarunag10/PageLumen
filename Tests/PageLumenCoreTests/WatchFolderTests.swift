@@ -41,4 +41,26 @@ final class WatchFolderTests: XCTestCase {
         let bookmark = try WatchFolderBookmark.create(for: folder)
         XCTAssertEqual(try bookmark.resolve().standardizedFileURL, folder.standardizedFileURL)
     }
+
+    func testMonitorReportsCandidatesWithoutImportingThem() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("PageLumen-watch-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let file = folder.appendingPathComponent("incoming.pdf")
+        try Data([1, 2, 3]).write(to: file)
+        let bookmark = try WatchFolderBookmark.create(for: folder)
+        let monitor = WatchFolderMonitor()
+        let expectation = expectation(description: "candidate reported")
+        var reported: [WatchFolderCandidate] = []
+
+        try monitor.start(bookmark: bookmark, intervalNanoseconds: 1_000_000) { candidates in
+            reported = candidates
+            expectation.fulfill()
+        }
+        await fulfillment(of: [expectation], timeout: 2)
+        monitor.stop()
+
+        XCTAssertEqual(reported.map(\.url.lastPathComponent), ["incoming.pdf"])
+        XCTAssertTrue(FileManager.default.fileExists(atPath: file.path), "Monitoring must not import or delete files")
+    }
 }

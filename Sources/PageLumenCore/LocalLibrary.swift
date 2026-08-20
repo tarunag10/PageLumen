@@ -3,6 +3,8 @@ import Foundation
 public enum DocumentRepositorySettings {
     public static let keepSearchableLocalCopiesKey = "keepSearchableLocalCopies"
     public static let lastClearedAtKey = "documentLibrary.lastClearedAt"
+    public static let watchFolderBookmarkKey = "documentLibrary.watchFolderBookmark"
+    public static let watchFolderEnabledKey = "documentLibrary.watchFolderEnabled"
 }
 
 /// A small repository boundary over the existing persistence adapters. It keeps

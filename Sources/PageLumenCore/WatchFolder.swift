@@ -92,3 +92,53 @@ public struct WatchFolderBookmark: Codable, Equatable, Sendable {
         }
     }
 }
+
+/// Opt-in polling monitor. It reports candidates but never imports them; the
+/// caller must show confirmation and pass selected URLs to the import flow.
+public final class WatchFolderMonitor: @unchecked Sendable {
+    private let scanner: WatchFolderScanner
+    private var task: Task<Void, Never>?
+    private var accessedFolder: URL?
+
+    public init(scanner: WatchFolderScanner = WatchFolderScanner()) {
+        self.scanner = scanner
+    }
+
+    public func start(
+        bookmark: WatchFolderBookmark,
+        intervalNanoseconds: UInt64 = 5_000_000_000,
+        onCandidates: @escaping @Sendable ([WatchFolderCandidate]) async -> Void
+    ) throws {
+        stop()
+        let folder = try bookmark.resolve()
+        guard folder.startAccessingSecurityScopedResource() else {
+            throw WatchFolderError.inaccessible
+        }
+        accessedFolder = folder
+        task = Task { [scanner] in
+            var seen = Set<URL>()
+            while !Task.isCancelled {
+                if let candidates = try? scanner.candidates(in: folder, excluding: seen), !candidates.isEmpty {
+                    seen.formUnion(candidates.map(\.url))
+                    await onCandidates(candidates)
+                }
+                do {
+                    try await Task.sleep(nanoseconds: intervalNanoseconds)
+                } catch {
+                    break
+                }
+            }
+        }
+    }
+
+    public func stop() {
+        task?.cancel()
+        task = nil
+        if let accessedFolder {
+            accessedFolder.stopAccessingSecurityScopedResource()
+            self.accessedFolder = nil
+        }
+    }
+
+    deinit { stop() }
+}

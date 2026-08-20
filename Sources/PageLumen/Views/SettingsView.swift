@@ -97,6 +97,42 @@ struct SettingsView: View {
             }
             .popoverTip(BoostContrastTip(), arrowEdge: .top)
 
+            Section("Watch folder") {
+                Toggle("Monitor a selected folder", isOn: Binding(
+                    get: { store.watchFolderEnabled },
+                    set: { store.setWatchFolderEnabled($0) }
+                ))
+                Button {
+                    store.chooseWatchFolder()
+                } label: {
+                    Label("Choose folder…", systemImage: "folder.badge.plus")
+                }
+                Text(store.watchFolderPathLabel)
+                    .font(.callout)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
+                Text("New supported files are reported here but never imported automatically. Confirm each file before processing.")
+                    .font(.callout)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
+
+                if !store.watchFolderCandidates.isEmpty {
+                    ForEach(store.watchFolderCandidates) { candidate in
+                        HStack {
+                            Label(candidate.url.lastPathComponent, systemImage: "doc")
+                                .lineLimit(1)
+                            Spacer()
+                            Button("Import") {
+                                store.importWatchFolderCandidate(candidate)
+                            }
+                            Button("Ignore") {
+                                store.dismissWatchFolderCandidate(candidate)
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                        .accessibilityElement(children: .contain)
+                    }
+                }
+            }
+
             Section("Onboarding") {
                 Toggle("Show welcome screen on launch", isOn: showOnLaunchBinding)
                 Button {

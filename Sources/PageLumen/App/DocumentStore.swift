@@ -66,6 +66,9 @@ final class DocumentStore {
     var exportPreviewFormat: ExportFormat = .markdown
     var librarySearchQuery = ""
     var librarySearchResults: [LibrarySearchResult] = []
+    var watchFolderEnabled = false
+    var watchFolderPathLabel = "Not configured"
+    var watchFolderCandidates: [WatchFolderCandidate] = []
 
     private(set) var canUndo = false
     private(set) var canRedo = false
@@ -147,6 +150,7 @@ final class DocumentStore {
     private let explanationEngine = ExplanationEngine()
     private let screenshotCaptureService = ScreenshotCaptureService()
     private let audioExportService = AudioExportService()
+    private let watchFolderMonitor = WatchFolderMonitor()
     private var importTask: Task<Void, Never>?
     private var audioExportTask: Task<Void, Never>?
 
@@ -179,6 +183,7 @@ final class DocumentStore {
         self.processor = processor
         self.intelligencePreferences = intelligencePreferences
         self.repositoryPreferences = repositoryPreferences
+        self.watchFolderEnabled = repositoryPreferences.bool(forKey: DocumentRepositorySettings.watchFolderEnabledKey)
         if let persisting {
             self.persisting = persisting
             self.persistenceStatus = .available
@@ -219,6 +224,71 @@ final class DocumentStore {
             self.recentDocuments = [self.document]
         }
         applyLanguagePreference()
+        if watchFolderEnabled {
+            startConfiguredWatchFolder()
+        }
+    }
+
+    func chooseWatchFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.message = "Choose a folder to monitor for new PDFs and images."
+        guard panel.runModal() == .OK, let folder = panel.url else { return }
+        do {
+            let bookmark = try WatchFolderBookmark.create(for: folder)
+            repositoryPreferences.set(bookmark.data, forKey: DocumentRepositorySettings.watchFolderBookmarkKey)
+            watchFolderPathLabel = folder.lastPathComponent
+            setWatchFolderEnabled(true)
+            statusMessage = "Watch folder enabled for \(folder.lastPathComponent); new files require confirmation"
+        } catch {
+            statusMessage = "Could not save watch folder: \(error.localizedDescription)"
+        }
+    }
+
+    func setWatchFolderEnabled(_ enabled: Bool) {
+        watchFolderEnabled = enabled
+        repositoryPreferences.set(enabled, forKey: DocumentRepositorySettings.watchFolderEnabledKey)
+        guard enabled else {
+            watchFolderMonitor.stop()
+            watchFolderCandidates.removeAll()
+            return
+        }
+        startConfiguredWatchFolder()
+    }
+
+    func importWatchFolderCandidate(_ candidate: WatchFolderCandidate) {
+        watchFolderCandidates.removeAll { $0.id == candidate.id }
+        startImport(urls: [candidate.url])
+    }
+
+    func dismissWatchFolderCandidate(_ candidate: WatchFolderCandidate) {
+        watchFolderCandidates.removeAll { $0.id == candidate.id }
+    }
+
+    private func startConfiguredWatchFolder() {
+        guard let data = repositoryPreferences.data(forKey: DocumentRepositorySettings.watchFolderBookmarkKey) else {
+            watchFolderEnabled = false
+            return
+        }
+        do {
+            let bookmark = WatchFolderBookmark(data: data)
+            watchFolderPathLabel = try bookmark.resolve().lastPathComponent
+            try watchFolderMonitor.start(bookmark: bookmark) { [weak self] candidates in
+                await MainActor.run {
+                    guard let self else { return }
+                    self.watchFolderCandidates.append(contentsOf: candidates.filter { candidate in
+                        !self.watchFolderCandidates.contains(where: { $0.id == candidate.id })
+                    })
+                    self.statusMessage = "\(self.watchFolderCandidates.count) watch-folder file\(self.watchFolderCandidates.count == 1 ? "" : "s") awaiting confirmation"
+                }
+            }
+        } catch {
+            watchFolderEnabled = false
+            repositoryPreferences.set(false, forKey: DocumentRepositorySettings.watchFolderEnabledKey)
+            statusMessage = "Watch folder unavailable: \(error.localizedDescription)"
+        }
     }
 
     var selectedPage: ReaderPage? {
