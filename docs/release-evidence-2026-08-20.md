@@ -4,6 +4,9 @@ This record separates local artifact evidence from Apple-hosted distribution
 state. It was refreshed after a successful signed universal archive and local
 ZIP/DMG packaging run from the current source on 2026-08-20.
 
+The artifact values below were refreshed at 20:45 IST after the latest UI
+source commit; they supersede the earlier archive checksums in this record.
+
 ## Local artifact
 
 - Archive: `dist/PageLumen.xcarchive`
@@ -18,16 +21,17 @@ ZIP/DMG packaging run from the current source on 2026-08-20.
 - Current-source unsigned Release configuration build: `xcodebuild -project PageLumen.xcodeproj -scheme PageLumen -configuration Release -sdk macosx CODE_SIGNING_ALLOWED=NO build` passed on 2026-08-20. This confirms the checked-out source compiles in Release; it does not replace the signed archive evidence above.
 - Full package regression: `swift test -Xswiftc -gnone` passed 332 tests with 2 documented translation-model skips; focused export, model-comparison, and UI build gates were also rerun after this record's original archive.
 - Strict diagnostics regression: `swift test -Xswiftc -gnone -Xswiftc -warnings-as-errors` passed the same 332 tests with 2 documented translation-model skips and 0 failures on 2026-08-20.
-- CodeDirectory CDHash: `6ab8c034116918cb02350c6b8522f54fb95087b6`
+- Latest UI source commit included: `55e603f` (readable Review Continue action)
+- CodeDirectory CDHash: `3026ba12407788eacf85813c6ff99ad87e1f3dd9`
 - Privacy manifest: `Contents/Resources/PrivacyInfo.xcprivacy`, valid, non-tracking, and declares the UserDefaults accessed-API reason
 - Gatekeeper: rejected as `Unnotarized Developer ID` (expected before notarization)
 
 ## Distribution artifacts
 
 - ZIP: `dist/PageLumen.zip`
-  - SHA-256: `fadc9438adf8768feab37d083b7e5e8fe68b7fe3e26d0b54162957f60b9d7f4a`
+  - SHA-256: `c9a56710e0708a9f5f021b01de81bd440b38cf998e61b9b06e263d705d107a61`
 - DMG: `dist/PageLumen.dmg`
-  - SHA-256: `355223a1daafd07d402f0e71bb3ce1631f693c738a2e1b7aeac50930b7e894b5`
+  - SHA-256: `b744d1f4d2cdc4ab5b584c1578ea31b79418e7ddfb58cedfb2b0f4e5615ccc62`
 
 ## Notarization and manual gates
 
