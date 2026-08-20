@@ -37,7 +37,7 @@ final class EvaluationContractTests: XCTestCase {
             language: first.language, adversarialTags: [first.className],
             groundTruthStatus: first.groundTruthStatus, sourceReference: "/Users/me/product-document.pdf"
         )
-        let samples = [badSample] + base.samples.dropFirst().filter { !$0.adversarialTags.contains("hidden-text") }
+        let samples = base.samples.filter { !$0.adversarialTags.contains("hidden-text") } + [badSample]
         let bad = EvaluationContract.CorpusManifest(corpusID: base.corpusID, revision: base.revision, consent: base.consent, samples: samples)
         let errors = EvaluationContract.validate(bad)
         XCTAssertTrue(errors.contains(.duplicateID(first.id)))
