@@ -24,7 +24,7 @@ final class ExportSnapshotTests: XCTestCase {
             of: #"block-[0-9a-fA-F-]{36}"#,
             with: "block-UUID",
             options: .regularExpression
-        )
+        ).trimmingCharacters(in: .whitespacesAndNewlines)
         assertSnapshot(of: normalized, as: .lines, named: "demo-tagged-html")
     }
 }

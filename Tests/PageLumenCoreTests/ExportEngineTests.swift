@@ -206,7 +206,7 @@ final class ExportEngineTests: XCTestCase {
     <h2 id="page-1-heading">Page 1</h2>
     <h3 id="block-UUID" data-page="1">IMPORT FLOW</h3>
     <p id="block-UUID" data-page="1" data-confidence="0.95">PageLumen turns inaccessible visual documents into readable, structured, audio-friendly, and exportable content.</p>
-    <table data-page="1">
+    <table id="block-UUID" data-page="1">
     <thead><tr><th scope="col">Item</th><th scope="col">Status</th></tr></thead>
     <tbody>
     <tr><td>PDF import</td><td>Ready</td></tr>
