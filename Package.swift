@@ -21,6 +21,9 @@ let package = Package(
     targets: [
         .target(
             name: "PageLumenCore",
+            dependencies: [
+                .product(name: "Markdown", package: "swift-markdown")
+            ],
             swiftSettings: [
                 .swiftLanguageMode(.v5)
             ]

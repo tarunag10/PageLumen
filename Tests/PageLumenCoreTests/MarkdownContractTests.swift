@@ -28,4 +28,40 @@ final class MarkdownContractTests: XCTestCase {
 
         XCTAssertTrue(topLevel.contains { $0 is BlockQuote })
     }
+
+    func testExportContractAcceptsDemoAndStablePageMarkers() {
+        let markdown = ExportEngine().markdown(
+            for: SampleDataFactory.makeDemoDocument(),
+            options: .full
+        )
+
+        let validation = MarkdownExportContract.validate(markdown, expectedPageNumbers: [1])
+
+        XCTAssertTrue(validation.isValid, validation.issues.joined(separator: ", "))
+        XCTAssertTrue(validation.issues.isEmpty)
+    }
+
+    func testExportEscapesTablePipesAndNormalizesLineBreaks() {
+        var document = SampleDataFactory.makeDemoDocument()
+        document.title = "Title\r\nwith a line"
+        document.pages[0].tables[0].rows[1][0] = "Cell | value\ncontinued"
+
+        let markdown = ExportEngine().markdown(for: document, options: .full)
+
+        XCTAssertTrue(markdown.contains("# Title with a line"))
+        XCTAssertTrue(markdown.contains("Cell \\| value continued"))
+        XCTAssertFalse(markdown.contains("\r"))
+        XCTAssertFalse(markdown.contains("Cell | value"))
+        XCTAssertTrue(MarkdownExportContract.validate(markdown).isValid)
+    }
+
+    func testExportContractRejectsUnstableOrMalformedStructure() {
+        let malformed = "# Title\n\n## Page 2\n\n| A | B |\n| --- |\n"
+
+        let validation = MarkdownExportContract.validate(malformed, expectedPageNumbers: [1])
+
+        XCTAssertFalse(validation.isValid)
+        XCTAssertTrue(validation.issues.contains("markdown.page-markers-not-deterministic"))
+        XCTAssertTrue(validation.issues.contains("markdown.table-column-count-mismatch"))
+    }
 }

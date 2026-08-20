@@ -243,7 +243,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [x] Make tagged HTML the recommended remediation export.
 - [ ] Verify heading hierarchy, landmarks, document language, table headers/scopes, figure alt text, link preservation, and escaped content.
 - [x] Add page/block anchors so exported citations can return to the original PageLumen review workspace.
-- [ ] Add a robust Markdown AST validation/normalisation layer (see `swift-markdown` decision below) before supporting Markdown import or advanced editing.
+- [x] Add a robust Markdown AST validation/normalisation layer (see `swift-markdown` decision below) before supporting Markdown import or advanced editing. `MarkdownExportContract` is a production boundary backed by `swift-markdown`; it validates the title/heading hierarchy, table headers and column consistency, block-parseability, newline normalization, and optional deterministic page markers. The writer escapes table pipes and normalizes embedded line breaks. Focused `MarkdownContractTests` cover the demo AST, hostile table content, stable page markers, and malformed structure; Markdown import/editor remains out of scope.
 - [ ] Snapshot-test HTML/Markdown across all fixture classes.
 
 ### 2.3 DOCX, CSV, JSON, and audio
@@ -391,8 +391,8 @@ the focused DOCX suite covers OOXML parts, escaping, and delegation (7/7).
 **Repository:** `swiftlang/swift-markdown` — Apache-2.0  
 **Use:** parse, inspect, normalise, and safely edit Markdown; groundwork for Markdown import and high-fidelity export validation.
 
-- [ ] Introduce only if implementing Markdown import/editor or AST-level export validation.
-- [ ] Keep current deterministic string writer until an AST-backed output test proves stronger correctness.
+- [x] Introduce only if implementing Markdown import/editor or AST-level export validation. AST-level export validation is now implemented in `Sources/PageLumenCore/MarkdownExportContract.swift`.
+- [x] Keep the deterministic string writer behind the validation boundary; the AST-backed output tests prove the current writer's structural correctness without introducing destructive AST rewrites.
 - [ ] Define dialect support and preserve unsupported syntax without destructive rewrites.
 
 ### 5.5 Experimental only: MLX Swift and swift-transformers
@@ -455,7 +455,7 @@ privacy complexity to a native macOS reader.
 
 ### 5.8 Dependency governance
 
-- [x] Add `THIRD_PARTY_NOTICES.md`, a dependency inventory, and an SPM lock/review policy. The current inventory is maintained in the repository root; `Package.swift` pins the Markdown test dependency exactly and records lower bounds for the two other packages, with resolved versions reviewed before release.
+- [x] Add `THIRD_PARTY_NOTICES.md`, a dependency inventory, and an SPM lock/review policy. The current inventory is maintained in the repository root; `Package.swift` pins the Markdown dependency exactly and records lower bounds for the two other packages, with resolved versions reviewed before release.
 - [ ] Add Dependabot or an equivalent update-review workflow after confirming it does not alter release branches automatically.
 - [x] Add a license/security review checklist to `CONTRIBUTING.md`.
 - [ ] Verify new packages work in sandboxed, offline runtime conditions after initial resolution.

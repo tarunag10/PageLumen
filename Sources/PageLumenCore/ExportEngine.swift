@@ -424,7 +424,7 @@ public struct ExportEngine: Sendable {
     }
 
     public func markdown(for document: ReaderDocument, options: ExportOptions) -> String {
-        var lines = ["# \(document.title)", ""]
+        var lines = ["# \(markdownInline(document.title))", ""]
         for page in document.pages {
             if options.includePageReferences {
                 lines.append("## Page \(page.pageNumber)")
@@ -434,23 +434,23 @@ public struct ExportEngine: Sendable {
             for block in DocumentEditing.exportableBlocks(on: page, includeHeadersAndFooters: options.includeHeadersAndFooters) {
                 switch block.type {
                 case .heading where options.includeHeadings:
-                    lines.append("### \(block.text)")
+                    lines.append("### \(markdownInline(block.text))")
                 case .table where options.includeTables:
                     if let table = page.tables.first(where: { $0.bounds == block.bounds }) {
                         lines.append(markdownTable(table.rows))
                         lines.append("")
-                        lines.append("> \(table.explanation)")
+                        lines.append("> \(markdownInline(table.explanation))")
                     } else {
-                        lines.append(block.text)
+                        lines.append(markdownInline(block.text))
                     }
                 case .figure where options.includeFigures:
                     if let figure = page.figures.first(where: { $0.bounds == block.bounds }) {
-                        lines.append("Figure: \(figure.description)")
+                        lines.append("Figure: \(markdownInline(figure.description))")
                     } else {
-                        lines.append("Figure: \(block.text)")
+                        lines.append("Figure: \(markdownInline(block.text))")
                     }
                 default:
-                    lines.append(block.text)
+                    lines.append(markdownInline(block.text))
                 }
 
                 if options.includeConfidenceNotes, block.confidence < 0.7 {
@@ -822,8 +822,19 @@ public struct ExportEngine: Sendable {
         let separator = Array(repeating: "---", count: header.count)
         let dataRows = rows.dropFirst()
         return ([header, separator] + dataRows)
-            .map { "| " + $0.joined(separator: " | ") + " |" }
+            .map { "| " + $0.map(markdownTableCell).joined(separator: " | ") + " |" }
             .joined(separator: "\n")
+    }
+
+    private func markdownTableCell(_ text: String) -> String {
+        markdownInline(text).replacingOccurrences(of: "|", with: "\\|")
+    }
+
+    private func markdownInline(_ text: String) -> String {
+        text
+            .replacingOccurrences(of: "\r\n", with: " ")
+            .replacingOccurrences(of: "\r", with: " ")
+            .replacingOccurrences(of: "\n", with: " ")
     }
 
     private func htmlTable(_ rows: [[String]], pageNumber: Int? = nil, blockID: String? = nil) -> String {
