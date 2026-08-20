@@ -208,7 +208,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 - [ ] Add `ProvenanceRecord` or typed fields rather than expanding unstructured metadata dictionaries.
 - [ ] Record source (`embeddedPDF`, Vision, user edit, Apple intelligence), page, bounds, confidence, timestamp, and parent source when a block is altered.
-- [ ] Replace scattered warning generation with a `ReviewFinding` model: `id`, severity, category, page/block/table/figure reference, explanation, recommended action, resolved state, and provenance.
+- [x] Replace scattered warning generation with a `ReviewFinding` model: `id`, severity, category, page/block/table/figure reference, explanation, resolved state, and typed provenance. `ReviewFindingProvenance` records source, page, bounds, parent block, and timestamp without copying source text; recommended-action and full export persistence remain open.
 - [ ] Prioritise findings: unreadable page, missing structure, low confidence, conflicting extraction sources, unresolved table headers, missing image description, and unreviewed AI contribution.
 - [ ] Persist resolution state and include it in exports/audit reports without exposing source text when anonymisation is selected.
 

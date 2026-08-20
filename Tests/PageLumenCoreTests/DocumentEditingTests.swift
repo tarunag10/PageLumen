@@ -110,6 +110,26 @@ final class DocumentEditingTests: XCTestCase {
         XCTAssertTrue(findings.allSatisfy { !$0.id.isEmpty })
     }
 
+    func testReviewFindingsCarryTypedSourceProvenanceWithoutTextDuplication() {
+        var document = SampleDataFactory.makeDemoDocument()
+        for pageIndex in document.pages.indices {
+            for blockIndex in document.pages[pageIndex].blocks.indices {
+                document.pages[pageIndex].blocks[blockIndex].metadata["source"] = BlockSource.visionOCR.rawValue
+            }
+        }
+
+        guard let finding = DocumentEditing.reviewFindings(for: document).first(where: { $0.blockID != nil }),
+              let sourceBlock = document.allBlocks.first(where: { $0.id == finding.blockID }) else {
+            return XCTFail("Expected a block-backed review finding")
+        }
+
+        XCTAssertEqual(finding.provenance?.source, .visionOCR)
+        XCTAssertEqual(finding.provenance?.pageNumber, 1)
+        XCTAssertEqual(finding.provenance?.parentBlockID, finding.blockID)
+        XCTAssertEqual(finding.provenance?.bounds, sourceBlock.bounds)
+        XCTAssertFalse(String(describing: finding.provenance).contains(sourceBlock.text))
+    }
+
     func testExportPreviewUsesSelectedFormatAndOptions() {
         let block = TextBlock(pageNumber: 1, type: .heading, text: "Introduction", bounds: BoundingBox(x: 10, y: 80, width: 300, height: 20), confidence: 0.9)
         let document = ReaderDocument(title: "Preview", sourceType: .sample, pages: [

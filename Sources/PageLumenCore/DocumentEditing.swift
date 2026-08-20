@@ -18,6 +18,38 @@ public enum ReviewFindingSeverity: String, Codable, Equatable, Sendable, CaseIte
     case info
 }
 
+public enum ReviewFindingSource: String, Codable, Equatable, Sendable {
+    case embeddedPDF
+    case visionOCR
+    case heuristic
+    case userEdit
+    case appleIntelligence
+}
+
+/// Typed provenance for a finding. Source excerpts remain outside this model;
+/// callers can resolve the page/block location without duplicating OCR text.
+public struct ReviewFindingProvenance: Codable, Equatable, Sendable {
+    public var source: ReviewFindingSource
+    public var pageNumber: Int
+    public var bounds: BoundingBox?
+    public var parentBlockID: UUID?
+    public var createdAt: Date
+
+    public init(
+        source: ReviewFindingSource,
+        pageNumber: Int,
+        bounds: BoundingBox? = nil,
+        parentBlockID: UUID? = nil,
+        createdAt: Date = Date()
+    ) {
+        self.source = source
+        self.pageNumber = pageNumber
+        self.bounds = bounds
+        self.parentBlockID = parentBlockID
+        self.createdAt = createdAt
+    }
+}
+
 /// A normalized review finding that can be persisted or rendered by any UI.
 /// `ReviewIssue` remains as the compatibility-facing view model used by the
 /// current SwiftUI shell.
@@ -30,6 +62,7 @@ public struct ReviewFinding: Identifiable, Codable, Equatable, Sendable {
     public var title: String
     public var detail: String
     public var isResolved: Bool
+    public var provenance: ReviewFindingProvenance?
 
     public init(
         id: String,
@@ -39,7 +72,8 @@ public struct ReviewFinding: Identifiable, Codable, Equatable, Sendable {
         blockID: UUID? = nil,
         title: String,
         detail: String,
-        isResolved: Bool = false
+        isResolved: Bool = false,
+        provenance: ReviewFindingProvenance? = nil
     ) {
         self.id = id
         self.kind = kind
@@ -49,6 +83,7 @@ public struct ReviewFinding: Identifiable, Codable, Equatable, Sendable {
         self.title = title
         self.detail = detail
         self.isResolved = isResolved
+        self.provenance = provenance
     }
 }
 
@@ -203,6 +238,15 @@ public enum DocumentEditing {
             case .lowConfidence, .unreviewedTableOrFigure:
                 severity = .warning
             }
+            let block = issue.blockID.flatMap { id in document.allBlocks.first { $0.id == id } }
+            let source: ReviewFindingSource = {
+                switch block?.blockSource {
+                case .embeddedPDF: return .embeddedPDF
+                case .visionOCR: return .visionOCR
+                case .userEdited: return .userEdit
+                default: return .heuristic
+                }
+            }()
             return ReviewFinding(
                 id: issue.id,
                 kind: issue.kind,
@@ -210,7 +254,13 @@ public enum DocumentEditing {
                 pageNumber: issue.pageNumber,
                 blockID: issue.blockID,
                 title: issue.title,
-                detail: issue.detail
+                detail: issue.detail,
+                provenance: ReviewFindingProvenance(
+                    source: source,
+                    pageNumber: issue.pageNumber,
+                    bounds: block?.bounds,
+                    parentBlockID: issue.blockID
+                )
             )
         }
     }
