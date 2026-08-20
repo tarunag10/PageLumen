@@ -3,10 +3,40 @@ import Foundation
 import FoundationModels
 #endif
 
-public enum IntelligentExplainerAvailability: Equatable, Sendable {
+public enum IntelligentExplainerAvailability: Codable, Equatable, Sendable {
     case available
     case unavailable(reason: String)
     case notSupported
+
+    private enum CodingKeys: String, CodingKey { case status, reason }
+    private enum Status: String, Codable { case available, unavailable, notSupported }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .available:
+            try container.encode(Status.available, forKey: .status)
+        case .unavailable:
+            try container.encode(Status.unavailable, forKey: .status)
+            // Availability is a capability state, not a diagnostic channel.
+            // Do not serialize provider text, which could accidentally echo
+            // request/source content. The in-memory value remains available
+            // to the Settings explanation before persistence/transport.
+        case .notSupported:
+            try container.encode(Status.notSupported, forKey: .status)
+        }
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        switch try container.decode(Status.self, forKey: .status) {
+        case .available: self = .available
+        case .unavailable:
+            self = .unavailable(reason: "Apple Intelligence is unavailable on this Mac.")
+        case .notSupported: self = .notSupported
+        }
+    }
+
 }
 
 /// The copy used by UI surfaces before an intelligence request starts.  It

@@ -26,29 +26,94 @@ public struct SummaryCitation: Codable, Equatable, Sendable, Identifiable {
     }
 }
 
+/// A citation that is safe to pass between the intelligence adapter and the
+/// review UI.  Unlike `SummaryCitation`, this intentionally contains no
+/// extracted text.  Page and block identifiers are enough to navigate back to
+/// the source without making a model response or an unavailable-result
+/// payload disclose document content.
+public struct GroundedSourceReference: Codable, Equatable, Sendable, Identifiable {
+    public let id: String
+    public let pageNumber: Int
+    public let blockID: UUID
+
+    public init(pageNumber: Int, blockID: UUID) {
+        self.id = "page-\(pageNumber)-\(blockID.uuidString)"
+        self.pageNumber = pageNumber
+        self.blockID = blockID
+    }
+}
+
+public enum GroundedReviewActionKind: String, Codable, Equatable, Sendable {
+    case verifySource
+    case inspectOmittedContent
+    case reviewLowConfidence
+    case reviewUnsupportedClaim
+}
+
+/// A bounded next step for a human reviewer.  The action is a location and a
+/// reason, never a copy of the source passage.
+public struct GroundedReviewAction: Codable, Equatable, Sendable, Identifiable {
+    public let id: String
+    public let kind: GroundedReviewActionKind
+    public let title: String
+    public let reason: String
+    public let pageNumber: Int?
+    public let blockID: UUID?
+
+    public init(
+        kind: GroundedReviewActionKind,
+        title: String,
+        reason: String,
+        pageNumber: Int? = nil,
+        blockID: UUID? = nil
+    ) {
+        self.kind = kind
+        self.title = title
+        self.reason = reason
+        self.pageNumber = pageNumber
+        self.blockID = blockID
+        let location = [pageNumber.map(String.init), blockID?.uuidString]
+            .compactMap { $0 }
+            .joined(separator: "-")
+        self.id = "\(kind.rawValue)-\(location.isEmpty ? "document" : location)"
+    }
+}
+
 public struct GroundedSummary: Codable, Equatable, Sendable {
     public let text: String
     public let citations: [SummaryCitation]
     public let groundingWarning: String?
     public let uncertaintyNotes: [String]
     public let unsupportedClaims: [String]
+    /// Typed page/block locations supplied to the structured result contract.
+    /// This is intentionally redundant with the human-readable citation
+    /// excerpts so privacy-sensitive consumers can use IDs only.
+    public let citedPageBlockIDs: [GroundedSourceReference]
+    public let suggestedReviewActions: [GroundedReviewAction]
 
     public init(
         text: String,
         citations: [SummaryCitation],
         groundingWarning: String? = nil,
         uncertaintyNotes: [String] = [],
-        unsupportedClaims: [String] = []
+        unsupportedClaims: [String] = [],
+        citedPageBlockIDs: [GroundedSourceReference]? = nil,
+        suggestedReviewActions: [GroundedReviewAction] = []
     ) {
         self.text = text
         self.citations = citations
         self.groundingWarning = groundingWarning
         self.uncertaintyNotes = uncertaintyNotes
         self.unsupportedClaims = unsupportedClaims
+        self.citedPageBlockIDs = citedPageBlockIDs ?? citations.map {
+            GroundedSourceReference(pageNumber: $0.pageNumber, blockID: $0.blockID)
+        }
+        self.suggestedReviewActions = suggestedReviewActions
     }
 
     private enum CodingKeys: String, CodingKey {
-        case text, citations, groundingWarning, uncertaintyNotes, unsupportedClaims
+        case text, citations, groundingWarning, uncertaintyNotes, unsupportedClaims,
+             citedPageBlockIDs, suggestedReviewActions
     }
 
     public init(from decoder: Decoder) throws {
@@ -58,13 +123,16 @@ public struct GroundedSummary: Codable, Equatable, Sendable {
         groundingWarning = try container.decodeIfPresent(String.self, forKey: .groundingWarning)
         uncertaintyNotes = try container.decodeIfPresent([String].self, forKey: .uncertaintyNotes) ?? []
         unsupportedClaims = try container.decodeIfPresent([String].self, forKey: .unsupportedClaims) ?? []
+        citedPageBlockIDs = try container.decodeIfPresent([GroundedSourceReference].self, forKey: .citedPageBlockIDs)
+            ?? citations.map { GroundedSourceReference(pageNumber: $0.pageNumber, blockID: $0.blockID) }
+        suggestedReviewActions = try container.decodeIfPresent([GroundedReviewAction].self, forKey: .suggestedReviewActions) ?? []
     }
 }
 
 /// A privacy-safe boundary for an intelligence request. Only a generated
 /// result carries source excerpts; unavailable and failed outcomes carry no
 /// document content and can therefore be surfaced without leaking prompts.
-public enum GroundedIntelligenceResult: Equatable, Sendable {
+public enum GroundedIntelligenceResult: Codable, Equatable, Sendable {
     case generated(GroundedSummary)
     case unavailable(IntelligentExplainerAvailability)
     case failed(reason: String)
@@ -72,6 +140,45 @@ public enum GroundedIntelligenceResult: Equatable, Sendable {
     public var summary: GroundedSummary? {
         if case .generated(let summary) = self { return summary }
         return nil
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case status, summary, availability, reason
+    }
+
+    private enum Status: String, Codable {
+        case generated, unavailable, failed
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .generated(let summary):
+            try container.encode(Status.generated, forKey: .status)
+            try container.encode(summary, forKey: .summary)
+        case .unavailable(let availability):
+            try container.encode(Status.unavailable, forKey: .status)
+            try container.encode(availability, forKey: .availability)
+        case .failed(let reason):
+            try container.encode(Status.failed, forKey: .status)
+            // Do not serialize provider diagnostics: they can accidentally
+            // echo a prompt or source excerpt.
+            _ = reason
+            try container.encode("On-device intelligence request failed.", forKey: .reason)
+        }
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        switch try container.decode(Status.self, forKey: .status) {
+        case .generated:
+            self = .generated(try container.decode(GroundedSummary.self, forKey: .summary))
+        case .unavailable:
+            self = .unavailable(try container.decode(IntelligentExplainerAvailability.self, forKey: .availability))
+        case .failed:
+            _ = try container.decode(String.self, forKey: .reason)
+            self = .failed(reason: "On-device intelligence request failed.")
+        }
     }
 }
 
@@ -231,7 +338,21 @@ public struct ExplanationEngine: Sendable {
         let warning = citations.isEmpty || document.pages.contains(where: { $0.warning != nil })
             ? "Verify this summary against the original source before relying on it."
             : nil
-        return GroundedSummary(text: text, citations: citations, groundingWarning: warning)
+        let notes = document.pages.contains(where: { $0.warning != nil })
+            ? ["One or more source pages contain extraction warnings."]
+            : []
+        return GroundedSummary(
+            text: text,
+            citations: citations,
+            groundingWarning: warning,
+            uncertaintyNotes: notes,
+            suggestedReviewActions: reviewActions(
+                selected: selected,
+                totalSourceBlockCount: blocks.count,
+                document: document,
+                unsupportedClaims: []
+            )
+        )
     }
 
     /// Returns the deterministic, cited result used when intelligence is
@@ -254,7 +375,15 @@ public struct ExplanationEngine: Sendable {
             citations: baseline.citations,
             groundingWarning: warning,
             uncertaintyNotes: baseline.uncertaintyNotes + ["This is a fallback result and must be checked against the cited source."],
-            unsupportedClaims: baseline.unsupportedClaims
+            unsupportedClaims: baseline.unsupportedClaims,
+            citedPageBlockIDs: baseline.citedPageBlockIDs,
+            suggestedReviewActions: baseline.suggestedReviewActions + [
+                GroundedReviewAction(
+                    kind: .verifySource,
+                    title: "Verify the deterministic summary",
+                    reason: "No generative model was used; compare the draft with the cited source blocks."
+                )
+            ]
         )
     }
 
@@ -277,7 +406,10 @@ public struct ExplanationEngine: Sendable {
         case .unavailable(let availability):
             return .unavailable(availability)
         case .failed(let reason):
-            return .failed(reason: reason)
+            // Keep provider diagnostics out of the user-facing/result
+            // boundary.  The typed result only needs a bounded, single-line
+            // policy reason; it must never echo a prompt or source excerpt.
+            return .failed(reason: "On-device intelligence request failed: \(safeDiagnostic(reason))")
         case .generated(let text):
             let selected = Array(sourceBlocks.prefix(maxCitationBlocks(for: length)))
             let citations = selected.map {
@@ -295,15 +427,69 @@ public struct ExplanationEngine: Sendable {
                 notes.append("One or more source pages contain extraction warnings.")
             }
             let warning = notes.isEmpty ? nil : "Verify this generated draft against the original source before relying on it."
+            let actions = reviewActions(
+                selected: selected,
+                totalSourceBlockCount: sourceBlocks.count,
+                document: document,
+                unsupportedClaims: []
+            )
             return .generated(
                 GroundedSummary(
                     text: text,
                     citations: citations,
                     groundingWarning: warning,
-                    uncertaintyNotes: notes
+                    uncertaintyNotes: notes,
+                    suggestedReviewActions: actions
                 )
             )
         }
+    }
+
+    private func reviewActions(
+        selected: [TextBlock],
+        totalSourceBlockCount: Int,
+        document: ReaderDocument,
+        unsupportedClaims: [String]
+    ) -> [GroundedReviewAction] {
+        var actions: [GroundedReviewAction] = []
+        if selected.count < totalSourceBlockCount {
+            actions.append(
+                GroundedReviewAction(
+                    kind: .inspectOmittedContent,
+                    title: "Inspect omitted source content",
+                    reason: "The result was generated from a bounded subset of readable source blocks."
+                )
+            )
+        }
+        for page in document.pages where page.warning != nil {
+            actions.append(
+                GroundedReviewAction(
+                    kind: .reviewLowConfidence,
+                    title: "Review page \(page.pageNumber)",
+                    reason: "This page has an extraction warning; compare the result with the original page.",
+                    pageNumber: page.pageNumber
+                )
+            )
+        }
+        if !unsupportedClaims.isEmpty {
+            actions.append(
+                GroundedReviewAction(
+                    kind: .reviewUnsupportedClaim,
+                    title: "Review unsupported claims",
+                    reason: "One or more claims could not be grounded in the selected source blocks."
+                )
+            )
+        }
+        if actions.isEmpty && selected.isEmpty {
+            actions.append(
+                GroundedReviewAction(
+                    kind: .verifySource,
+                    title: "Verify against the source",
+                    reason: "No source block could be cited for this result."
+                )
+            )
+        }
+        return actions
     }
 
     private func maxCitationBlocks(for length: SummaryLength) -> Int {
@@ -312,6 +498,14 @@ public struct ExplanationEngine: Sendable {
         case .medium: return 8
         case .detailed: return 24
         }
+    }
+
+    private func safeDiagnostic(_ reason: String) -> String {
+        let cleaned = reason
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "\r", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return String(cleaned.prefix(160))
     }
 
     private func budgets(for length: SummaryLength) -> (headings: Int, bodies: Int) {

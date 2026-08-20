@@ -157,6 +157,43 @@ final class ExplanationEngineTests: XCTestCase {
         let legacyDecoded = try JSONDecoder().decode(GroundedSummary.self, from: legacy)
         XCTAssertEqual(legacyDecoded.uncertaintyNotes, [])
         XCTAssertEqual(legacyDecoded.unsupportedClaims, [])
+        XCTAssertEqual(legacyDecoded.citedPageBlockIDs.count, legacyDecoded.citations.count)
+        XCTAssertEqual(legacyDecoded.suggestedReviewActions, [])
+    }
+
+    func testStructuredGroundedResultCarriesTypedLocationsAndReviewActions() throws {
+        var document = SampleDataFactory.makeDemoDocument()
+        document.pages[0].warning = "OCR confidence is limited"
+
+        let grounded = ExplanationEngine().groundedSummary(for: document, length: .short)
+        XCTAssertEqual(grounded.citedPageBlockIDs.count, grounded.citations.count)
+        XCTAssertEqual(
+            grounded.citedPageBlockIDs.map(\.blockID),
+            grounded.citations.map(\.blockID)
+        )
+        XCTAssertTrue(grounded.suggestedReviewActions.contains { $0.kind == .reviewLowConfidence })
+        XCTAssertTrue(grounded.suggestedReviewActions.allSatisfy { action in
+            !action.reason.contains(document.pages[0].blocks.first?.text ?? "__missing__")
+        })
+
+        let result: GroundedIntelligenceResult = .generated(grounded)
+        let data = try JSONEncoder().encode(result)
+        let decoded = try JSONDecoder().decode(GroundedIntelligenceResult.self, from: data)
+        XCTAssertEqual(decoded, result)
+    }
+
+    func testUnavailableAndFailedStructuredResultsDoNotContainSourceText() throws {
+        let sourceSecret = "PRIVATE-SOURCE-\(UUID().uuidString)"
+        let unavailable: GroundedIntelligenceResult = .unavailable(.unavailable(reason: sourceSecret))
+        let unavailableData = try JSONEncoder().encode(unavailable)
+        let unavailableJSON = String(decoding: unavailableData, as: UTF8.self)
+        XCTAssertFalse(unavailableJSON.contains(sourceSecret))
+
+        let failed: GroundedIntelligenceResult = .failed(reason: "provider failed\n\(sourceSecret)")
+        let failedData = try JSONEncoder().encode(failed)
+        let failedJSON = String(decoding: failedData, as: UTF8.self)
+        XCTAssertFalse(failedJSON.contains(sourceSecret))
+        XCTAssertFalse(failedJSON.contains("\\n"))
     }
 
     private func makeMultiSectionDocument() -> ReaderDocument {
