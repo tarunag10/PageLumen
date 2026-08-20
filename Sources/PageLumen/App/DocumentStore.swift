@@ -1479,7 +1479,10 @@ final class DocumentStore {
     }
 
     var canUseStirlingCompression: Bool {
-        guard UserDefaults.standard.bool(forKey: "stirlingPDFEnabled"), !privacyMode, !document.pages.isEmpty, !isProcessing else {
+        guard (UserDefaults.standard.bool(forKey: "stirlingPDFEnabled") || isUITestingStirlingMode),
+              (!privacyMode || isUITestingStirlingMode),
+              !document.pages.isEmpty,
+              !isProcessing else {
             return false
         }
         return stirlingPDFEndpoint?.capabilityState == .loopback || stirlingPDFEndpoint?.capabilityState == .remoteHTTPSAdvancedOptIn
@@ -1487,7 +1490,7 @@ final class DocumentStore {
 
     var stirlingCompressionAvailabilityMessage: String {
         if privacyMode { return "Disable Privacy mode before sending a PDF to Stirling-PDF" }
-        guard UserDefaults.standard.bool(forKey: "stirlingPDFEnabled") else { return "Enable Stirling-PDF in Settings first" }
+        guard UserDefaults.standard.bool(forKey: "stirlingPDFEnabled") || isUITestingStirlingMode else { return "Enable Stirling-PDF in Settings first" }
         guard let endpoint = stirlingPDFEndpoint else { return "Configure a valid Stirling-PDF endpoint in Settings" }
         switch endpoint.capabilityState {
         case .loopback: return "Compress a generated Readable PDF through the local Stirling-PDF service"
@@ -1600,9 +1603,16 @@ final class DocumentStore {
 
     private var stirlingPDFEndpoint: StirlingPDFEndpoint? {
         let raw = UserDefaults.standard.string(forKey: "stirlingPDFEndpoint")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if isUITestingStirlingMode {
+            return StirlingPDFEndpoint(baseURL: URL(string: "http://127.0.0.1:8080")!)
+        }
         guard let url = URL(string: raw), !raw.isEmpty else { return nil }
         let allowRemoteHTTPS = UserDefaults.standard.bool(forKey: "stirlingPDFAllowRemoteHTTPS")
         return StirlingPDFEndpoint(baseURL: url, allowRemoteHTTPS: allowRemoteHTTPS)
+    }
+
+    private var isUITestingStirlingMode: Bool {
+        ProcessInfo.processInfo.arguments.contains("-ui-testing-stirling")
     }
 
     private func exportTranslated() {

@@ -61,6 +61,13 @@ preference. This proves the app's System/Light/Dark wiring deterministically,
 while contrast, transparency, motion, VoiceOver, and host-level visual
 verification remain separate accessibility gates.
 
+The `-ui-testing-stirling` launch argument (combined with
+`-ui-testing-fixture`) uses an in-process loopback endpoint seam and exposes
+the compression and merge controls without persisting settings or contacting
+a server. The contract verifies that the controls are present and that no
+save panel opens; provider execution and real-server behavior remain separate
+tests.
+
 Workflow step buttons retain their accessible labels (`Step 1, Add` through
 `Step 4, Export`) so navigation checks do not depend on SwiftUI view hierarchy
 or localized visual text.

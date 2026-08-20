@@ -91,6 +91,20 @@ final class PageLumenUITests: XCTestCase {
         XCTAssertFalse(fixtureApp.sheets.firstMatch.exists, "Control-surface coverage must not open a save panel")
     }
 
+    func testFixtureStirlingModeExposesConfirmedOperationControls() throws {
+        let fixtureApp = XCUIApplication()
+        fixtureApp.launchArguments = ["-ui-testing", "-ui-testing-fixture", "-ui-testing-stirling"]
+        fixtureApp.launch()
+
+        XCTAssertTrue(fixtureApp.buttons["review.queue"].waitForExistence(timeout: 5))
+        fixtureApp.buttons["review.continue"].click()
+        XCTAssertTrue(fixtureApp.buttons["export.backToReview"].waitForExistence(timeout: 3))
+        XCTAssertTrue(fixtureApp.buttons["export.stirlingCompress"].exists)
+        XCTAssertTrue(fixtureApp.buttons["export.stirlingMerge"].exists)
+        XCTAssertFalse(fixtureApp.buttons["export.stirlingCancel"].exists)
+        XCTAssertFalse(fixtureApp.sheets.firstMatch.exists)
+    }
+
     func testSettingsLaunchExposesPrivacyAndAppearanceControls() throws {
         let settingsApp = XCUIApplication()
         settingsApp.launchArguments = ["-ui-testing", "-ui-testing-settings"]
