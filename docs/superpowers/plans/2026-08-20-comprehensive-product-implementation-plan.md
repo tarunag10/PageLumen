@@ -508,7 +508,7 @@ participant and physical-device gates remain open.
 
 ### 7.3 Distribution evidence
 
-- [ ] Add CI jobs for package tests, Xcode build, lint, fixture corpus, and release-manifest validation.
+- [ ] Add CI jobs for package tests, Xcode build, lint, fixture corpus, and release-manifest validation. CI now runs package tests, Xcode build, whitespace checks, privacy-manifest validation, performance-baseline artifact validation, and plan-integrity checks; fixture-corpus and signed release-manifest validation remain open.
 - [ ] Before release, create a signed archive, validate entitlements and sandbox behaviour, export the distribution artifact, notarize if distributing outside the Mac App Store, and separately validate the submitted App Store build if applicable.
 - [ ] Do not call a local archive, notarized DMG, upload, TestFlight processing, or App Review submission a live-store release; report each state separately.
 - [ ] Run a final physical-Mac smoke test: PDF, image, clipboard, selected capture, window capture, translation, review queue, each export, deletion/retention controls, VoiceOver, light/dark appearance, and offline behaviour.
