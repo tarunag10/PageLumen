@@ -1,4 +1,4 @@
-.PHONY: help test build release lint clean
+.PHONY: help test build release lint quality clean
 
 APP_NAME := PageLumen
 SCHEME := PageLumen
@@ -9,6 +9,7 @@ help:
 	@echo "  make build     - build the app (Debug)"
 	@echo "  make release   - build the app (Release) and produce an archive"
 	@echo "  make lint      - run swift test + release build"
+	@echo "  make quality   - run local privacy, artifact, and whitespace gates"
 	@echo "  make clean     - remove .build, dist, DerivedData"
 
 test:
@@ -23,6 +24,9 @@ release:
 lint:
 	swift test
 	./script/package_release.sh
+
+quality:
+	./script/quality_gates.sh
 
 clean:
 	rm -rf .build dist DerivedData

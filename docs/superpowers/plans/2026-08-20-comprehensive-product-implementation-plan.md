@@ -508,7 +508,7 @@ participant and physical-device gates remain open.
 
 ### 7.3 Distribution evidence
 
-- [ ] Add CI jobs for package tests, Xcode build, lint, fixture corpus, and release-manifest validation. CI now runs package tests, Xcode build, whitespace checks, privacy-manifest validation, performance-baseline artifact validation, and plan-integrity checks; fixture-corpus and signed release-manifest validation remain open.
+- [ ] Add CI jobs for package tests, Xcode build, lint, fixture corpus, and release-manifest validation. Existing CI runs package tests and Xcode build; the local `make quality`/`script/quality_gates.sh` boundary now validates whitespace, the privacy manifest, and required baseline/plan artifacts. Workflow integration is prepared but cannot be published with the current GitHub OAuth token because it lacks `workflow` scope; fixture-corpus and signed release-manifest validation remain open.
 - [ ] Before release, create a signed archive, validate entitlements and sandbox behaviour, export the distribution artifact, notarize if distributing outside the Mac App Store, and separately validate the submitted App Store build if applicable.
 - [ ] Do not call a local archive, notarized DMG, upload, TestFlight processing, or App Review submission a live-store release; report each state separately.
 - [ ] Run a final physical-Mac smoke test: PDF, image, clipboard, selected capture, window capture, translation, review queue, each export, deletion/retention controls, VoiceOver, light/dark appearance, and offline behaviour.
