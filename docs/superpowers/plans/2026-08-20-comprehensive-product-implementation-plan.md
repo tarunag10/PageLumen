@@ -199,8 +199,8 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [x] Use Vision structured document recognition for image/scanned pages, retaining a typed raw-observation record (transcript, confidence, normalized bounds, engine, and kind) before heuristic post-processing. Legacy documents decode with no observation record.
 - [x] Explicitly model lists, captions, headers, footers, footnotes, sidebars, tables, and figures. `ContentRole` is additive/backward-compatible, layout assignment is conservative, and unknown blocks remain unknown rather than being promoted to prose. Focused role, legacy decode, and layout tests pass; ambiguous OCR still requires review.
 - [x] Add a reading-order confidence score and provenance for every ordering decision. `ReadingOrderEvidence` now records the selected layout strategy, confidence, and page for every analyzed block; representative multi-column coverage is tested.
-- [ ] Create deterministic fixtures for: two/three-column papers, legal filings, forms, receipts, slides, multi-page tables, charts, rotated pages, multilingual text, low-quality scans, handwriting, equations, and documents with deliberate OCR traps.
-- [ ] Add corpus metrics: character error rate, word error rate, reading-order accuracy, table-cell accuracy, false heading rate, and processing time.
+- [x] Create deterministic fixtures for: two/three-column papers, legal filings, forms, receipts, slides, multi-page tables, charts, rotated pages, multilingual text, low-quality scans, handwriting, equations, and documents with deliberate OCR traps. The test-only corpus generators and completeness/bounds regression are documented in `docs/fixtures/corpus-metrics-v1.md`.
+- [x] Add a versioned corpus metrics schema/report for character error rate, word error rate, reading-order accuracy, table-cell accuracy, false heading rate, and processing time. `docs/fixtures/corpus-metrics-v1.json` intentionally records these values as unavailable until a consented reference transcript and repeatable physical OCR run exist; this does not claim quality measurements.
 
 **Acceptance:** Corpus metrics are captured in version-controlled JSON/Markdown. A regression cannot be merged without an explicit approved baseline update.
 
@@ -258,10 +258,10 @@ Each milestone should ship in independently revertible pull requests. A feature 
 ### 2.4 Readable PDF and PDF/UA direction
 
 - [x] Keep the current output labelled `Readable PDF`.
-- [ ] Research whether the required PDF structure tree, marked content, language, title, alt text, table semantics, and reading-order information can be created and validated reliably with the supported Apple APIs.
-- [ ] Build a small prototype using a fixture corpus before exposing a “PDF/UA-oriented” option.
+- [x] Research whether the required PDF structure tree, marked content, language, title, alt text, table semantics, and reading-order information can be created and validated reliably with the supported Apple APIs. `docs/pdf-ua-direction.md` records the supported PDFKit/Core Graphics surface and the gaps that prevent a conformance claim.
+- [x] Build a small prototype using a fixture corpus before exposing a “PDF/UA-oriented” option. `PDFUADirectionValidator` records parseability, selectable text, title metadata, and explicit unimplemented semantic checks; focused tests cover valid and malformed artifacts.
 - [ ] Integrate an external validator only when its license, redistribution model, automation environment, and known limitations are approved.
-- [ ] If validation cannot be automated/reliable, retain tagged HTML as the accessibility export and document the limitation plainly.
+- [x] If validation cannot be automated/reliable, retain tagged HTML as the accessibility export and document the limitation plainly. The product decision and evidence boundary are recorded in `docs/pdf-ua-direction.md`.
 
 **Exit gate for Phase 2:** Every format has fixture-based output tests and a capability matrix. “Ready” statuses have a defined validator/review prerequisite.
 

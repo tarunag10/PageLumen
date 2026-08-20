@@ -21,6 +21,7 @@
 		1C6EF14525399C7AC3B8FE54 /* DOCXWriterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A605EA1CCE9F381D51DE986A /* DOCXWriterTests.swift */; };
 		208E3AF0FC7244183FBA3072 /* FixtureCorpusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1804517D1CC70DE20B29EB4 /* FixtureCorpusTests.swift */; };
 		2175D7BFE55280C57309D783 /* AdvancedExportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBE16865324D47B5AD434E1C /* AdvancedExportTests.swift */; };
+		23CA81AC377CF6E5DD8306EC /* PDFUADirection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00AF4251449A663E30C2BE37 /* PDFUADirection.swift */; };
 		279655DA7AAB073AF474A8C6 /* SwiftDataPersistingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1122FAA9155AEFC4782A225F /* SwiftDataPersistingTests.swift */; };
 		2906FC2FA4187E33DF68DEDD /* ExplanationEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FF3DCCB16D8AC6195018D83 /* ExplanationEngineTests.swift */; };
 		2978CA55670E9D842798A5D3 /* AccessibilityStatusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EBCF1AACF66549302EC7427 /* AccessibilityStatusTests.swift */; };
@@ -29,6 +30,7 @@
 		2F2E208DEFCCD417E92C7145 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B1C3F3CF365A97DC8EE00D0 /* ContentView.swift */; };
 		30B74E61BC3ACA3DE3798FBF /* PreviewPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD0CB7CF25D3032E3EC19965 /* PreviewPane.swift */; };
 		34965B785A918A574C9E62A2 /* DOCXWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BA19D33ACA07521D9D454FB /* DOCXWriter.swift */; };
+		35811A3374DF65449C2E0075 /* PDFUADirectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2FAC41A6143CFB5755CAB2E /* PDFUADirectionTests.swift */; };
 		37BD647D489ACF90ABC7222D /* SampleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99E5C644819EDB4F6F621D7A /* SampleData.swift */; };
 		3886F26189A17E19BC3F719F /* PageLumenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9E4B58A0FC934C9DC62F3754 /* PageLumenCore.framework */; };
 		39DADDA68F137A5CA34FDF2A /* PDFOperationsProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FB31681A1F9D103897D7C5 /* PDFOperationsProvider.swift */; };
@@ -71,6 +73,7 @@
 		B39123D3B652317A13DE47B5 /* QuoteCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76E976492C1C191015CFB289 /* QuoteCapture.swift */; };
 		B4ACB1693B970790F1D6D4C0 /* testDemoTaggedHTMLExportSnapshot.demo-tagged-html.txt in Resources */ = {isa = PBXBuildFile; fileRef = 45F990D4F459CA9087296DDC /* testDemoTaggedHTMLExportSnapshot.demo-tagged-html.txt */; };
 		B5AB21D2BF5E68475264C623 /* ScreenshotCaptureServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6BAC94216AB318648C32ADF /* ScreenshotCaptureServiceTests.swift */; };
+		B7C64136A766792D881BF9CA /* CorpusManifestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDA8BA4A04118FE546D1B5CC /* CorpusManifestTests.swift */; };
 		B7E4567FA883A438C6D65A80 /* StirlingPDFProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BE206365E46217CFE2A7CD7 /* StirlingPDFProvider.swift */; };
 		B820A83E9DB0DD704EFAFDAF /* MarkdownExportContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D4A7DCB07A9B2ACD32B05F1 /* MarkdownExportContract.swift */; };
 		BE044BB82DB542AC8C22CBC2 /* PageLumenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9E4B58A0FC934C9DC62F3754 /* PageLumenCore.framework */; };
@@ -176,6 +179,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		00AF4251449A663E30C2BE37 /* PDFUADirection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFUADirection.swift; sourceTree = "<group>"; };
 		01C6609B23473073ABF51DAC /* DocumentEditing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentEditing.swift; sourceTree = "<group>"; };
 		05D794E3270A74F25DD799CF /* IntelligentExplainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligentExplainer.swift; sourceTree = "<group>"; };
 		06110C3339DFA38795DCB525 /* DocumentComparisonTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentComparisonTests.swift; sourceTree = "<group>"; };
@@ -256,10 +260,12 @@
 		E7FC574618FEADA955CF48E5 /* DocumentStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentStoreTests.swift; sourceTree = "<group>"; };
 		EBC3669176703A82D1F69F41 /* PageLumenCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PageLumenCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EBCFF6F0F0049CF4980C8299 /* LocalLibraryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLibraryTests.swift; sourceTree = "<group>"; };
+		F2FAC41A6143CFB5755CAB2E /* PDFUADirectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFUADirectionTests.swift; sourceTree = "<group>"; };
 		F948AD3CC70357D53F87F901 /* AccessibleStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibleStyle.swift; sourceTree = "<group>"; };
 		FAC1B624E59DAA96C4060C73 /* PageLumenTips.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageLumenTips.swift; sourceTree = "<group>"; };
 		FBE16865324D47B5AD434E1C /* AdvancedExportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedExportTests.swift; sourceTree = "<group>"; };
 		FD0CB7CF25D3032E3EC19965 /* PreviewPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewPane.swift; sourceTree = "<group>"; };
+		FDA8BA4A04118FE546D1B5CC /* CorpusManifestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorpusManifestTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -331,6 +337,7 @@
 				4D4A7DCB07A9B2ACD32B05F1 /* MarkdownExportContract.swift */,
 				51ED10D17EEF3D8A5A4C74B0 /* Models.swift */,
 				C0FB31681A1F9D103897D7C5 /* PDFOperationsProvider.swift */,
+				00AF4251449A663E30C2BE37 /* PDFUADirection.swift */,
 				C65BABD59FFBD2C7A825B919 /* PersistedDocument.swift */,
 				BFD4CAE7BE7F9F93A1491036 /* PersistedDocumentSchema.swift */,
 				76E976492C1C191015CFB289 /* QuoteCapture.swift */,
@@ -438,6 +445,7 @@
 				9EBCF1AACF66549302EC7427 /* AccessibilityStatusTests.swift */,
 				FBE16865324D47B5AD434E1C /* AdvancedExportTests.swift */,
 				672E6D23DE829F90478ECDFC /* BatchImportQueueTests.swift */,
+				FDA8BA4A04118FE546D1B5CC /* CorpusManifestTests.swift */,
 				06110C3339DFA38795DCB525 /* DocumentComparisonTests.swift */,
 				10425478B42934D73AD06316 /* DocumentEditingTests.swift */,
 				97FBD3593ADD8AA57BD938D6 /* DocumentPersistingTests.swift */,
@@ -453,6 +461,7 @@
 				EBCFF6F0F0049CF4980C8299 /* LocalLibraryTests.swift */,
 				CCD368DF1D25E58B885FC699 /* MarkdownContractTests.swift */,
 				1E6CC3CC58A7B75E480464BC /* PDFOperationsProviderTests.swift */,
+				F2FAC41A6143CFB5755CAB2E /* PDFUADirectionTests.swift */,
 				06C96C1A82E586B01C41B2ED /* QuoteCaptureTests.swift */,
 				E6BAC94216AB318648C32ADF /* ScreenshotCaptureServiceTests.swift */,
 				D2E2726B74EFC602BCEE4058 /* StirlingPDFProviderTests.swift */,
@@ -687,6 +696,7 @@
 				2978CA55670E9D842798A5D3 /* AccessibilityStatusTests.swift in Sources */,
 				2175D7BFE55280C57309D783 /* AdvancedExportTests.swift in Sources */,
 				D1CC83CD8B4C2C0D6505952E /* BatchImportQueueTests.swift in Sources */,
+				B7C64136A766792D881BF9CA /* CorpusManifestTests.swift in Sources */,
 				1C6EF14525399C7AC3B8FE54 /* DOCXWriterTests.swift in Sources */,
 				F47F64BC249E936280B1AB0F /* DocumentComparisonTests.swift in Sources */,
 				ECC4328F40B23404AE5729AA /* DocumentEditingTests.swift in Sources */,
@@ -702,6 +712,7 @@
 				A066598C72207F203053B1F3 /* LocalLibraryTests.swift in Sources */,
 				484629EACB8D181F8C11F6C7 /* MarkdownContractTests.swift in Sources */,
 				A64338CD31493A561D39F786 /* PDFOperationsProviderTests.swift in Sources */,
+				35811A3374DF65449C2E0075 /* PDFUADirectionTests.swift in Sources */,
 				9E5DF85CC5F6CC24DDF61BF6 /* QuoteCaptureTests.swift in Sources */,
 				B5AB21D2BF5E68475264C623 /* ScreenshotCaptureServiceTests.swift in Sources */,
 				0D65495EDF87C45A2DEDAC49 /* StirlingPDFProviderTests.swift in Sources */,
@@ -730,6 +741,7 @@
 				B820A83E9DB0DD704EFAFDAF /* MarkdownExportContract.swift in Sources */,
 				925D49B3592958D424690066 /* Models.swift in Sources */,
 				39DADDA68F137A5CA34FDF2A /* PDFOperationsProvider.swift in Sources */,
+				23CA81AC377CF6E5DD8306EC /* PDFUADirection.swift in Sources */,
 				8F7F7D75A226B002BDF56857 /* PersistedDocument.swift in Sources */,
 				D570A6FCC33E2175A1409D5B /* PersistedDocumentSchema.swift in Sources */,
 				B39123D3B652317A13DE47B5 /* QuoteCapture.swift in Sources */,

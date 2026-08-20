@@ -35,6 +35,7 @@ The reading-order overlay is fully accessible:
 
 - The **Tagged HTML** export writes a structurally valid HTML document with `<h1>`…`<h6>`, lists, table headers, figure captions, and ARIA landmarks. It is the recommended format for users who want to take the document into another tool.
 - The **Readable PDF** export goes through PDFKit and is designed to be more accessible than a flat text PDF. It is **not** PDF/UA compliant. See the limitations below.
+- The current PDF evidence prototype is documented in [the PDF/UA direction record](pdf-ua-direction.md). It verifies only parseability, selectable text, and title metadata; it intentionally reports structure-tree, language, marked-content, figure alternate-text, and table-semantics checks as not implemented.
 
 Accessibility-sensitive exports are now review-gated. Tagged HTML, HTML, Readable
 PDF, and DOCX exports are blocked when automated checks find an unresolved
@@ -72,6 +73,7 @@ with `'` to prevent formula execution when opened in a spreadsheet.
 ## Known Limitations
 
 - **Not PDF/UA compliant.** The current PDF export does not claim PDF/UA conformance. We are tracking this in the audit plan; a tagged-PDF pass would require moving the export onto `PDFKit`'s `PDFDocument` / `PDFPage` APIs and adding structure-tree metadata.
+- The bounded prototype does not change that claim. `Tagged HTML` remains the recommended accessibility export until a specialist tagged-PDF authoring path and approved independent validator are available.
 - **Dynamic Type is partial.** Most of the UI uses semantic font styles (`Font.body`, `Font.title3`, …) so it scales with the user's preferred text size. A few fixed-size affordances (workflow step pill numbers, the batch queue status dot) are intentionally fixed; they will move to `ScaledMetric` in a follow-up.
 - **Reduce-motion is currently a no-animation workflow.** The review workflow
   has no decorative transitions, and any future animation must be gated on
