@@ -106,6 +106,25 @@ struct SummaryExportView: View {
                         .accessibilityElement(children: .combine)
                 }
 
+                if store.isStirlingOperationInFlight {
+                    HStack(spacing: 12) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text("Stirling-PDF is processing the separate output copy.")
+                            .font(.callout)
+                            .foregroundStyle(AccessibleStyle.secondaryText)
+                        Spacer()
+                        Button("Cancel") {
+                            store.cancelStirlingOperation()
+                        }
+                        .accessibilityIdentifier("export.stirlingCancel")
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .accessiblePanel(paddedShadow: false)
+                    .accessibilityElement(children: .contain)
+                }
+
                 if let draft = store.reviewDraft {
                     VStack(alignment: .leading, spacing: 12) {
                         Label("Review draft — source unchanged", systemImage: "checkmark.shield")

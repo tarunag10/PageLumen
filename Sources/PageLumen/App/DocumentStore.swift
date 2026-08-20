@@ -72,6 +72,7 @@ final class DocumentStore {
     var selectedReviewIssueID: String?
     var isProcessing = false
     var isExportingAudio = false
+    private(set) var isStirlingOperationInFlight = false
     var audioExportProgress = AudioExportProgress(fractionCompleted: 0, phase: .preparing)
     var statusMessage = "Ready"
     var exportOptions = ExportOptions.full
@@ -188,6 +189,7 @@ final class DocumentStore {
     private let watchFolderMonitor = WatchFolderMonitor()
     private var importTask: Task<Void, Never>?
     private var audioExportTask: Task<Void, Never>?
+    private var stirlingOperationTask: Task<Void, Never>?
     private var watchFolderImportsInFlight = Set<URL>()
 
     private let processor: any DocumentImporting
@@ -1502,7 +1504,7 @@ final class DocumentStore {
             statusMessage = "Stirling-PDF compression requires explicit confirmation."
             return
         }
-        guard canUseStirlingCompression, let endpoint = stirlingPDFEndpoint else {
+        guard !isStirlingOperationInFlight, canUseStirlingCompression, let endpoint = stirlingPDFEndpoint else {
             statusMessage = stirlingCompressionAvailabilityMessage
             return
         }
@@ -1516,7 +1518,12 @@ final class DocumentStore {
         let sourceData = exportEngine.data(for: document, format: .pdf, options: exportOptions)
         let authorization = StirlingPDFOperationAuthorization(privacyModeEnabled: privacyMode, operationConfirmed: confirmed)
         statusMessage = "Compressing a copy through Stirling-PDF…"
-        Task { @MainActor in
+        isStirlingOperationInFlight = true
+        stirlingOperationTask = Task { @MainActor in
+            defer {
+                isStirlingOperationInFlight = false
+                stirlingOperationTask = nil
+            }
             do {
                 let result = try await StirlingPDFOperationsProvider(endpoint: endpoint, authorization: authorization).execute(
                     PDFOperationRequest(operation: .compress, documents: [(data: sourceData, filename: "\(document.title).pdf")])
@@ -1524,7 +1531,7 @@ final class DocumentStore {
                 try result.data.write(to: url, options: .atomic)
                 statusMessage = "Saved compressed PDF copy to \(url.lastPathComponent)"
             } catch {
-                statusMessage = "Stirling-PDF compression failed: \(error.localizedDescription)"
+                statusMessage = Task.isCancelled ? "Stirling-PDF compression cancelled." : "Stirling-PDF compression failed: \(error.localizedDescription)"
             }
         }
     }
@@ -1537,7 +1544,7 @@ final class DocumentStore {
             statusMessage = "Stirling-PDF merge requires explicit confirmation."
             return
         }
-        guard canUseStirlingCompression, let endpoint = stirlingPDFEndpoint else {
+        guard !isStirlingOperationInFlight, canUseStirlingCompression, let endpoint = stirlingPDFEndpoint else {
             statusMessage = stirlingCompressionAvailabilityMessage
             return
         }
@@ -1563,8 +1570,13 @@ final class DocumentStore {
             guard panel.runModal() == .OK, let outputURL = panel.url else { return }
 
             let authorization = StirlingPDFOperationAuthorization(privacyModeEnabled: privacyMode, operationConfirmed: confirmed)
-            statusMessage = "Merging (selected.count + 1) PDFs through Stirling-PDF…"
-            Task { @MainActor in
+            statusMessage = "Merging \(selected.count + 1) PDFs through Stirling-PDF…"
+            isStirlingOperationInFlight = true
+            stirlingOperationTask = Task { @MainActor in
+                defer {
+                    isStirlingOperationInFlight = false
+                    stirlingOperationTask = nil
+                }
                 do {
                     let result = try await StirlingPDFOperationsProvider(endpoint: endpoint, authorization: authorization).execute(
                         PDFOperationRequest(operation: .merge, documents: inputs)
@@ -1572,12 +1584,18 @@ final class DocumentStore {
                     try result.data.write(to: outputURL, options: .atomic)
                     statusMessage = "Saved merged PDF copy to \(outputURL.lastPathComponent)"
                 } catch {
-                    statusMessage = "Stirling-PDF merge failed: \(error.localizedDescription)"
+                    statusMessage = Task.isCancelled ? "Stirling-PDF merge cancelled." : "Stirling-PDF merge failed: \(error.localizedDescription)"
                 }
             }
         } catch {
             statusMessage = "Could not read a selected PDF: \(error.localizedDescription)"
         }
+    }
+
+    func cancelStirlingOperation() {
+        guard isStirlingOperationInFlight else { return }
+        stirlingOperationTask?.cancel()
+        statusMessage = "Cancelling Stirling-PDF operation…"
     }
 
     private var stirlingPDFEndpoint: StirlingPDFEndpoint? {

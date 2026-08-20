@@ -88,6 +88,9 @@ confirmation fail closed before any transport call.
 The same screen exposes bounded merge: the generated PDF is combined with
 one or more user-selected PDFs only after confirmation, with strict provider
 input limits and a separate output save. No selected source is overwritten.
+Both operations expose an in-flight progress state and cancellation action;
+the provider receives task cancellation and the UI reports cancellation
+separately from transport failure.
 
 ### Stage B — one safe operation
 
