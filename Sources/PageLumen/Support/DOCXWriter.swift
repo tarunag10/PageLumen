@@ -96,15 +96,16 @@ public struct DOCXWriter: Sendable {
         var rows: [String] = []
         rows.append("    <w:tbl>")
         rows.append("      <w:tblPr><w:tblW w:w=\"0\" w:type=\"auto\"/></w:tblPr>")
-        rows.append("      <w:tblGrid></w:tblGrid>")
+        let columnCount = table.rows.map(\.count).max() ?? 0
+        let gridColumns = (0..<columnCount)
+            .map { _ in "<w:gridCol w:w=\"2400\"/>" }
+            .joined()
+        rows.append("      <w:tblGrid>\(gridColumns)</w:tblGrid>")
         for (rowIndex, row) in table.rows.enumerated() {
             rows.append("      <w:tr>")
             for cell in row {
-                if rowIndex == 0 {
-                    rows.append("        \(paragraph(text: cell, style: "Strong"))")
-                } else {
-                    rows.append("        \(paragraph(text: cell))")
-                }
+                let style = rowIndex == 0 ? "Strong" : nil
+                rows.append("        <w:tc>\(paragraph(text: cell, style: style))</w:tc>")
             }
             rows.append("      </w:tr>")
         }

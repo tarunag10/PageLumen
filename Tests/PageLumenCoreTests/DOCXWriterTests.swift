@@ -37,6 +37,22 @@ final class DOCXWriterTests: XCTestCase {
         XCTAssertTrue(names.contains("word/document.xml"))
     }
 
+    func testDOCXTablesUseWordprocessingMLTableCells() {
+        let document = SampleDataFactory.makeDemoDocument()
+        let data = DOCXWriter().data(for: document, options: .full)
+        let entries = parseZipEntries(in: data)
+        let documentXML = entries.first { $0.name == "word/document.xml" }
+        let xml = String(data: documentXML?.payload ?? Data(), encoding: .utf8) ?? ""
+
+        // The demo table has three rows and two columns. WordprocessingML
+        // requires every cell to be wrapped in w:tc under its w:tr parent.
+        XCTAssertEqual(xml.components(separatedBy: "<w:tc>").count - 1, 6)
+        XCTAssertEqual(xml.components(separatedBy: "</w:tc>").count - 1, 6)
+        XCTAssertTrue(xml.contains("<w:tc><w:p>"))
+        XCTAssertFalse(xml.contains("<w:tr>\n        <w:p"))
+        XCTAssertTrue(xml.contains("<w:gridCol w:w=\"2400\"/>"))
+    }
+
     func testExportFormatDOCXExposesDocxExtension() {
         XCTAssertEqual(ExportFormat.docx.fileExtension, "docx")
         XCTAssertEqual(ExportFormat.docx.rawValue, "DOCX")
