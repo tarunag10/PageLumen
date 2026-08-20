@@ -260,6 +260,7 @@ public enum DocumentEditing {
         }
 
         document.pages[location.pageIndex].blocks[location.blockIndex].type = type
+        document.pages[location.pageIndex].blocks[location.blockIndex].contentRole = ContentRole(legacyType: type)
         rebuildOutline(in: &document)
     }
 

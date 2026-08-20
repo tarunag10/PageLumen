@@ -271,4 +271,31 @@ final class LayoutAnalyzerTests: XCTestCase {
         XCTAssertEqual(resolvedCaption?.type, .caption)
         XCTAssertEqual(resolvedFigure?.type, .figure)
     }
+
+    func testContentRolesRetainFootnoteSidebarListAndUnknown() {
+        let list = TextBlock(pageNumber: 1, type: .paragraph, text: "- First\n- Second", bounds: BoundingBox(x: 100, y: 120, width: 300, height: 42), confidence: 0.95)
+        let unknown = TextBlock(pageNumber: 1, type: .unknown, text: "Unclassified mark", bounds: BoundingBox(x: 100, y: 220, width: 240, height: 18), confidence: 0.5)
+        let sidebar = TextBlock(pageNumber: 1, type: .paragraph, text: "Marginal note", bounds: BoundingBox(x: 900, y: 80, width: 80, height: 1_100), confidence: 0.95)
+        let footnote = TextBlock(pageNumber: 1, type: .paragraph, text: "1 Source note.", bounds: BoundingBox(x: 100, y: 1_290, width: 300, height: 18), confidence: 0.95)
+        let page = ReaderPage(pageNumber: 1, size: PageSize(width: 1_000, height: 1_400), blocks: [list, unknown, sidebar, footnote])
+
+        let analyzed = LayoutAnalyzer().analyze(page: page)
+
+        XCTAssertEqual(analyzed.blocks.first(where: { $0.text == "- First\n- Second" })?.resolvedContentRole, .list)
+        XCTAssertEqual(analyzed.blocks.first(where: { $0.text == "Unclassified mark" })?.resolvedContentRole, .unknown)
+        XCTAssertEqual(analyzed.blocks.first(where: { $0.text == "Marginal note" })?.resolvedContentRole, .sidebar)
+        XCTAssertEqual(analyzed.blocks.first(where: { $0.text == "1 Source note." })?.resolvedContentRole, .footnote)
+    }
+
+    func testContentRoleIsBackwardCompatibleWhenMissingFromStoredBlock() throws {
+        let block = TextBlock(pageNumber: 1, type: .unknown, text: "Not prose", bounds: BoundingBox(x: 0, y: 0, width: 10, height: 10), confidence: 0.2)
+        var object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(block)) as! [String: Any]
+        object.removeValue(forKey: "contentRole")
+        let data = try JSONSerialization.data(withJSONObject: object)
+
+        let decoded = try JSONDecoder().decode(TextBlock.self, from: data)
+
+        XCTAssertNil(decoded.contentRole)
+        XCTAssertEqual(decoded.resolvedContentRole, .unknown)
+    }
 }

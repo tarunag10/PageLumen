@@ -58,6 +58,54 @@ public enum BlockType: String, Codable, Sendable {
     case unknown
 }
 
+/// Semantic content roles are intentionally separate from the legacy
+/// `BlockType` enum.  `BlockType` is still used by the existing editor and
+/// exporters, while this richer vocabulary lets the analysis pipeline retain
+/// distinctions such as footnotes and sidebars.  `unknown` is a first-class
+/// result: uncertain OCR is never silently promoted to prose.
+public enum ContentRole: String, Codable, Equatable, Sendable, CaseIterable {
+    case heading
+    case paragraph
+    case list
+    case table
+    case figure
+    case caption
+    case header
+    case footer
+    case footnote
+    case sidebar
+    case unknown
+
+    public init(legacyType: BlockType) {
+        switch legacyType {
+        case .heading: self = .heading
+        case .paragraph: self = .paragraph
+        case .list: self = .list
+        case .table: self = .table
+        case .figure: self = .figure
+        case .caption: self = .caption
+        case .header: self = .header
+        case .footer: self = .footer
+        case .unknown: self = .unknown
+        }
+    }
+
+    public var legacyType: BlockType {
+        switch self {
+        case .heading: return .heading
+        case .paragraph: return .paragraph
+        case .list: return .list
+        case .table: return .table
+        case .figure: return .figure
+        case .caption: return .caption
+        case .header, .footnote: return .footer
+        case .footer: return .footer
+        case .sidebar: return .paragraph
+        case .unknown: return .unknown
+        }
+    }
+}
+
 public enum BlockSource: String, Codable, Sendable {
     case visionOCR = "vision-ocr"
     case embeddedPDF = "embedded-pdf"
@@ -198,6 +246,14 @@ public struct TextBlock: Identifiable, Codable, Equatable, Sendable {
     /// layout regression; this stores no Vision framework object.
     public var rawObservation: OCRObservationRecord?
     public var readingOrderEvidence: ReadingOrderEvidence?
+    /// Rich semantic role assigned by layout analysis or an explicit user
+    /// edit. Optional keeps documents written before role modeling readable;
+    /// use `resolvedContentRole` at consumption boundaries.
+    public var contentRole: ContentRole?
+
+    public var resolvedContentRole: ContentRole {
+        contentRole ?? ContentRole(legacyType: type)
+    }
 
     public var hasTextEdit: Bool {
         guard let originalText else { return false }
@@ -216,7 +272,8 @@ public struct TextBlock: Identifiable, Codable, Equatable, Sendable {
         provenance: BlockProvenance? = nil,
         originalText: String? = nil,
         rawObservation: OCRObservationRecord? = nil,
-        readingOrderEvidence: ReadingOrderEvidence? = nil
+        readingOrderEvidence: ReadingOrderEvidence? = nil,
+        contentRole: ContentRole? = nil
     ) {
         self.id = id
         self.pageNumber = pageNumber
@@ -230,6 +287,7 @@ public struct TextBlock: Identifiable, Codable, Equatable, Sendable {
         self.originalText = originalText
         self.rawObservation = rawObservation
         self.readingOrderEvidence = readingOrderEvidence
+        self.contentRole = contentRole
     }
 }
 

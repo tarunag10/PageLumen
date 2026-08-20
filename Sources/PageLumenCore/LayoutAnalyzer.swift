@@ -9,6 +9,7 @@ public struct LayoutAnalyzer: Sendable {
 
     public func analyze(document: ReaderDocument) -> ReaderDocument {
         var analyzedPages = markRepeatedHeadersAndFooters(in: document.pages.map(analyze(page:)))
+        analyzedPages = analyzedPages.map(assignContentRoles(on:))
         let outline = analyzedPages.flatMap { page in
             page.blocks
                 .filter { $0.type == .heading }
@@ -55,16 +56,23 @@ public struct LayoutAnalyzer: Sendable {
                 )
                 if isLikelyTable(copy) {
                     copy.type = .table
+                    copy.contentRole = .table
                 } else if isLikelyFigure(copy) {
                     copy.type = .figure
+                    copy.contentRole = .figure
+                } else if isLikelyList(copy) {
+                    copy.type = .list
+                    copy.contentRole = .list
                 } else if isLikelyHeading(copy) {
                     copy.type = .heading
+                    copy.contentRole = .heading
                 }
                 // Footnote: short text near the bottom of the page. Reuse
                 // `.footer` because the block enum has no dedicated footnote
                 // case yet (per Phase 6.3.1 in the audit plan).
                 if isLikelyFootnote(copy, on: page) {
                     copy.type = .footer
+                    copy.contentRole = .footnote
                 }
                 // Caption: short text whose vertical center sits near a figure
                 // candidate. This runs after the figure check so a block that
@@ -72,6 +80,7 @@ public struct LayoutAnalyzer: Sendable {
                 // is correctly tagged as the caption, not a duplicate figure.
                 if isLikelyCaption(copy, on: page, figureCandidates: figureCandidates) {
                     copy.type = .caption
+                    copy.contentRole = .caption
                 }
                 return copy
             }
@@ -82,7 +91,7 @@ public struct LayoutAnalyzer: Sendable {
         page.warning = ordered.contains { $0.confidence < 0.65 } ? "Some extracted text has low OCR confidence and should be reviewed." : nil
         page.tables = detectTables(in: ordered)
         page.figures = detectFigures(in: ordered)
-        return page
+        return assignContentRoles(on: page)
     }
 
     private func readingOrderStrategy(for layoutType: LayoutType) -> String {
@@ -442,6 +451,17 @@ public struct LayoutAnalyzer: Sendable {
         return lower.contains("chart") || lower.contains("figure") || lower.contains("axis") || lower.contains("legend")
     }
 
+    private func isLikelyList(_ block: TextBlock) -> Bool {
+        if block.type == .list { return true }
+        let lines = block.text
+            .split(whereSeparator: { $0.isNewline })
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        guard lines.count >= 2 else { return false }
+        let marker = #"^(?:[-*•‣▪◦]|\d+[.)]|[A-Za-z][.)])\s+\S+"#
+        return lines.allSatisfy { $0.range(of: marker, options: .regularExpression) != nil }
+    }
+
     internal func isLikelyFootnote(_ block: TextBlock, on page: ReaderPage) -> Bool {
         // Footnotes are short text in the bottom 10% of the page. We skip
         // tables and figures because their visual identity is more important
@@ -460,6 +480,11 @@ public struct LayoutAnalyzer: Sendable {
         let candidates = figureCandidates ?? page.blocks.filter(isLikelyFigure)
         let text = block.text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, text.count <= 240 else { return false }
+        let hasCaptionLabel = text.range(
+            of: #"^(?:figure|fig\.?|table|chart|image|illustration|diagram)\s*(?:\d+[A-Za-z]?\s*[:.\-]|[:.\-])"#,
+            options: [.regularExpression, .caseInsensitive]
+        ) != nil
+        guard hasCaptionLabel else { return false }
         for figure in candidates where figure.id != block.id {
             let dy = abs(block.bounds.midY - figure.bounds.midY)
             if dy <= figure.bounds.height * 0.3 {
@@ -564,12 +589,58 @@ public struct LayoutAnalyzer: Sendable {
                 let normalized = normalize(copy.blocks[index].text)
                 if isTop(copy.blocks[index], on: page), headerCandidates.contains(normalized) {
                     copy.blocks[index].type = .header
+                    copy.blocks[index].contentRole = .header
                 } else if isBottom(copy.blocks[index], on: page), footerCandidates.contains(normalized) {
                     copy.blocks[index].type = .footer
+                    copy.blocks[index].contentRole = .footer
                 }
             }
             return copy
         }
+    }
+
+    /// Assign the richer role vocabulary after repeated header/footer
+    /// detection, so those roles cannot be lost when the compatibility type is
+    /// updated. Unknown blocks remain unknown rather than becoming prose.
+    private func assignContentRoles(on page: ReaderPage) -> ReaderPage {
+        var copy = page
+        let figureCandidates = page.blocks.filter { isLikelyFigure($0) || $0.type == .figure }
+        let sidebarIDs = sidebarCandidates(in: page.blocks, pageSize: page.size)
+
+        for index in copy.blocks.indices {
+            var block = copy.blocks[index]
+            if block.type == .header {
+                block.contentRole = .header
+            } else if block.type == .footer {
+                // Preserve a specifically detected footnote; a repeated
+                // footer is otherwise the safer interpretation.
+                block.contentRole = block.contentRole == .footnote ? .footnote : .footer
+            } else if sidebarIDs.contains(block.id) {
+                block.contentRole = .sidebar
+            } else if isLikelyFootnote(block, on: page) {
+                block.type = .footer
+                block.contentRole = .footnote
+            } else if isLikelyCaption(block, on: page, figureCandidates: figureCandidates) {
+                block.type = .caption
+                block.contentRole = .caption
+            } else if isLikelyTable(block) || block.type == .table {
+                block.type = .table
+                block.contentRole = .table
+            } else if isLikelyFigure(block) || block.type == .figure {
+                block.type = .figure
+                block.contentRole = .figure
+            } else if isLikelyList(block) {
+                block.type = .list
+                block.contentRole = .list
+            } else if isLikelyHeading(block) || block.type == .heading {
+                block.type = .heading
+                block.contentRole = .heading
+            } else {
+                block.contentRole = block.type == .unknown ? .unknown : ContentRole(legacyType: block.type)
+            }
+            copy.blocks[index] = block
+        }
+        return copy
     }
 
     private enum PageRegion {
