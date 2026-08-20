@@ -3,6 +3,34 @@ import XCTest
 @testable import PageLumenCore
 
 final class StirlingPDFProviderTests: XCTestCase {
+    func testInMemoryCredentialStoreIsScopedAndSupportsLifecycle() async throws {
+        let store = InMemoryStirlingPDFCredentialStore()
+        let key = StirlingPDFCredentialKey(service: "com.example.pagelumen.stirling", account: "default")
+        let otherKey = StirlingPDFCredentialKey(service: "com.example.pagelumen.stirling", account: "other")
+
+        let initiallyStored = try await store.credential(for: key)
+        XCTAssertNil(initiallyStored)
+        try await store.save("secret", for: key)
+        let stored = try await store.credential(for: key)
+        XCTAssertEqual(stored, "secret")
+        let otherStored = try await store.credential(for: otherKey)
+        XCTAssertNil(otherStored)
+        try await store.removeCredential(for: key)
+        let removed = try await store.credential(for: key)
+        XCTAssertNil(removed)
+    }
+
+    func testCredentialStoreRejectsEmptyKeysAndCredentialsWithoutExposingValues() async throws {
+        let store = InMemoryStirlingPDFCredentialStore()
+        await XCTAssertThrowsErrorAsync(try await store.save("secret-value", for: StirlingPDFCredentialKey(service: "", account: "user"))) { error in
+            XCTAssertEqual(error as? StirlingPDFCredentialStoreError, .invalidKey)
+            XCTAssertFalse(String(describing: error).contains("secret-value"))
+        }
+        await XCTAssertThrowsErrorAsync(try await store.save("", for: StirlingPDFCredentialKey(service: "service", account: "user"))) { error in
+            XCTAssertEqual(error as? StirlingPDFCredentialStoreError, .emptyCredential)
+        }
+    }
+
     func testProbeReadsMetadataWithoutUploadingContent() async throws {
         let transport = StubTransport { request in
             XCTAssertEqual(request.httpMethod, "GET")
