@@ -68,6 +68,13 @@ struct SummaryExportView: View {
                     }
                     .help("Copy a generated draft labelled with page and block citations")
 
+                    Button {
+                        store.prepareReviewDraft()
+                    } label: {
+                        Label("Prepare Draft", systemImage: "wand.and.stars")
+                    }
+                    .help("Prepare a cited draft for explicit review before applying it")
+
                     Spacer()
 
                     Button {
@@ -90,6 +97,30 @@ struct SummaryExportView: View {
                                 .stroke(statusTint.opacity(0.45))
                         }
                         .accessibilityElement(children: .combine)
+                }
+
+                if let draft = store.reviewDraft {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Label("Review draft — source unchanged", systemImage: "checkmark.shield")
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(AccessibleStyle.primaryText)
+                        Text(draft.text)
+                            .foregroundStyle(AccessibleStyle.primaryText)
+                            .textSelection(.enabled)
+                        if let warning = draft.groundingWarning {
+                            Label(warning, systemImage: "exclamationmark.triangle")
+                                .font(.callout)
+                                .foregroundStyle(AccessibleStyle.warning)
+                        }
+                        HStack {
+                            Button("Insert as Summary") { store.insertReviewDraftAsSummary() }
+                            Button("Replace Selected Description") { store.replaceSelectedDescriptionAfterReview() }
+                                .disabled(store.selectedBlockID == nil)
+                            Button("Discard", role: .destructive) { store.discardReviewDraft() }
+                        }
+                    }
+                    .padding(20)
+                    .accessiblePanel()
                 }
 
                 Text(store.document.summary)

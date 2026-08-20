@@ -182,11 +182,11 @@ final class DocumentProcessorTests: XCTestCase {
             XCTFail("Expected malformed PDFs to throw")
         } catch let error as DocumentProcessorError {
             let description = error.localizedDescription
-            XCTAssertEqual(description, "The PDF (url.lastPathComponent) could not be opened.")
+            XCTAssertEqual(description, "The PDF \(url.lastPathComponent) could not be opened.")
             XCTAssertFalse(description.contains(url.path), "Errors must not expose the local path")
             XCTAssertFalse(description.contains(secret), "Errors must not expose document payloads")
         } catch {
-            XCTFail("Unexpected error: (error)")
+            XCTFail("Unexpected error: \(error)")
         }
     }
 

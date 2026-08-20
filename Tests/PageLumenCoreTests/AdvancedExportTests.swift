@@ -260,6 +260,7 @@ final class AdvancedExportTests: XCTestCase {
             "export",
             "id",
             "language",
+            "metadata",
             "outline",
             "pages",
             "processingStatus",

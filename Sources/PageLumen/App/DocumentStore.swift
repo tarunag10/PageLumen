@@ -64,6 +64,7 @@ final class DocumentStore {
     var reviewSearchQuery = ""
     var reviewFilter: ReviewFilter = .all
     var exportPreviewFormat: ExportFormat = .markdown
+    var reviewDraft: GroundedSummary?
     var librarySearchQuery = ""
     var librarySearchResults: [LibrarySearchResult] = []
     var watchFolderEnabled = false
@@ -862,6 +863,47 @@ final class DocumentStore {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(output, forType: .string)
         statusMessage = "Copied generated summary with \(grounded.citations.count) citation\(grounded.citations.count == 1 ? "" : "s")"
+    }
+
+    /// Creates a review-gated draft from the current grounded summary. The
+    /// draft is held separately from extracted source and is never applied
+    /// implicitly.
+    func prepareReviewDraft() {
+        reviewDraft = explanationEngine.groundedSummary(for: document, length: summaryLength)
+        statusMessage = "Draft prepared for review; extracted source is unchanged"
+    }
+
+    func insertReviewDraftAsSummary() {
+        guard let draft = reviewDraft else { return }
+        recordEdit()
+        document.summary = draft.text
+        reviewDraft = nil
+        statusMessage = "Draft inserted as the document summary"
+    }
+
+    /// Replaces the selected block only after an explicit review action. This
+    /// is intentionally limited to a selected block and retains undo history.
+    func replaceSelectedDescriptionAfterReview() {
+        guard let draft = reviewDraft,
+              let selectedBlockID,
+              let pageIndex = document.pages.firstIndex(where: { page in
+                  page.blocks.contains { $0.id == selectedBlockID }
+              }),
+              let blockIndex = document.pages[pageIndex].blocks.firstIndex(where: { $0.id == selectedBlockID }) else {
+            statusMessage = "Select a source block before replacing its description"
+            return
+        }
+        recordEdit()
+        document.pages[pageIndex].blocks[blockIndex].text = draft.text
+        document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
+        reviewDraft = nil
+        statusMessage = "Reviewed draft replaced the selected description"
+    }
+
+    func discardReviewDraft() {
+        guard reviewDraft != nil else { return }
+        reviewDraft = nil
+        statusMessage = "Draft discarded; extracted source is unchanged"
     }
 
     func changeBlockType(_ block: TextBlock, to type: BlockType) {

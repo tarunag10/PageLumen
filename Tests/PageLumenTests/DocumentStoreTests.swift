@@ -57,6 +57,38 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertNotEqual(short, detailed)
     }
 
+    func testReviewDraftActionsAreExplicitAndUndoable() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let block = TextBlock(pageNumber: 1, type: .paragraph, text: "Source text", bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 0)
+        store.document = ReaderDocument(title: "Draft", sourceType: .sample, pages: [ReaderPage(pageNumber: 1, size: PageSize(width: 400, height: 600), blocks: [block])])
+
+        store.prepareReviewDraft()
+        XCTAssertNotNil(store.reviewDraft)
+        XCTAssertEqual(store.document.pages[0].blocks[0].text, "Source text")
+
+        store.insertReviewDraftAsSummary()
+        XCTAssertNil(store.reviewDraft)
+        XCTAssertFalse(store.document.summary.isEmpty)
+        XCTAssertTrue(store.canUndo)
+    }
+
+    func testReviewDraftCanReplaceSelectedBlockOrBeDiscarded() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let block = TextBlock(pageNumber: 1, type: .paragraph, text: "Original", bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 0)
+        store.document = ReaderDocument(title: "Draft", sourceType: .sample, pages: [ReaderPage(pageNumber: 1, size: PageSize(width: 400, height: 600), blocks: [block])])
+        store.selectedBlockID = block.id
+        store.prepareReviewDraft()
+        store.reviewDraft = GroundedSummary(text: "Reviewed replacement", citations: [])
+        store.replaceSelectedDescriptionAfterReview()
+        XCTAssertNil(store.reviewDraft)
+        XCTAssertNotEqual(store.document.pages[0].blocks[0].text, "Original")
+
+        store.prepareReviewDraft()
+        store.discardReviewDraft()
+        XCTAssertNil(store.reviewDraft)
+        XCTAssertTrue(store.statusMessage.contains("discarded"))
+    }
+
     func testCopySummaryWithCitationsLabelsDraftAndSources() {
         let store = DocumentStore(persisting: InMemoryPersisting())
         NSPasteboard.general.clearContents()
