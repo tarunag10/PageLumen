@@ -186,3 +186,10 @@ interruption, Xcode reported `waiting for workers to materialize` and
 No UI assertions are counted as passed. A real signed app window was separately
 captured in the same GUI session, so this remains a test-runner infrastructure
 limitation rather than evidence that the app cannot render.
+
+After stopping six stale PageLumen app instances, an isolated single-test run
+was retried at 20:37 IST with fresh module-cache paths. It reproduced the same
+LaunchServices worker stall. `xcresulttool` reports one failed runner target
+(`PageLumenUITests-Runner ... encountered an error`, `Testing was canceled`),
+zero passed tests, and no test statistics. The result bundle is
+`~/Library/Developer/Xcode/DerivedData/PageLumen-hbeprxkxvdpbnyeekgojupdmzjpn/Logs/Test/Test-PageLumen-2026.08.20_20-37-34-+0530.xcresult`.
