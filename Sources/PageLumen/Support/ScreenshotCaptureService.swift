@@ -23,6 +23,7 @@ enum ScreenshotCaptureMode {
 }
 
 enum ScreenshotCaptureError: LocalizedError {
+    case cancelled
     case commandFailed(Int32)
     case missingOutput
     case permissionDenied
@@ -32,6 +33,8 @@ enum ScreenshotCaptureError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
+        case .cancelled:
+            return "Screenshot capture was cancelled."
         case .commandFailed(let status):
             return "Screenshot capture failed with status \(status)."
         case .missingOutput:
@@ -182,6 +185,9 @@ struct ScreenshotCaptureService {
         process.waitUntilExit()
 
         guard process.terminationStatus == 0 else {
+            if process.terminationStatus == 1 {
+                throw ScreenshotCaptureError.cancelled
+            }
             throw ScreenshotCaptureError.commandFailed(process.terminationStatus)
         }
 
