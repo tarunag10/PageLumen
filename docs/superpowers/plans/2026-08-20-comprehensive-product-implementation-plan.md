@@ -410,8 +410,10 @@ repeatable pipelines. See [`docs/stirling-pdf-integration.md`](../../stirling-pd
   provider as the default and a separately enabled Stirling provider.
 - [ ] Require an explicit local base URL, Keychain-held API key, capability
   probe, privacy-mode check, and per-operation confirmation before upload.
-- [ ] Start with a cancellable compress operation; validate the returned PDF
-  before offering replacement, and write output atomically.
+- [x] Start with a cancellable compress operation; validate the returned PDF
+  before offering replacement, and write output atomically. Stage B is covered
+  by `StirlingPDFCompressor`, `StirlingPDFAtomicOutput`, and the focused
+  `StirlingPDFProviderTests` suite (10/10 passed).
 - [ ] Add merge/rearrange and typed, bounded pipelines only after Stage B passes
   fake-server, offline, cancellation, and malformed-response gates.
 - [ ] Keep remote endpoints disabled by default; require HTTPS and an explicit
