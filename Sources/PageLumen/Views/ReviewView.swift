@@ -55,6 +55,7 @@ private struct ReviewHeader: View {
     @Environment(DocumentStore.self) private var store
     @Binding var showReadingOrder: Bool
     @State private var showConfidenceChart = false
+    @State private var showReviewQueue = false
 
     var body: some View {
         @Bindable var store = store
@@ -105,6 +106,16 @@ private struct ReviewHeader: View {
                 .popover(isPresented: $showConfidenceChart) {
                     ConfidenceChartView(document: store.document)
                         .frame(minWidth: 400, minHeight: 300)
+                }
+
+                Button {
+                    showReviewQueue = true
+                } label: {
+                    Label("Review Queue", systemImage: "list.bullet.clipboard")
+                }
+                .popover(isPresented: $showReviewQueue, arrowEdge: .top) {
+                    ReviewQueuePopover()
+                        .frame(width: 360, height: 420)
                 }
 
                 if let page = store.selectedPage {
@@ -280,6 +291,55 @@ private struct TrustMetric: View {
         .padding(.vertical, 8)
         .accessiblePanel(paddedShadow: false)
         .accessibilityElement(children: .combine)
+    }
+}
+
+private struct ReviewQueuePopover: View {
+    @Environment(DocumentStore.self) private var store
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Review queue")
+                        .font(.headline)
+                    Text("Select an issue to open its source block.")
+                        .font(.caption)
+                        .foregroundStyle(AccessibleStyle.secondaryText)
+                }
+                Spacer()
+                Text("\(store.reviewIssueCount)")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(AccessibleStyle.accentBright)
+            }
+
+            if store.reviewIssues.isEmpty {
+                ContentUnavailableView("Queue is clear", systemImage: "checkmark.circle", description: Text("All current extraction issues are resolved."))
+            } else {
+                List(store.reviewIssues) { issue in
+                    Button {
+                        store.jumpToIssue(issue)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(issue.title)
+                                .font(.callout.weight(.semibold))
+                                .foregroundStyle(AccessibleStyle.primaryText)
+                            Text("Page \(issue.pageNumber) · \(issue.detail)")
+                                .font(.caption)
+                                .foregroundStyle(AccessibleStyle.secondaryText)
+                                .lineLimit(2)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Page \(issue.pageNumber), \(issue.title)")
+                    .accessibilityHint("Open this issue in the review editor")
+                }
+                .listStyle(.inset)
+            }
+        }
+        .padding(16)
+        .background(AccessibleStyle.appBackground)
     }
 }
 
