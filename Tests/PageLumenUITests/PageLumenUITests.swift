@@ -104,6 +104,10 @@ final class PageLumenUITests: XCTestCase {
         XCTAssertTrue(settingsApp.popUpButtons["settings.intelligenceMode"].exists)
         XCTAssertTrue(settingsApp.checkBoxes["settings.documentIntelligenceOptOut"].exists)
         XCTAssertTrue(settingsApp.staticTexts["settings.intelligenceAvailability"].exists)
+        XCTAssertTrue(settingsApp.checkBoxes["settings.stirlingEnabled"].exists)
+        XCTAssertTrue(settingsApp.textFields["settings.stirlingEndpoint"].exists)
+        XCTAssertTrue(settingsApp.staticTexts["settings.stirlingEndpointState"].exists)
+        XCTAssertTrue(settingsApp.buttons["settings.stirlingProbe"].exists)
         XCTAssertTrue(settingsApp.buttons["settings.forgetAll"].exists)
     }
 

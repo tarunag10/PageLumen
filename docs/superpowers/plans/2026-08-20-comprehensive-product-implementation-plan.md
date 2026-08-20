@@ -446,8 +446,10 @@ repeatable pipelines. See [`docs/stirling-pdf-integration.md`](../../stirling-pd
   `StirlingPDFEndpoint.capabilityState` exposes loopback, blocked remote HTTP,
   and advanced remote HTTPS warning states; `StirlingPDFOperationAuthorization`
   is required by compress/merge and fails closed before transport when privacy
-  mode is enabled or confirmation is absent. App-shell Settings wiring and the
-  physical privacy/confirmation participant gate remain open.
+  mode is enabled or confirmation is absent. Settings now exposes a disabled-
+  by-default endpoint field, privacy-safe capability state, explicit remote
+  HTTPS opt-in, and metadata-only connection check; the physical
+  privacy/confirmation participant gate remains open.
 - [x] Start with a cancellable compress operation; validate the returned PDF
   before offering replacement, and write output atomically. Stage B is covered
   by `StirlingPDFCompressor`, `StirlingPDFAtomicOutput`, and the focused
@@ -460,7 +462,8 @@ repeatable pipelines. See [`docs/stirling-pdf-integration.md`](../../stirling-pd
 - [x] Keep remote endpoints disabled by default; the core endpoint validator
   rejects remote HTTP and requires explicit opt-in for remote HTTPS. The core
   capability state supplies privacy-safe advanced warning text; the user-facing
-  Settings warning/consent flow and physical participant gate remain open.
+  Settings warning/consent flow is wired and the physical participant gate
+  remains open.
 - [x] Record the current license, security, endpoint, source-content retention,
   credential, owner, and removal decisions in
   [`docs/stirling-pdf-security-review.md`](../../stirling-pdf-security-review.md).

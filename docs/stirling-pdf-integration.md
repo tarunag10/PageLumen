@@ -64,8 +64,12 @@ loopback, blocked remote HTTP, and advanced remote HTTPS states, plus
 privacy-safe warning text for Settings. URLs containing credentials, query
 strings, or fragments are rejected. Stage A keeps an API key in memory only
 and sends it as `X-API-KEY`; it does not persist, log, or export the key.
-Keychain storage is required before any user-facing provider configuration
-ships.
+The app Settings surface now accepts a non-secret endpoint, shows the
+privacy-safe capability state, keeps remote HTTPS opt-in explicit, and offers
+an on-demand metadata-only connection check. API keys remain a separate
+Keychain boundary and are never entered into or persisted by these settings.
+Document operations still require an in-app confirmation at the upload
+boundary.
 
 The probe returns distinct states for availability, authentication failure,
 timeout, cancellation, TLS failure, unavailable services, malformed status

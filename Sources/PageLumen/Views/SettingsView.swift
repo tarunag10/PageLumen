@@ -21,7 +21,12 @@ struct SettingsView: View {
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @AppStorage("intelligenceMode") private var intelligenceModeRaw = IntelligenceMode.off.rawValue
     @AppStorage(DocumentRepositorySettings.keepSearchableLocalCopiesKey) private var keepSearchableLocalCopies = false
+    @AppStorage("stirlingPDFEnabled") private var stirlingPDFEnabled = false
+    @AppStorage("stirlingPDFEndpoint") private var stirlingPDFEndpointString = ""
+    @AppStorage("stirlingPDFAllowRemoteHTTPS") private var stirlingPDFAllowRemoteHTTPS = false
     @State private var isShowingForgetConfirmation = false
+    @State private var stirlingProbeState: StirlingPDFProbeState?
+    @State private var isProbingStirling = false
 
     var body: some View {
         Form {
@@ -45,6 +50,62 @@ struct SettingsView: View {
                 Text("Privacy mode keeps imports local and disables translation export, which may use a network-assisted service.")
                     .font(.callout)
                     .foregroundStyle(AccessibleStyle.secondaryText)
+            }
+
+            Section("Optional Stirling-PDF provider") {
+                Toggle("Enable Stirling-PDF operations", isOn: Binding(
+                    get: { stirlingPDFEnabled },
+                    set: { enabled in
+                        stirlingPDFEnabled = enabled && !privacyMode && stirlingEndpointState != .invalid
+                        if !stirlingPDFEnabled {
+                            stirlingProbeState = nil
+                        }
+                    }
+                ))
+                .accessibilityIdentifier("settings.stirlingEnabled")
+                .disabled(privacyMode || stirlingEndpointState == .invalid)
+
+                TextField("Local endpoint (for example, http://localhost:8080)", text: $stirlingPDFEndpointString)
+                    .textFieldStyle(.roundedBorder)
+                    .accessibilityIdentifier("settings.stirlingEndpoint")
+                    .onChange(of: stirlingPDFEndpointString) { _, _ in
+                        stirlingPDFEnabled = false
+                        stirlingProbeState = nil
+                    }
+
+                Label(stirlingEndpointState.userMessage, systemImage: stirlingEndpointState.requiresAdvancedWarning ? "exclamationmark.triangle" : "info.circle")
+                    .font(.callout)
+                    .foregroundStyle(stirlingEndpointState.requiresAdvancedWarning ? AccessibleStyle.warning : AccessibleStyle.secondaryText)
+                    .accessibilityIdentifier("settings.stirlingEndpointState")
+
+                if stirlingEndpointState == .remoteHTTPSRequiresAdvancedOptIn || stirlingEndpointState == .remoteHTTPSAdvancedOptIn {
+                    Toggle("Allow remote HTTPS after reviewing server controls", isOn: $stirlingPDFAllowRemoteHTTPS)
+                        .accessibilityIdentifier("settings.stirlingRemoteHTTPS")
+                        .onChange(of: stirlingPDFAllowRemoteHTTPS) { _, _ in
+                            stirlingProbeState = nil
+                        }
+                }
+
+                HStack {
+                    Button {
+                        probeStirlingEndpoint()
+                    } label: {
+                        Label(isProbingStirling ? "Checking…" : "Check connection", systemImage: "antenna.radiowaves.left.and.right")
+                    }
+                    .disabled(isProbingStirling || stirlingEndpointState == .invalid || privacyMode)
+                    .accessibilityIdentifier("settings.stirlingProbe")
+                    if let stirlingProbeState {
+                        Text(stirlingProbeStateLabel(stirlingProbeState))
+                            .font(.callout)
+                            .foregroundStyle(stirlingProbeStateIsSuccessful(stirlingProbeState) ? AccessibleStyle.success : AccessibleStyle.secondaryText)
+                            .accessibilityIdentifier("settings.stirlingProbeState")
+                    }
+                }
+
+                Text("Stirling-PDF is disabled by default. Settings never uploads a document. Each compress or merge operation must separately confirm the endpoint, privacy boundary, and replacement output; credentials are held in Keychain and are not stored here.")
+                    .font(.callout)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Section("Library") {
@@ -364,6 +425,47 @@ struct SettingsView: View {
         case "dark": return "Dark"
         default: return "System"
         }
+    }
+
+    private var stirlingEndpointState: StirlingPDFEndpointCapabilityState {
+        let url = URL(string: stirlingPDFEndpointString.trimmingCharacters(in: .whitespacesAndNewlines))
+        let endpoint = StirlingPDFEndpoint(baseURL: url ?? URL(string: "file:///invalid")!, allowRemoteHTTPS: stirlingPDFAllowRemoteHTTPS)
+        return endpoint.capabilityState
+    }
+
+    private func probeStirlingEndpoint() {
+        guard !privacyMode,
+              let url = URL(string: stirlingPDFEndpointString.trimmingCharacters(in: .whitespacesAndNewlines)) else { return }
+        let endpoint = StirlingPDFEndpoint(baseURL: url, allowRemoteHTTPS: stirlingPDFAllowRemoteHTTPS)
+        guard endpoint.capabilityState != .invalid else { return }
+        isProbingStirling = true
+        Task {
+            let result = await StirlingPDFCapabilityProbe().probe(endpoint: endpoint)
+            await MainActor.run {
+                stirlingProbeState = result.state
+                isProbingStirling = false
+            }
+        }
+    }
+
+    private func stirlingProbeStateLabel(_ state: StirlingPDFProbeState) -> String {
+        switch state {
+        case .available(let capabilities):
+            let version = capabilities.version.map { " v\($0)" } ?? ""
+            return "Available\(version)"
+        case .unavailable: return "Unavailable"
+        case .authenticationRequired: return "Authentication required"
+        case .timedOut: return "Timed out"
+        case .cancelled: return "Cancelled"
+        case .tlsFailure: return "TLS failure"
+        case .invalidResponse: return "Invalid response"
+        case .invalidEndpoint: return "Invalid endpoint"
+        }
+    }
+
+    private func stirlingProbeStateIsSuccessful(_ state: StirlingPDFProbeState) -> Bool {
+        if case .available = state { return true }
+        return false
     }
 
     @ViewBuilder
