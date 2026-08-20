@@ -246,6 +246,12 @@ public struct AccessibilityAuditor: Sendable {
 }
 
 public struct ExportEngine: Sendable {
+    /// The additive JSON export contract. The document fields remain at the
+    /// root so consumers of the original unversioned export can continue to
+    /// read the fields they already know. New consumers should inspect the
+    /// `schemaVersion` and `export` envelope before interpreting metadata.
+    public static let jsonSchemaVersion = "1"
+
     public init() {}
 
     public func capability(for format: ExportFormat) -> ExportCapability {
@@ -596,7 +602,41 @@ public struct ExportEngine: Sendable {
             return copy
         }
 
-        return (try? encoder.encode(sanitized)) ?? Data("{}".utf8)
+        guard let documentData = try? encoder.encode(sanitized),
+              var root = (try? JSONSerialization.jsonObject(with: documentData)) as? [String: Any] else {
+            return Data("{}".utf8)
+        }
+
+        // Keep the original ReaderDocument properties at the root for
+        // additive/backward-compatible consumption. The envelope is the
+        // stable place for export metadata and provenance going forward.
+        root["schemaVersion"] = Self.jsonSchemaVersion
+        root["export"] = jsonExportMetadata(for: sanitized, options: options)
+
+        return (try? JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys])) ?? Data("{}".utf8)
+    }
+
+    private func jsonExportMetadata(for document: ReaderDocument, options: ExportOptions) -> [String: Any] {
+        let findings = DocumentEditing.reviewFindings(for: document)
+        var provenance: [String: Any] = [
+            "documentID": document.id.uuidString.lowercased(),
+            "sourceType": document.sourceType.rawValue,
+            "processingStatus": document.processingStatus.rawValue,
+            "pageCount": document.pages.count,
+            "blockCount": document.allBlocks.count,
+            "reviewedBlockCount": document.allBlocks.filter(DocumentEditing.isReviewed).count,
+            "unresolvedFindingCount": findings.filter { !$0.isResolved }.count,
+            "sourceURLRedacted": options.redactSourceURL
+        ]
+        if !options.redactSourceURL, let sourceURL = document.sourceURL?.absoluteString {
+            provenance["sourceURL"] = sourceURL
+        }
+
+        return [
+            "format": ExportFormat.json.rawValue,
+            "schemaVersion": Self.jsonSchemaVersion,
+            "provenance": provenance
+        ]
     }
 
     private func sanitizedDocument(_ document: ReaderDocument, options: ExportOptions) -> ReaderDocument {

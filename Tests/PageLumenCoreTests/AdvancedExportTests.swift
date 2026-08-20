@@ -62,6 +62,63 @@ final class AdvancedExportTests: XCTestCase {
         XCTAssertNotNil(object?["summary"] as? String)
     }
 
+    func testJSONExportIncludesAdditiveVersionedProvenanceEnvelope() throws {
+        let document = ReaderDocument(
+            title: "Envelope",
+            sourceType: .pdf,
+            sourceURL: URL(fileURLWithPath: "/tmp/envelope.pdf"),
+            processingStatus: .complete,
+            pages: [ReaderPage(
+                pageNumber: 1,
+                size: PageSize(width: 612, height: 792),
+                blocks: [TextBlock(
+                    pageNumber: 1,
+                    type: .paragraph,
+                    text: "Reviewed text",
+                    bounds: BoundingBox(x: 72, y: 72, width: 300, height: 20),
+                    confidence: 0.99,
+                    metadata: ["reviewStatus": "reviewed"]
+                )]
+            )]
+        )
+
+        let data = ExportEngine().data(for: document, format: .json, options: .full)
+        let object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let export = try XCTUnwrap(object["export"] as? [String: Any])
+        let provenance = try XCTUnwrap(export["provenance"] as? [String: Any])
+
+        XCTAssertEqual(object["schemaVersion"] as? String, ExportEngine.jsonSchemaVersion)
+        XCTAssertEqual(export["format"] as? String, ExportFormat.json.rawValue)
+        XCTAssertEqual(export["schemaVersion"] as? String, ExportEngine.jsonSchemaVersion)
+        XCTAssertEqual(provenance["sourceType"] as? String, SourceType.pdf.rawValue)
+        XCTAssertEqual(provenance["pageCount"] as? Int, 1)
+        XCTAssertEqual(provenance["blockCount"] as? Int, 1)
+        XCTAssertEqual(provenance["reviewedBlockCount"] as? Int, 1)
+        XCTAssertEqual(provenance["unresolvedFindingCount"] as? Int, 0)
+        XCTAssertEqual(provenance["sourceURL"] as? String, "file:///tmp/envelope.pdf")
+
+        // Existing consumers can continue reading the legacy root fields.
+        XCTAssertEqual(object["title"] as? String, "Envelope")
+        XCTAssertNotNil(object["pages"] as? [[String: Any]])
+    }
+
+    func testJSONExportProvenanceRedactsSourceURLWithAnonymousOptions() throws {
+        let document = ReaderDocument(
+            title: "Private envelope",
+            sourceType: .pdf,
+            sourceURL: URL(fileURLWithPath: "/private/secret.pdf"),
+            pages: [ReaderPage(pageNumber: 1, size: PageSize(width: 612, height: 792), blocks: [])]
+        )
+        let data = ExportEngine().data(for: document, format: .json, options: .anonymous)
+        let object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let export = try XCTUnwrap(object["export"] as? [String: Any])
+        let provenance = try XCTUnwrap(export["provenance"] as? [String: Any])
+
+        XCTAssertNil(object["sourceURL"])
+        XCTAssertEqual(provenance["sourceURLRedacted"] as? Bool, true)
+        XCTAssertNil(provenance["sourceURL"])
+    }
+
     func testJSONExportSnapshotIncludesExpectedKeys() throws {
         let document = SampleDataFactory.makeDemoDocument()
 
@@ -73,11 +130,13 @@ final class AdvancedExportTests: XCTestCase {
         // top-level key set on the demo document must match exactly.
         let expectedKeys: Set<String> = [
             "createdAt",
+            "export",
             "id",
             "language",
             "outline",
             "pages",
             "processingStatus",
+            "schemaVersion",
             "sourceType",
             "summary",
             "title"

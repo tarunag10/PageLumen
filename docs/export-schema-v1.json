@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pagelumen.app/schemas/export-v1.json",
+  "title": "PageLumen JSON export",
+  "description": "Version 1 of the additive PageLumen JSON export. Legacy ReaderDocument fields remain at the root; new consumers should inspect schemaVersion and export before interpreting metadata.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "export",
+    "id",
+    "title",
+    "sourceType",
+    "createdAt",
+    "processingStatus",
+    "pages",
+    "outline",
+    "summary"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1"
+    },
+    "export": {
+      "type": "object",
+      "required": ["format", "schemaVersion", "provenance"],
+      "properties": {
+        "format": {
+          "const": "JSON"
+        },
+        "schemaVersion": {
+          "const": "1"
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        }
+      },
+      "additionalProperties": false
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "title": {
+      "type": "string"
+    },
+    "sourceType": {
+      "enum": ["pdf", "image", "screenshot", "clipboard", "sample"]
+    },
+    "sourceURL": {
+      "type": "string",
+      "format": "uri"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "language": {
+      "type": ["string", "null"]
+    },
+    "processingStatus": {
+      "enum": ["pending", "processing", "complete", "partial", "failed"]
+    },
+    "pages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/page"
+      }
+    },
+    "outline": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/outlineItem"
+      }
+    },
+    "summary": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "required": [
+        "documentID",
+        "sourceType",
+        "processingStatus",
+        "pageCount",
+        "blockCount",
+        "reviewedBlockCount",
+        "unresolvedFindingCount",
+        "sourceURLRedacted"
+      ],
+      "properties": {
+        "documentID": { "type": "string", "format": "uuid" },
+        "sourceType": { "type": "string" },
+        "processingStatus": { "type": "string" },
+        "pageCount": { "type": "integer", "minimum": 0 },
+        "blockCount": { "type": "integer", "minimum": 0 },
+        "reviewedBlockCount": { "type": "integer", "minimum": 0 },
+        "unresolvedFindingCount": { "type": "integer", "minimum": 0 },
+        "sourceURLRedacted": { "type": "boolean" },
+        "sourceURL": { "type": "string", "format": "uri" }
+      },
+      "additionalProperties": false
+    },
+    "page": {
+      "type": "object",
+      "required": ["id", "pageNumber", "size", "ocrStatus", "layoutType", "blocks", "tables", "figures"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "pageNumber": { "type": "integer", "minimum": 1 },
+        "size": {
+          "type": "object",
+          "required": ["width", "height"],
+          "properties": {
+            "width": { "type": "number", "minimum": 0 },
+            "height": { "type": "number", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "ocrStatus": { "type": "string" },
+        "layoutType": { "type": "string" },
+        "blocks": { "type": "array" },
+        "tables": { "type": "array" },
+        "figures": { "type": "array" },
+        "thumbnailData": {},
+        "warning": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "outlineItem": {
+      "type": "object",
+      "required": ["id", "title", "pageNumber", "level"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "title": { "type": "string" },
+        "pageNumber": { "type": "integer", "minimum": 1 },
+        "level": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true
+}
