@@ -409,11 +409,11 @@ remains an explicit manual gate and is not claimed here.
 **Repositories:** `ml-explore/mlx-swift-lm` / `mlx-swift`, MIT; `huggingface/swift-transformers`, Apache-2.0  
 **Potential use:** optional local vision-language or specialist language models for chart/figure descriptions and domain-specific assistance on Apple silicon.
 
-- [ ] Do not add these to the default product pipeline.
+- [x] Do not add these to the default product pipeline. `docs/local-model-decision-record.md` records the explicit non-adoption decision and keeps the shipping path deterministic unless a separately approved prototype passes all model gates.
 - [ ] Build a separate prototype target or internal feature branch first.
 - [ ] Require model cards, model-license review, download size estimate, source/repository disclosure, explicit download consent, storage location, progress/cancellation, offline removal, and device capability checks.
 - [ ] Compare against Apple Foundation Models on the same evaluation corpus. Prefer the option with lower unsupported-claim rate and lower operational cost, not merely more fluent prose.
-- [ ] Keep Intel Macs and unsupported Apple-silicon configurations on deterministic non-AI fallbacks.
+- [x] Keep Intel Macs and unsupported Apple-silicon configurations on deterministic non-AI fallbacks. The current Foundation Models availability contract returns `notSupported`/`unavailable`, and `ExplanationEngine` retains the deterministic cited fallback; downloaded-model support is not claimed.
 
 ### 5.6 Optional external provider: Stirling-PDF
 
@@ -470,8 +470,8 @@ privacy complexity to a native macOS reader.
 **Repository:** `argmaxinc/argmax-oss-swift` — MIT  
 **Potential use:** local transcription/audio intake or higher-quality downloadable speech models.
 
-- [ ] Do not adopt for the present document-to-speech workflow; AVFoundation already handles the core need without model download management.
-- [ ] Revisit only when PageLumen adds audio/lecture import, spoken-note capture, or a demonstrated need for higher-quality local speech.
+- [x] Do not adopt for the present document-to-speech workflow; AVFoundation already handles the core need without model download management. The decision record documents that no audio/lecture intake requirement currently exists.
+- [x] Revisit only when PageLumen adds audio/lecture import, spoken-note capture, or a demonstrated need for higher-quality local speech. The decision record defines this as the reopen trigger and keeps model evaluation separate from the shipping path.
 
 ### 5.8 Dependency governance
 
