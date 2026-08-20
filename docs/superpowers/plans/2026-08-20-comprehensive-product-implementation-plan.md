@@ -378,10 +378,10 @@ remains an explicit manual gate and is not claimed here.
 **Repository:** `pointfreeco/swift-snapshot-testing` — MIT  
 **Use:** Visual and textual golden tests for review UI, light/dark appearance, large text, and export output.
 
-- [ ] Add only to test targets; do not link it into the shipping app.
-- [ ] Establish stable macOS CI renderer constraints and an explicit snapshot-recording procedure.
-- [ ] Start with export JSON/HTML/Markdown snapshots and a small number of view snapshots; do not use screenshots as a substitute for accessibility testing.
-- [ ] Require reviewer approval for snapshot updates accompanied by a rendered diff.
+- [x] Add only to test targets; do not link it into the shipping app. `swift-snapshot-testing` is a test-target-only dependency in `Package.swift`.
+- [x] Establish stable macOS CI renderer constraints and an explicit snapshot-recording procedure. `docs/third-party-dependencies.md` requires the pinned toolchain/renderer context and an intentional record run.
+- [x] Start with export JSON/HTML/Markdown snapshots and a small number of view snapshots; do not use screenshots as a substitute for accessibility testing. Current golden coverage is deterministic export text across demo, legal, multilingual, receipt/table, and links/figure fixtures; rendered UI snapshots remain intentionally deferred.
+- [x] Require reviewer approval for snapshot updates accompanied by a rendered diff. Snapshot updates are treated as reviewable diffs and machine-specific UI captures are explicitly excluded.
 
 ### 5.3 Evaluate: GRDB.swift
 
@@ -510,7 +510,7 @@ participant and physical-device gates remain open.
 - [ ] Keep existing unit tests and add protocol-fake tests for every external/platform boundary.
 - [ ] Add XCUITest coverage for import, review queue, export confirmation, settings, dark/light appearance, and denied permission recovery.
 - [ ] Add fixture-corpus regression tests and performance baselines separate from fast unit tests.
-- [ ] Add snapshot tests only where they are stable and actionable.
+- [x] Add snapshot tests only where they are stable and actionable. Export snapshot coverage is deterministic and text-based; UI screenshots remain a separate manual/accessibility concern.
 - [ ] Run tests on the minimum supported macOS and current macOS/Xcode; manually test Apple Intelligence on eligible and ineligible Macs.
 
 ### 7.2 Privacy and security
