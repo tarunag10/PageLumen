@@ -46,3 +46,9 @@ any shipping decision.
 Until those gates exist, Intel Macs, unsupported Apple-silicon Macs, and Macs
 without a ready model remain on the deterministic non-AI fallback. No current
 UI or export label claims downloaded-model support.
+
+`ModelComparator` in `PageLumenCore` provides the evaluation boundary:
+Foundation Models and a future prototype must submit measured snapshots for
+the same corpus revision. It prefers lower unsupported-claim rate, then lower
+operational cost, and returns an explicit unavailable/incomparable decision
+when required evidence is missing. No model comparison has been run yet.
