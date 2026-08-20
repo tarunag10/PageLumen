@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "product": "PageLumen",
+  "reviewedOn": "2026-08-20",
+  "scope": "macOS app build with the optional user-managed Stirling-PDF provider disabled by default",
+  "appStoreNutritionLabel": {
+    "tracking": false,
+    "dataTypesCollected": [],
+    "disclosureBasis": "The current build does not collect data on behalf of the developer. Local document processing and local preferences are not collection. A user-managed remote Stirling operation is a conditional transfer and must be reviewed again if the provider is bundled, operated, or changed."
+  },
+  "behaviours": [
+    {
+      "id": "document-content-local",
+      "dataClass": "User Content",
+      "behaviour": "Import, OCR, layout analysis, review edits, summaries, and exports",
+      "processingLocation": "on-device",
+      "transmission": "none",
+      "developerCollection": false,
+      "linkedToUser": false,
+      "usedForTracking": false,
+      "nutritionLabel": "not-collected",
+      "releaseStatus": "verified",
+      "evidence": ["docs/privacy.md", "Sources/PageLumenCore/DocumentProcessor.swift", "Sources/PageLumenCore/ExportEngine.swift"]
+    },
+    {
+      "id": "preferences-local",
+      "dataClass": "Diagnostics and Preferences",
+      "behaviour": "Privacy, reading, retention, intelligence, and export preferences",
+      "processingLocation": "on-device",
+      "transmission": "none",
+      "developerCollection": false,
+      "linkedToUser": false,
+      "usedForTracking": false,
+      "nutritionLabel": "not-collected",
+      "releaseStatus": "verified",
+      "evidence": ["Config/PrivacyInfo.xcprivacy", "Sources/PageLumen/App/DocumentStore.swift", "docs/privacy.md"]
+    },
+    {
+      "id": "local-library-metadata",
+      "dataClass": "User Content",
+      "behaviour": "Recent-document metadata and optional searchable local copies",
+      "processingLocation": "on-device",
+      "transmission": "none",
+      "developerCollection": false,
+      "linkedToUser": false,
+      "usedForTracking": false,
+      "nutritionLabel": "not-collected",
+      "releaseStatus": "verified",
+      "evidence": ["Sources/PageLumenCore/LocalLibrary.swift", "docs/privacy.md"]
+    },
+    {
+      "id": "apple-platform-services",
+      "dataClass": "User Content",
+      "behaviour": "Optional Apple Translation, Foundation Models, and screen capture platform services",
+      "processingLocation": "on-device-or-system-managed",
+      "transmission": "not-controlled-by-pagelumen",
+      "developerCollection": false,
+      "linkedToUser": false,
+      "usedForTracking": false,
+      "nutritionLabel": "not-collected-by-pagelumen",
+      "releaseStatus": "conditional-platform-review",
+      "evidence": ["Sources/PageLumen/Support/TranslationService.swift", "Sources/PageLumenCore/IntelligentExplainer.swift", "Sources/PageLumen/Support/ScreenshotCaptureService.swift", "docs/privacy.md"]
+    },
+    {
+      "id": "stirling-user-managed",
+      "dataClass": "User Content",
+      "behaviour": "Explicitly confirmed PDF compression or merge through a user-managed Stirling endpoint",
+      "processingLocation": "user-managed-endpoint",
+      "transmission": "conditional-document-upload",
+      "developerCollection": false,
+      "linkedToUser": false,
+      "usedForTracking": false,
+      "nutritionLabel": "not-collected-by-pagelumen",
+      "releaseStatus": "conditional-security-and-legal-review",
+      "evidence": ["Sources/PageLumenCore/StirlingPDFProvider.swift", "docs/stirling-pdf-security-review.md", "docs/stirling-pdf-integration.md"]
+    },
+    {
+      "id": "telemetry-and-advertising",
+      "dataClass": "Diagnostics",
+      "behaviour": "Analytics, advertising, tracking, contacts, location, and device identifiers",
+      "processingLocation": "none",
+      "transmission": "none",
+      "developerCollection": false,
+      "linkedToUser": false,
+      "usedForTracking": false,
+      "nutritionLabel": "not-collected",
+      "releaseStatus": "verified-absent",
+      "evidence": ["Config/PrivacyInfo.xcprivacy", "docs/privacy.md", "Package.swift"]
+    }
+  ],
+  "recheckTriggers": [
+    "Add an analytics, crash-reporting, advertising, cloud-sync, or model-download dependency.",
+    "Operate or bundle a remote PDF service instead of calling only a user-managed endpoint.",
+    "Persist a user identifier, telemetry event, prompt, model response, or remote-processing result.",
+    "Change Apple platform-service availability or add a new system API with data handling implications.",
+    "Submit a build whose entitlements, endpoints, or retention behaviour differs from this matrix."
+  ]
+}

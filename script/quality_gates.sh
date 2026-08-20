@@ -10,4 +10,5 @@ test -s docs/performance-baseline-2026-08-20.md
 test -s docs/superpowers/plans/2026-08-20-comprehensive-product-implementation-plan.md
 ./script/validate_fixture_corpus.sh
 ./script/validate_release_manifest.sh
+./script/validate_privacy_matrix.sh
 echo "Quality gates passed"

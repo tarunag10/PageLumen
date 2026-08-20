@@ -2,6 +2,8 @@
 
 This page summarises the privacy commitments that PageLumen makes to its users. It draws from the product PRD (`pagelumen_prd.md`, sections 11.3 and 16.3) and the security policy in `SECURITY.md`.
 
+The versioned release-review source of truth is [`privacy-matrix-v1.json`](privacy-matrix-v1.json). Validate it with `./script/validate_privacy_matrix.sh` before answering App Store Connect's privacy questionnaire. The matrix separates developer collection (none in the current build) from conditional transfers to Apple-managed services or a user-managed Stirling endpoint; a local build or this matrix is not App Review or legal approval.
+
 ## Local Processing by Default
 
 - OCR, layout analysis, summaries, and exports all run on-device using Apple platform frameworks (Vision, PDFKit, AVFoundation, NaturalLanguage).

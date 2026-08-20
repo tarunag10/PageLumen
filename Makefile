@@ -1,4 +1,4 @@
-.PHONY: help test build release lint quality fixtures release-manifest clean
+.PHONY: help test build release lint quality fixtures release-manifest privacy-matrix clean
 
 APP_NAME := PageLumen
 SCHEME := PageLumen
@@ -35,6 +35,9 @@ fixtures:
 
 release-manifest:
 	./script/validate_release_manifest.sh
+
+privacy-matrix:
+	./script/validate_privacy_matrix.sh
 
 clean:
 	rm -rf .build dist DerivedData
