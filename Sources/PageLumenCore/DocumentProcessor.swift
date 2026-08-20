@@ -105,7 +105,8 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
                     blocks: [],
                     pageLabel: pdfPage.label,
                     links: pdfLinks(for: pdfPage, in: pdf, pageNumber: index + 1),
-                    annotations: pdfAnnotations(for: pdfPage, pageNumber: index + 1)
+                    annotations: pdfAnnotations(for: pdfPage, pageNumber: index + 1),
+                    textPositions: pdfTextPositions(for: pdfPage)
                 )
             },
             outline: pdfOutline(pdf),
@@ -215,6 +216,22 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
                 contents: annotation.contents,
                 fieldName: annotation.fieldName,
                 value: annotation.widgetStringValue
+            )
+        }
+    }
+
+    private func pdfTextPositions(for page: PDFPage) -> [DocumentTextPosition] {
+        // Character bounds are useful for downstream highlighting but can be
+        // unexpectedly large in hostile PDFs. Keep this auxiliary data bounded
+        // independently of the OCR/page budgets.
+        let count = min(page.numberOfCharacters, 100_000)
+        guard count > 0 else { return [] }
+        return (0..<count).compactMap { index in
+            let bounds = page.characterBounds(at: index)
+            guard bounds.width > 0, bounds.height > 0 else { return nil }
+            return DocumentTextPosition(
+                characterIndex: index,
+                bounds: BoundingBox(x: bounds.origin.x, y: bounds.origin.y, width: bounds.width, height: bounds.height)
             )
         }
     }

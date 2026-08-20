@@ -254,6 +254,16 @@ public struct ReaderAnnotation: Identifiable, Codable, Equatable, Sendable {
     }
 }
 
+public struct DocumentTextPosition: Codable, Equatable, Sendable {
+    public var characterIndex: Int
+    public var bounds: BoundingBox
+
+    public init(characterIndex: Int, bounds: BoundingBox) {
+        self.characterIndex = characterIndex
+        self.bounds = bounds
+    }
+}
+
 public struct ReaderPage: Identifiable, Codable, Equatable, Sendable {
     public var id: UUID
     public var pageNumber: Int
@@ -269,6 +279,7 @@ public struct ReaderPage: Identifiable, Codable, Equatable, Sendable {
     public var pageLabel: String?
     public var links: [ReaderLink]
     public var annotations: [ReaderAnnotation]
+    public var textPositions: [DocumentTextPosition]
 
     public init(
         id: UUID = UUID(),
@@ -283,7 +294,8 @@ public struct ReaderPage: Identifiable, Codable, Equatable, Sendable {
         warning: String? = nil,
         pageLabel: String? = nil,
         links: [ReaderLink] = [],
-        annotations: [ReaderAnnotation] = []
+        annotations: [ReaderAnnotation] = [],
+        textPositions: [DocumentTextPosition] = []
     ) {
         self.id = id
         self.pageNumber = pageNumber
@@ -298,10 +310,11 @@ public struct ReaderPage: Identifiable, Codable, Equatable, Sendable {
         self.pageLabel = pageLabel
         self.links = links
         self.annotations = annotations
+        self.textPositions = textPositions
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, pageNumber, size, thumbnailData, ocrStatus, layoutType, blocks, tables, figures, warning, pageLabel, links, annotations
+        case id, pageNumber, size, thumbnailData, ocrStatus, layoutType, blocks, tables, figures, warning, pageLabel, links, annotations, textPositions
     }
 
     public init(from decoder: Decoder) throws {
@@ -319,6 +332,7 @@ public struct ReaderPage: Identifiable, Codable, Equatable, Sendable {
         pageLabel = try values.decodeIfPresent(String.self, forKey: .pageLabel)
         links = try values.decodeIfPresent([ReaderLink].self, forKey: .links) ?? []
         annotations = try values.decodeIfPresent([ReaderAnnotation].self, forKey: .annotations) ?? []
+        textPositions = try values.decodeIfPresent([DocumentTextPosition].self, forKey: .textPositions) ?? []
     }
 }
 

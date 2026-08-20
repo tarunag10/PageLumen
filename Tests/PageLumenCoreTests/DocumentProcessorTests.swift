@@ -34,6 +34,8 @@ final class DocumentProcessorTests: XCTestCase {
         XCTAssertEqual(document.pageCount, 1)
         XCTAssertTrue(document.allBlocks.map(\.text).joined(separator: " ").contains("Embedded PDF text for PageLumen"))
         XCTAssertTrue(document.allBlocks.contains { $0.metadata["source"] == "embedded-pdf" })
+        XCTAssertFalse(document.pages[0].textPositions.isEmpty)
+        XCTAssertEqual(document.pages[0].textPositions.first?.characterIndex, 0)
     }
 
     @MainActor

@@ -195,7 +195,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 ### 1.2 Improve document structure and reading order
 
-- [ ] Preserve the fast embedded-text path but augment it with PDF semantics: page labels, links, bookmarks, metadata, annotations, form fields, and text positions when available. PDF document metadata, human-facing page labels, nested bookmarks, link annotations, and non-link/form annotations (bounds, labels, field names, and values) are now retained through the model and legacy Codable decoding; text positions remain open.
+- [x] Preserve the fast embedded-text path and augment it with PDF semantics available through PDFKit: page labels, links, nested bookmarks, document metadata, annotations, form fields, and bounded character text positions. All are retained through the model with legacy Codable defaults; unsupported producer-specific semantics remain outside the contract.
 - [ ] Use Vision structured document recognition for image/scanned pages, retaining raw observations and normalized bounds before heuristic post-processing.
 - [ ] Explicitly model lists, captions, headers, footers, footnotes, sidebars, tables, and figures. Do not force unknown content into prose.
 - [ ] Add a reading-order confidence score and provenance for every ordering decision.
