@@ -371,7 +371,8 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
                             "source": BlockSource.visionOCR.metadataValue,
                             "structured-recognition": "title"
                         ],
-                        provenance: BlockProvenance(source: .visionOCR, pageNumber: pageNumber, bounds: bounds, confidence: Double(observation.confidence), engine: "Vision structured document recognition")
+                        provenance: BlockProvenance(source: .visionOCR, pageNumber: pageNumber, bounds: bounds, confidence: Double(observation.confidence), engine: "Vision structured document recognition"),
+                        originalText: text
                     ))
                     index += 1
                 }
@@ -392,7 +393,8 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
                             "source": BlockSource.visionOCR.metadataValue,
                             "structured-recognition": "paragraph"
                     ],
-                    provenance: BlockProvenance(source: .visionOCR, pageNumber: pageNumber, bounds: bounds, confidence: Double(observation.confidence), engine: "Vision structured document recognition")
+                    provenance: BlockProvenance(source: .visionOCR, pageNumber: pageNumber, bounds: bounds, confidence: Double(observation.confidence), engine: "Vision structured document recognition"),
+                    originalText: text
                 ))
                 index += 1
             }
@@ -451,7 +453,8 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
                         confidence: Double(candidate.confidence),
                         readingOrderIndex: index,
                         metadata: ["source": BlockSource.visionOCR.metadataValue],
-                        provenance: BlockProvenance(source: .visionOCR, pageNumber: pageNumber, bounds: bounds, confidence: Double(candidate.confidence), engine: "Vision text recognition")
+                        provenance: BlockProvenance(source: .visionOCR, pageNumber: pageNumber, bounds: bounds, confidence: Double(candidate.confidence), engine: "Vision text recognition"),
+                        originalText: candidate.string
                     )
                 }
                 continuation.resume(returning: blocks)
@@ -498,7 +501,8 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
                     bounds: bounds,
                     confidence: confidence,
                     engine: source == BlockSource.embeddedPDF.metadataValue ? "PDF embedded text" : "Layout text segmentation"
-                )
+                ),
+                originalText: paragraph
             )
         }
     }

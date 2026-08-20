@@ -560,6 +560,17 @@ private struct EditableBlockRow: View {
                 .onChange(of: draft) { _, newValue in
                     scheduleCommit(newValue)
                 }
+
+            if let originalText = block.originalText, block.hasTextEdit {
+                DisclosureGroup("Original OCR text") {
+                    Text(originalText)
+                        .font(.callout)
+                        .foregroundStyle(AccessibleStyle.secondaryText)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .accessibilityHint("Shows the original extracted text without replacing your edited text.")
+            }
         }
         .padding(14)
         .accessiblePanel(borderColor: block.confidence < 0.7 ? AccessibleStyle.warning : AccessibleStyle.border)

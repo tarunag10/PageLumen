@@ -64,5 +64,6 @@ final class FixtureCorpusTests: XCTestCase {
         XCTAssertEqual(document.pageCount, 1)
         XCTAssertEqual(document.processingStatus, .complete)
         XCTAssertTrue(document.allBlocks.contains { $0.provenance?.source == .visionOCR })
+        XCTAssertTrue(document.allBlocks.contains { $0.originalText != nil })
     }
 }

@@ -864,6 +864,9 @@ final class DocumentStore {
         }
         guard document.pages[pageIndex].blocks[blockIndex].text != text else { return }
         recordEdit("Edit block text")
+        if document.pages[pageIndex].blocks[blockIndex].originalText == nil {
+            document.pages[pageIndex].blocks[blockIndex].originalText = block.text
+        }
         document.pages[pageIndex].blocks[blockIndex].text = text
         document.pages[pageIndex].blocks[blockIndex].provenance = BlockProvenance(
             source: .userEdit,

@@ -162,6 +162,14 @@ public struct TextBlock: Identifiable, Codable, Equatable, Sendable {
     public var readingOrderIndex: Int
     public var metadata: [String: String]
     public var provenance: BlockProvenance?
+    /// The first extracted text, retained for an explicit raw-OCR diff.
+    /// Existing documents decode this as nil and remain fully readable.
+    public var originalText: String?
+
+    public var hasTextEdit: Bool {
+        guard let originalText else { return false }
+        return originalText != text
+    }
 
     public init(
         id: UUID = UUID(),
@@ -172,7 +180,8 @@ public struct TextBlock: Identifiable, Codable, Equatable, Sendable {
         confidence: Double,
         readingOrderIndex: Int = 0,
         metadata: [String: String] = [:],
-        provenance: BlockProvenance? = nil
+        provenance: BlockProvenance? = nil,
+        originalText: String? = nil
     ) {
         self.id = id
         self.pageNumber = pageNumber
@@ -183,6 +192,7 @@ public struct TextBlock: Identifiable, Codable, Equatable, Sendable {
         self.readingOrderIndex = readingOrderIndex
         self.metadata = metadata
         self.provenance = provenance
+        self.originalText = originalText
     }
 }
 
