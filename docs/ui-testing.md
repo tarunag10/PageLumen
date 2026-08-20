@@ -177,3 +177,12 @@ The newly generated Developer ID-signed archive was also launched directly from
 produced no running process or matching unified-log event. The archive itself
 passes `codesign --verify --deep --strict` and the release validator, so this is
 recorded as a host GUI/runtime limitation rather than an application assertion.
+
+On 20 August 2026 at 20:29 IST, a fresh explicit-arm64 run using the command
+above reached `Testing started` but stalled before worker materialization. On
+interruption, Xcode reported `waiting for workers to materialize` and
+`Xcode.IDEFoundation.Launcher.LaunchServices`; the result bundle is
+`~/Library/Developer/Xcode/DerivedData/PageLumen-hbeprxkxvdpbnyeekgojupdmzjpn/Logs/Test/Test-PageLumen-2026.08.20_20-29-27-+0530.xcresult`.
+No UI assertions are counted as passed. A real signed app window was separately
+captured in the same GUI session, so this remains a test-runner infrastructure
+limitation rather than evidence that the app cannot render.

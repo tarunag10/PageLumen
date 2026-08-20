@@ -79,6 +79,13 @@ quality bar still requires a clean physical run at compact and expanded window
 sizes, Light/Dark appearance, large text, VoiceOver, keyboard-only navigation,
 and the reduced-transparency/motion settings.
 
+The follow-up debug build rendered the revised Review workspace in the GUI
+session (`/tmp/pagelumen-ui-updated-clean3.png`): the heading, page selector,
+reading-order toggle, queue/issue actions, and scrollable search controls are
+visible, while the transient onboarding sheet and test-runner warning were
+dismissed through normal macOS controls. The bottom Dock was visible in that
+capture, so it is visual evidence only and not a polished marketing screenshot.
+
 ---
 
 # Current runtime slice
