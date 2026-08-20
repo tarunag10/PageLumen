@@ -110,12 +110,12 @@ Each milestone should ship in independently revertible pull requests. A feature 
 **Files:** `Sources/PageLumen/Support/TranslationService.swift`, `DocumentStore.swift`, `SettingsView.swift`, `SummaryExportView.swift`, `TranslationServiceTests.swift`
 
 - [x] Replace the old identity/stub path with a `TranslationSession`-backed adapter on supported systems; older/unsupported systems return a typed unavailable error.
-- [ ] Before displaying a target language, use language-availability APIs and distinguish: installed, downloadable with user approval, unsupported, and failed.
+- [x] Before displaying a target language, use the provider availability boundary and distinguish: installed, downloadable with explicit approval required, unsupported, and failed.
 - [x] Translate blocks while preserving block IDs/bounds and record `translatedFrom`, `translationTargetLanguage`, and `translationEngine` metadata.
-- [ ] Never create a translated export if translation was unavailable or if the returned text is unchanged for a source/target pair that should differ. Surface a recoverable error instead.
+- [x] Never create a translated export if translation was unavailable or if the returned text is unchanged for a source/target pair that should differ. Surface a recoverable error instead.
 - [x] Rename the export action to `Translate and Export Markdown` until additional output formats are intentionally supported.
 - [ ] On macOS 14, hide or disable the action with an explanatory label; do not create an incorrectly labelled source-language export.
-- [ ] Add deterministic fake translation-provider tests for successful mapping, availability states, cancellation, partial failure, and unchanged-output detection. Do not make CI depend on downloaded language models.
+- [x] Add deterministic fake translation-provider tests for successful mapping, availability states, cancellation, partial failure, and unchanged-output detection. Do not make CI depend on downloaded language models.
 
 **Acceptance:** A Spanish fixture produces a verified English fixture through a developer-run physical-Mac test; unsupported systems cannot falsely label an output as translated.
 
