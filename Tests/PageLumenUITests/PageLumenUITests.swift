@@ -36,4 +36,19 @@ final class PageLumenUITests: XCTestCase {
             )
         }
     }
+
+    func testFixtureLaunchExposesReviewAndExportWorkflow() throws {
+        let fixtureApp = XCUIApplication()
+        fixtureApp.launchArguments = ["-ui-testing", "-ui-testing-fixture"]
+        fixtureApp.launch()
+
+        XCTAssertTrue(fixtureApp.windows.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(fixtureApp.buttons["review.queue"].waitForExistence(timeout: 3))
+        XCTAssertTrue(fixtureApp.buttons["review.continue"].exists)
+
+        fixtureApp.buttons["review.continue"].click()
+        XCTAssertTrue(fixtureApp.buttons["export.backToReview"].waitForExistence(timeout: 3))
+        XCTAssertTrue(fixtureApp.buttons["export.Markdown"].exists)
+        XCTAssertTrue(fixtureApp.buttons["export.Tagged HTML"].exists)
+    }
 }

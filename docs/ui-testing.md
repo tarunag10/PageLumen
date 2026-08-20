@@ -56,3 +56,9 @@ Running the tests requires a logged-in macOS GUI session. A participant run
 must separately record outcomes for onboarding, dark/light appearance,
 permission denial/recovery, import, review, and export; compilation alone is
 not evidence for those gates.
+
+For deterministic review/export coverage, launch with both
+`-ui-testing -ui-testing-fixture`. This loads the bounded in-memory demo
+document and opens Review without touching the persisted library. The fixture
+test asserts Review Queue/Continue and navigates to export controls; it does
+not prove OCR, save-panel, permission, or accessibility-participant behavior.

@@ -36,6 +36,10 @@ struct PageLumenApp: App {
         ProcessInfo.processInfo.arguments.contains("-ui-testing")
     }
 
+    private var isUITestingFixtureLaunch: Bool {
+        ProcessInfo.processInfo.arguments.contains("-ui-testing-fixture")
+    }
+
     var body: some Scene {
         WindowGroup("PageLumen", id: "main") {
             ContentView()
@@ -50,6 +54,9 @@ struct PageLumenApp: App {
                 .onAppear {
                     if !hasSeenOnboarding && !isUITestingLaunch {
                         isShowingOnboarding = true
+                    }
+                    if isUITestingFixtureLaunch {
+                        store.loadSample()
                     }
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .pageLumenShowOnboardingRequest)) { _ in
