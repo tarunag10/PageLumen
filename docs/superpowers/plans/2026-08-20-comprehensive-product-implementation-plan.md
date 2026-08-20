@@ -144,7 +144,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [ ] Replace first-window selection with `SCContentSharingPicker` where available. Do not inspect/capture a window until the person selects it.
 - [x] Treat picker dismissal, denied permission, and API failure as distinct errors. Do not silently fall back to a shell capture after denial or dismissal.
 - [x] Retain a narrowly scoped legacy region picker only if a supported native alternative cannot serve macOS 14; document why and make it visible in the UI.
-- [ ] Provide a pre-permission explanatory screen, a System Settings deep-link/help path after denial, cancellation, and stale temporary-file cleanup on app launch.
+- [x] Provide a pre-permission explanatory screen, a System Settings deep-link/help path after denial, cancellation, and stale temporary-file cleanup on app launch. Manual permission-denial recovery remains a participant gate.
 - [x] Ensure temporary captures are removed after successful processing unless the person explicitly saves them, and clean stale PageLumen capture files from the temporary directory at service startup. The cleanup is prefix-scoped, age-bounded, and regression-tested without touching unrelated files.
 - [ ] Add tests for error mapping, no selected window, cancellation, temp cleanup, and command argument construction. Manually test macOS 14 and the current macOS release.
 
@@ -291,7 +291,7 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 - [ ] Implement Finder Quick Action / Share support for selected PDFs and images.
 - [ ] Add Quick Look thumbnails/previews only after verifying sandbox and performance behaviour.
 - [ ] Add watch-folder support only with explicit folder selection, a visible enable/disable toggle, security-scoped bookmark handling, and per-file confirmation/error reporting.
-- [ ] Add a small set of App Intents: open a selected document, import, search local library, read unresolved findings, and export tagged HTML.
+- [x] Add a small set of App Intents: open a selected document, import, search local library, read unresolved findings, and export tagged HTML. The implementation is bounded to retained local documents, caller-provided export URLs, and notification-based open actions; `AppIntentExportTests` covers metadata-only entities, the searchable-copy retention boundary, unresolved-finding filtering, open-action payloads, and typed Tagged HTML validation failures.
 
 **Exit gate for Phase 3:** Search uses local-only data, retention is understandable and reversible, and App Intent/Quick Action flows have no permission or data-loss surprises.
 
@@ -333,7 +333,7 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 - [ ] Promote user-recognisable document and finding concepts to `AppEntity` types, with privacy-safe display representations.
 - [ ] Use intents for bounded actions only; never make all local document text generally discoverable by default.
 - [ ] Evaluate newer entity schemas/view annotations only after confirming they expose no unwanted private context.
-- [ ] Test intents with empty library, revoked permissions, unsupported macOS, and a disabled-intelligence preference.
+- [ ] Test intents with empty library, revoked permissions, unsupported macOS, and a disabled-intelligence preference. Deterministic empty-library/entity and retention-gate coverage is now present in `AppIntentExportTests`; revoked-permission, unsupported-macOS, and disabled-intelligence participant/system gates remain release work.
 
 **Exit gate for Phase 4:** Every AI result has citations or an explicit inability-to-cite warning, AI is opt-in, evaluations meet predeclared thresholds, and disabled/unsupported paths are fully functional.
 

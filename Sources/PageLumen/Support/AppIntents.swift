@@ -31,16 +31,8 @@ struct PageLumenDocumentQuery: EntityQuery {
     }
 
     private func libraryEntities() -> [PageLumenDocumentEntity] {
-        guard let repository = PageLumenIntentBridge.repository(),
-              let documents = try? repository.recentMetadata() else { return [] }
-        return documents.map { metadata in
-            PageLumenDocumentEntity(
-                id: metadata.id,
-                title: metadata.title,
-                pageCount: metadata.pageCount,
-                unresolvedFindings: metadata.unresolvedFindingCount
-            )
-        }
+        guard let repository = PageLumenIntentBridge.repository() else { return [] }
+        return PageLumenIntentBridge.entities(from: repository)
     }
 }
 
@@ -56,7 +48,7 @@ struct SearchPageLumenLibraryIntent: AppIntent {
         guard let repository = PageLumenIntentBridge.repository() else {
             return .result(value: "Local library is unavailable.", dialog: "PageLumen's local library is unavailable.")
         }
-        let results = try repository.search(query: query, limit: 10)
+        let results = try PageLumenIntentBridge.search(query: query, in: repository)
         guard !results.isEmpty else {
             return .result(value: "No local matches found.", dialog: "No matching PageLumen documents were found.")
         }
@@ -75,7 +67,7 @@ struct OpenPageLumenDocumentIntent: AppIntent {
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
         await NSApp.activate(ignoringOtherApps: true)
-        NotificationCenter.default.post(name: .pageLumenOpenLibraryDocumentRequest, object: nil, userInfo: ["id": document.id])
+        PageLumenIntentBridge.postOpenLibraryDocumentRequest(id: document.id)
         return .result(dialog: "Opening \(document.title) in PageLumen.")
     }
 }
@@ -92,7 +84,7 @@ struct ReadUnresolvedPageLumenFindingsIntent: AppIntent {
         guard let repository = PageLumenIntentBridge.repository(), let loaded = try repository.document(id: document.id) else {
             return .result(value: "Document is unavailable.", dialog: "That document is no longer in the local library.")
         }
-        let findings = DocumentEditing.reviewFindings(for: loaded).filter { !$0.isResolved }
+        let findings = PageLumenIntentBridge.unresolvedFindings(in: loaded)
         let text = findings.isEmpty ? "No unresolved findings." : findings.map { "Page \($0.pageNumber): \($0.title) — \($0.detail)" }.joined(separator: "\n")
         return .result(value: text, dialog: findings.isEmpty ? "No unresolved findings." : "There are \(findings.count) unresolved findings.")
     }
@@ -141,11 +133,7 @@ struct OpenDocumentIntent: AppIntent {
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
         await NSApp.activate(ignoringOtherApps: true)
-        NotificationCenter.default.post(
-            name: .pageLumenOpenDocumentRequest,
-            object: nil,
-            userInfo: ["url": fileURL]
-        )
+        PageLumenIntentBridge.postOpenDocumentRequest(url: fileURL)
         return .result(dialog: "Opening \(fileURL.lastPathComponent) in PageLumen.")
     }
 }
@@ -225,7 +213,7 @@ enum PageLumenCoreSummaryBridge {
 }
 
 enum PageLumenIntentBridge {
-    static func repository() -> LocalDocumentRepository? {
+    static func repository() -> (any DocumentRepository)? {
         if #available(macOS 14.0, *), let persisting = try? SwiftDataPersisting() {
             return LocalDocumentRepository(
                 persisting: persisting,
@@ -236,6 +224,40 @@ enum PageLumenIntentBridge {
             persisting: FilePersisting(),
             keepSearchableLocalCopies: UserDefaults.standard.bool(forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey)
         )
+    }
+
+    static func entities(from repository: any DocumentRepository) -> [PageLumenDocumentEntity] {
+        guard let documents = try? repository.recentMetadata() else { return [] }
+        return documents.map { metadata in
+            PageLumenDocumentEntity(
+                id: metadata.id,
+                title: metadata.title,
+                pageCount: metadata.pageCount,
+                unresolvedFindings: metadata.unresolvedFindingCount
+            )
+        }
+    }
+
+    static func search(query: String, in repository: any DocumentRepository) throws -> [LibrarySearchResult] {
+        try repository.search(query: query, limit: 10)
+    }
+
+    static func unresolvedFindings(in document: ReaderDocument) -> [ReviewFinding] {
+        DocumentEditing.reviewFindings(for: document).filter { !$0.isResolved }
+    }
+
+    static func postOpenDocumentRequest(
+        url: URL,
+        notificationCenter: NotificationCenter = .default
+    ) {
+        notificationCenter.post(name: .pageLumenOpenDocumentRequest, object: nil, userInfo: ["url": url])
+    }
+
+    static func postOpenLibraryDocumentRequest(
+        id: UUID,
+        notificationCenter: NotificationCenter = .default
+    ) {
+        notificationCenter.post(name: .pageLumenOpenLibraryDocumentRequest, object: nil, userInfo: ["id": id])
     }
 
     static func exportTaggedHTML(document: ReaderDocument, to destination: URL, options: ExportOptions = .full) throws {
