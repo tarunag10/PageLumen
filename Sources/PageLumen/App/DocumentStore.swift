@@ -78,7 +78,7 @@ final class DocumentStore {
     }
 
     var lastLibraryClearLabel: String {
-        guard let date = UserDefaults.standard.object(forKey: DocumentRepositorySettings.lastClearedAtKey) as? Date else {
+        guard let date = repositoryPreferences.object(forKey: DocumentRepositorySettings.lastClearedAtKey) as? Date else {
             return "Never"
         }
         return date.formatted(date: .abbreviated, time: .shortened)
@@ -149,6 +149,7 @@ final class DocumentStore {
     private let processor: any DocumentImporting
     private let persisting: any DocumentPersisting
     private let intelligencePreferences: UserDefaults
+    private let repositoryPreferences: UserDefaults
 
     private var searchIndex: [String: [UUID]] = [:]
     private var searchIndexFingerprint: Int = 0
@@ -165,10 +166,12 @@ final class DocumentStore {
     init(
         processor: any DocumentImporting = DocumentProcessor(),
         persisting: (any DocumentPersisting)? = nil,
-        intelligencePreferences: UserDefaults = .standard
+        intelligencePreferences: UserDefaults = .standard,
+        repositoryPreferences: UserDefaults = .standard
     ) {
         self.processor = processor
         self.intelligencePreferences = intelligencePreferences
+        self.repositoryPreferences = repositoryPreferences
         if let persisting {
             self.persisting = persisting
             self.persistenceStatus = .available
@@ -368,7 +371,7 @@ final class DocumentStore {
         let count = recentDocuments.count
         recentDocuments.removeAll()
         try? persisting.forgetAll()
-        UserDefaults.standard.set(Date(), forKey: DocumentRepositorySettings.lastClearedAtKey)
+        repositoryPreferences.set(Date(), forKey: DocumentRepositorySettings.lastClearedAtKey)
         statusMessage = count == 0 ? "No recent documents to forget" : "Forgot \(count) recent document\(count == 1 ? "" : "s")"
     }
 
@@ -379,7 +382,7 @@ final class DocumentStore {
         if let query {
             librarySearchQuery = query
         }
-        guard UserDefaults.standard.bool(forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey) else {
+        guard repositoryPreferences.bool(forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey) else {
             librarySearchResults = []
             statusMessage = "Library search is off; enable searchable local copies in Settings"
             return

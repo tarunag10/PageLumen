@@ -88,8 +88,11 @@ final class DocumentStoreTests: XCTestCase {
         let persisting = InMemoryPersisting()
         let searchable = makeSearchableDocument()
         try persisting.save(searchable)
-        UserDefaults.standard.set(true, forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey)
-        let store = DocumentStore(persisting: persisting)
+        let suiteName = "PageLumen.DocumentStoreTests.search.\(UUID().uuidString)"
+        let preferences = UserDefaults(suiteName: suiteName)!
+        defer { UserDefaults.standard.removePersistentDomain(forName: suiteName) }
+        preferences.set(true, forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey)
+        let store = DocumentStore(persisting: persisting, repositoryPreferences: preferences)
 
         store.searchLibrary(query: "import")
 
@@ -103,7 +106,7 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertEqual(store.selectedPageNumber, result.pageNumber)
         XCTAssertEqual(store.selectedBlockID, result.blockID)
 
-        UserDefaults.standard.set(false, forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey)
+        preferences.set(false, forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey)
         store.searchLibrary(query: "import")
         XCTAssertTrue(store.librarySearchResults.isEmpty)
     }
