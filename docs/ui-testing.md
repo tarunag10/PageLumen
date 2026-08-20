@@ -76,8 +76,12 @@ not evidence for those gates.
 For deterministic review/export coverage, launch with both
 `-ui-testing -ui-testing-fixture`. This loads the bounded in-memory demo
 document and opens Review without touching the persisted library. The fixture
-test asserts Review Queue/Continue and navigates to export controls; it does
-not prove OCR, save-panel, permission, or accessibility-participant behavior.
+tests assert Review Queue/Continue, enumerate every export format and export
+option, and confirm the preview is present without opening a native file panel.
+This is a control-surface/wiring contract only; it does not prove OCR,
+save-panel/file-writing success, permission, or accessibility-participant
+behavior. Export confirmation remains a participant/release gate because
+clicking a format intentionally invokes the native save panel.
 
 On 20 August 2026, a live `xcodebuild ... -only-testing:PageLumenUITests test`
 attempt built the app and UI-test runner, then stalled while Xcode waited for a

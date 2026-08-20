@@ -52,6 +52,45 @@ final class PageLumenUITests: XCTestCase {
         XCTAssertTrue(fixtureApp.buttons["export.Tagged HTML"].exists)
     }
 
+    func testFixtureReviewToExportExposesAllControlsWithoutOpeningFilePanel() throws {
+        let fixtureApp = XCUIApplication()
+        fixtureApp.launchArguments = ["-ui-testing", "-ui-testing-fixture"]
+        fixtureApp.launch()
+
+        XCTAssertTrue(fixtureApp.buttons["review.queue"].waitForExistence(timeout: 5))
+        fixtureApp.buttons["review.continue"].click()
+        XCTAssertTrue(fixtureApp.buttons["export.backToReview"].waitForExistence(timeout: 3))
+
+        // This is deliberately a control-surface contract. Clicking an export
+        // format would invoke the native save panel, so confirmation and file
+        // writing stay in the participant/release gate.
+        let formats = [
+            "Markdown", "TXT", "HTML", "Tagged HTML", "Readable PDF", "CSV",
+            "JSON", "Accessibility Report", "Audio", "DOCX", "Translate and Export Markdown"
+        ]
+        for format in formats {
+            XCTAssertTrue(
+                fixtureApp.buttons["export.\(format)"].exists,
+                "Missing export control: \(format)"
+            )
+        }
+
+        let options = [
+            "Include headings", "Include tables", "Include chart and figure explanations",
+            "Include page references", "Include confidence notes",
+            "Include repeated headers and footers", "Include provenance and review details"
+        ]
+        for option in options {
+            XCTAssertTrue(
+                fixtureApp.checkBoxes[option].exists,
+                "Missing export option: \(option)"
+            )
+        }
+
+        XCTAssertTrue(fixtureApp.staticTexts["Export preview"].exists)
+        XCTAssertFalse(fixtureApp.sheets.firstMatch.exists, "Control-surface coverage must not open a save panel")
+    }
+
     func testSettingsLaunchExposesPrivacyAndAppearanceControls() throws {
         let settingsApp = XCUIApplication()
         settingsApp.launchArguments = ["-ui-testing", "-ui-testing-settings"]
