@@ -250,6 +250,37 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertEqual(store.statusMessage, "Reopened: \(issue.title)")
     }
 
+    func testReviewIssueCanBeRejectedAndReopenedWithoutChangingSourceText() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let sourceText = "Optional structure"
+        store.document = ReaderDocument(
+            title: "Reject review",
+            sourceType: .sample,
+            pages: [ReaderPage(
+                pageNumber: 1,
+                size: PageSize(width: 400, height: 600),
+                blocks: [TextBlock(
+                    pageNumber: 1,
+                    type: .unknown,
+                    text: sourceText,
+                    bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20),
+                    confidence: 0.4
+                )]
+            )]
+        )
+        let issue = try! XCTUnwrap(store.reviewIssues.first)
+
+        store.rejectReviewIssue(issue)
+        XCTAssertTrue(store.reviewIssues.isEmpty)
+        XCTAssertEqual(store.document.pages[0].blocks[0].text, sourceText)
+        XCTAssertEqual(DocumentEditing.reviewDecision(store.document.pages[0].blocks[0]), .rejected)
+        XCTAssertEqual(store.statusMessage, "Rejected: \(issue.title)")
+
+        store.reopenReviewIssue(issue)
+        XCTAssertEqual(store.reviewIssues.count, 1)
+        XCTAssertEqual(DocumentEditing.reviewDecision(store.document.pages[0].blocks[0]), .unreviewed)
+    }
+
     func testUndoAndRedoRestoreTextEdits() {
         let store = DocumentStore(persisting: InMemoryPersisting())
         let block = store.document.pages[0].blocks[0]

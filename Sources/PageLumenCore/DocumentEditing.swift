@@ -59,6 +59,12 @@ public enum ReviewFindingSource: String, Codable, Equatable, Sendable {
     case appleIntelligence
 }
 
+public enum ReviewDecision: String, Codable, Equatable, Sendable {
+    case unreviewed
+    case accepted
+    case rejected
+}
+
 /// Typed provenance for a finding. Source excerpts remain outside this model;
 /// callers can resolve the page/block location without duplicating OCR text.
 public struct ReviewFindingProvenance: Codable, Equatable, Sendable {
@@ -95,6 +101,7 @@ public struct ReviewFinding: Identifiable, Codable, Equatable, Sendable {
     public var title: String
     public var detail: String
     public var isResolved: Bool
+    public var decision: ReviewDecision
     public var provenance: ReviewFindingProvenance?
 
     public init(
@@ -106,6 +113,7 @@ public struct ReviewFinding: Identifiable, Codable, Equatable, Sendable {
         title: String,
         detail: String,
         isResolved: Bool = false,
+        decision: ReviewDecision = .unreviewed,
         provenance: ReviewFindingProvenance? = nil
     ) {
         self.id = id
@@ -116,7 +124,26 @@ public struct ReviewFinding: Identifiable, Codable, Equatable, Sendable {
         self.title = title
         self.detail = detail
         self.isResolved = isResolved
+        self.decision = decision
         self.provenance = provenance
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, kind, severity, pageNumber, blockID, title, detail, isResolved, decision, provenance
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        kind = try container.decode(ReviewIssueKind.self, forKey: .kind)
+        severity = try container.decode(ReviewFindingSeverity.self, forKey: .severity)
+        pageNumber = try container.decode(Int.self, forKey: .pageNumber)
+        blockID = try container.decodeIfPresent(UUID.self, forKey: .blockID)
+        title = try container.decode(String.self, forKey: .title)
+        detail = try container.decode(String.self, forKey: .detail)
+        isResolved = try container.decodeIfPresent(Bool.self, forKey: .isResolved) ?? false
+        decision = try container.decodeIfPresent(ReviewDecision.self, forKey: .decision) ?? .unreviewed
+        provenance = try container.decodeIfPresent(ReviewFindingProvenance.self, forKey: .provenance)
     }
 }
 
@@ -156,6 +183,7 @@ public struct ReviewProgress: Equatable, Sendable {
 public enum DocumentEditing {
     private static let reviewStatusKey = "reviewStatus"
     private static let reviewedValue = "reviewed"
+    private static let reviewDecisionKey = "reviewDecision"
 
     public static func moveBlock(id: UUID, direction: BlockMoveDirection, in document: inout ReaderDocument) {
         guard let pageIndex = document.pages.firstIndex(where: { page in
@@ -188,7 +216,24 @@ public enum DocumentEditing {
 
         if isReviewed {
             document.pages[location.pageIndex].blocks[location.blockIndex].metadata[reviewStatusKey] = reviewedValue
+            document.pages[location.pageIndex].blocks[location.blockIndex].metadata[reviewDecisionKey] = ReviewDecision.accepted.rawValue
         } else {
+            document.pages[location.pageIndex].blocks[location.blockIndex].metadata.removeValue(forKey: reviewStatusKey)
+            document.pages[location.pageIndex].blocks[location.blockIndex].metadata.removeValue(forKey: reviewDecisionKey)
+        }
+    }
+
+    public static func setReviewDecision(id: UUID, decision: ReviewDecision, in document: inout ReaderDocument) {
+        guard let location = blockLocation(id: id, in: document) else { return }
+        switch decision {
+        case .unreviewed:
+            document.pages[location.pageIndex].blocks[location.blockIndex].metadata.removeValue(forKey: reviewDecisionKey)
+            document.pages[location.pageIndex].blocks[location.blockIndex].metadata.removeValue(forKey: reviewStatusKey)
+        case .accepted:
+            document.pages[location.pageIndex].blocks[location.blockIndex].metadata[reviewDecisionKey] = decision.rawValue
+            document.pages[location.pageIndex].blocks[location.blockIndex].metadata[reviewStatusKey] = reviewedValue
+        case .rejected:
+            document.pages[location.pageIndex].blocks[location.blockIndex].metadata[reviewDecisionKey] = decision.rawValue
             document.pages[location.pageIndex].blocks[location.blockIndex].metadata.removeValue(forKey: reviewStatusKey)
         }
     }
@@ -201,8 +246,10 @@ public enum DocumentEditing {
         for blockIndex in document.pages[pageIndex].blocks.indices {
             if isReviewed {
                 document.pages[pageIndex].blocks[blockIndex].metadata[reviewStatusKey] = reviewedValue
+                document.pages[pageIndex].blocks[blockIndex].metadata[reviewDecisionKey] = ReviewDecision.accepted.rawValue
             } else {
                 document.pages[pageIndex].blocks[blockIndex].metadata.removeValue(forKey: reviewStatusKey)
+                document.pages[pageIndex].blocks[blockIndex].metadata.removeValue(forKey: reviewDecisionKey)
             }
         }
     }
@@ -246,7 +293,7 @@ public enum DocumentEditing {
             }
 
             for block in page.blocks.sorted(by: { $0.readingOrderIndex < $1.readingOrderIndex }) {
-                guard !isReviewed(block) else {
+                guard !isReviewed(block), reviewDecision(block) != .rejected else {
                     continue
                 }
 
@@ -272,6 +319,7 @@ public enum DocumentEditing {
                 severity = .warning
             }
             let block = issue.blockID.flatMap { id in document.allBlocks.first { $0.id == id } }
+            let decision = block.map(reviewDecision) ?? .unreviewed
             let source: ReviewFindingSource = {
                 if let provenance = block?.provenance {
                     switch provenance.source {
@@ -296,6 +344,8 @@ public enum DocumentEditing {
                 blockID: issue.blockID,
                 title: issue.title,
                 detail: issue.detail,
+                isResolved: decision != .unreviewed || (block.map(isReviewed) ?? false),
+                decision: decision,
                 provenance: ReviewFindingProvenance(
                     source: source,
                     pageNumber: issue.pageNumber,
@@ -332,6 +382,10 @@ public enum DocumentEditing {
 
     public static func isReviewed(_ block: TextBlock) -> Bool {
         block.metadata[reviewStatusKey] == reviewedValue
+    }
+
+    public static func reviewDecision(_ block: TextBlock) -> ReviewDecision {
+        ReviewDecision(rawValue: block.metadata[reviewDecisionKey] ?? "") ?? .unreviewed
     }
 
     private static func blockLocation(id: UUID, in document: ReaderDocument) -> (pageIndex: Int, blockIndex: Int)? {

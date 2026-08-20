@@ -208,15 +208,15 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 - [x] Add `ProvenanceRecord` or typed fields rather than expanding unstructured metadata dictionaries. `BlockProvenance` is now Codable, backward-compatible, and carried by OCR/embedded-text blocks and explicit text/type edits.
 - [ ] Record source (`embeddedPDF`, Vision, user edit, Apple intelligence), page, bounds, confidence, timestamp, and parent source when a block is altered. Embedded/PDF/Vision, text/type edits, and table/figure description edits are wired; AI-generated summaries now retain privacy-safe engine/timestamp/citation metadata, while AI block-level lineage remains open.
-- [x] Replace scattered warning generation with a `ReviewFinding` model: `id`, severity, category, page/block/table/figure reference, explanation, resolved state, and typed provenance. `ReviewFindingProvenance` records source, page, bounds, parent block, and timestamp without copying source text; recommended-action and full export persistence remain open.
+- [x] Replace scattered warning generation with a `ReviewFinding` model: `id`, severity, category, page/block/table/figure reference, explanation, resolved state, and typed provenance. `ReviewFindingProvenance` records source, page, bounds, parent block, and timestamp without copying source text; findings now carry explicit accept/reject decisions and exported decision state.
 - [ ] Prioritise findings: unreadable page, missing structure, low confidence, conflicting extraction sources, unresolved table headers, missing image description, and unreviewed AI contribution.
-- [ ] Persist resolution state and include it in exports/audit reports without exposing source text when anonymisation is selected.
+- [x] Persist resolution state and include it in exports/audit reports without exposing source text when anonymisation is selected. Block decisions are stored as metadata, JSON review findings include `decision`, and rejected suggestions remain excluded from the active queue while source text is unchanged.
 
 **Acceptance:** Every correction and AI suggestion can be traced to a source region or clearly marked as inference.
 
 ### 1.4 Create the review workspace
 
-- [ ] Add a filterable Review Queue with keyboard shortcuts for next/previous finding, accept/reject suggestion, mark reviewed, and open original source region. The queue popover now lists all unresolved findings, filters All/Blockers/Warnings, opens each source region, and resolves/reopens block-backed findings without changing source text; page-warning correction and richer accept/reject suggestion states remain open.
+- [ ] Add a filterable Review Queue with keyboard shortcuts for next/previous finding, accept/reject suggestion, mark reviewed, and open original source region. The queue popover now lists all unresolved findings, filters All/Blockers/Warnings, opens each source region, and offers separate accept/reject actions without changing source text; keyboard accept/reject bindings, page-warning correction, and original-region highlighting remain open.
 - [ ] Synchronise preview, extracted text, and issue list selection; support page-level deep links.
 - [x] Support table-grid editing with explicit column-header and row-header assignment. Review now provides validated cell editing plus explicit header row/column assignment, with semantic HTML/JSON preservation.
 - [x] Add reusable review presets for General, Legal, Academic, Receipts, Slides, and Accessibility Remediation. Settings exposes the preset and the core review engine applies only threshold/warning changes; source data remains untouched.

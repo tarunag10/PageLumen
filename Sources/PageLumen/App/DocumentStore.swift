@@ -470,6 +470,17 @@ final class DocumentStore {
         statusMessage = "Reopened: \(issue.title)"
     }
 
+    func rejectReviewIssue(_ issue: ReviewIssue) {
+        guard let blockID = issue.blockID,
+              let block = document.allBlocks.first(where: { $0.id == blockID }) else {
+            statusMessage = "This page warning needs source-level correction"
+            return
+        }
+        recordEdit("Reject review suggestion")
+        DocumentEditing.setReviewDecision(id: block.id, decision: .rejected, in: &document)
+        statusMessage = "Rejected: \(issue.title)"
+    }
+
     func jumpToNextSearchMatch() {
         jumpToSearchMatch(direction: 1)
     }
@@ -880,7 +891,8 @@ final class DocumentStore {
     }
 
     func setBlockReviewed(_ block: TextBlock, isReviewed: Bool) {
-        guard DocumentEditing.isReviewed(block) != isReviewed else { return }
+        let currentDecision = DocumentEditing.reviewDecision(block)
+        guard (isReviewed ? currentDecision != .accepted : currentDecision != .unreviewed) else { return }
         recordEdit("Change block review status")
         DocumentEditing.setBlockReviewed(id: block.id, isReviewed: isReviewed, in: &document)
         statusMessage = isReviewed ? "Marked block reviewed" : "Marked block for review"

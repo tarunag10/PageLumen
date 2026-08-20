@@ -818,7 +818,8 @@ public struct ExportEngine: Sendable {
                 "kind": finding.kind.rawValue,
                 "severity": finding.severity.rawValue,
                 "pageNumber": finding.pageNumber,
-                "isResolved": finding.isResolved
+                "isResolved": finding.isResolved,
+                "decision": finding.decision.rawValue
             ]
             if !options.redactTextSnippets {
                 result["title"] = finding.title

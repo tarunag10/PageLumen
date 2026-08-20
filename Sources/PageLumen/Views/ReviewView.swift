@@ -381,6 +381,14 @@ private struct ReviewQueuePopover: View {
                             .buttonStyle(.borderless)
                             .help("Mark finding reviewed")
                             .accessibilityLabel("Resolve \(finding.title)")
+                            Button {
+                                store.rejectReviewIssue(issue)
+                            } label: {
+                                Image(systemName: "xmark.circle")
+                            }
+                            .buttonStyle(.borderless)
+                            .help("Reject suggestion without changing source text")
+                            .accessibilityLabel("Reject \(finding.title)")
                         }
                     }
                 }

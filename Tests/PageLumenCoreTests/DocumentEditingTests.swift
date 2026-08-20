@@ -141,6 +141,27 @@ final class DocumentEditingTests: XCTestCase {
         XCTAssertFalse(String(describing: finding.provenance).contains(sourceBlock.text))
     }
 
+    func testReviewDecisionPersistsAcceptedAndRejectedStates() {
+        let block = TextBlock(pageNumber: 1, type: .unknown, text: "Keep source", bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20), confidence: 0.4)
+        var document = ReaderDocument(title: "Decisions", sourceType: .sample, pages: [
+            ReaderPage(pageNumber: 1, size: PageSize(width: 400, height: 600), blocks: [block])
+        ])
+
+        XCTAssertEqual(DocumentEditing.reviewDecision(document.pages[0].blocks[0]), .unreviewed)
+        DocumentEditing.setReviewDecision(id: block.id, decision: .rejected, in: &document)
+        XCTAssertEqual(DocumentEditing.reviewDecision(document.pages[0].blocks[0]), .rejected)
+        XCTAssertFalse(DocumentEditing.isReviewed(document.pages[0].blocks[0]))
+        XCTAssertTrue(DocumentEditing.reviewIssues(for: document).isEmpty)
+
+        DocumentEditing.setReviewDecision(id: block.id, decision: .accepted, in: &document)
+        XCTAssertEqual(DocumentEditing.reviewDecision(document.pages[0].blocks[0]), .accepted)
+        XCTAssertTrue(DocumentEditing.isReviewed(document.pages[0].blocks[0]))
+
+        DocumentEditing.setReviewDecision(id: block.id, decision: .unreviewed, in: &document)
+        XCTAssertEqual(DocumentEditing.reviewDecision(document.pages[0].blocks[0]), .unreviewed)
+        XCTAssertEqual(DocumentEditing.reviewIssues(for: document).count, 1)
+    }
+
     func testExportPreviewUsesSelectedFormatAndOptions() {
         let block = TextBlock(pageNumber: 1, type: .heading, text: "Introduction", bounds: BoundingBox(x: 10, y: 80, width: 300, height: 20), confidence: 0.9)
         let document = ReaderDocument(title: "Preview", sourceType: .sample, pages: [
