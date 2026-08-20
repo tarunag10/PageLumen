@@ -121,6 +121,34 @@ final class DocumentProcessorTests: XCTestCase {
         XCTAssertEqual(link.bounds, BoundingBox(x: 40, y: 60, width: 140, height: 24))
     }
 
+    @MainActor
+    func testPDFFormAndNonLinkAnnotationsAreRetained() async throws {
+        let source = try makePDF(containing: "Form fixture")
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("pdf")
+        defer { try? FileManager.default.removeItem(at: source); try? FileManager.default.removeItem(at: url) }
+        guard let pdf = PDFDocument(url: source), let page = pdf.page(at: 0) else {
+            XCTFail("Could not open generated PDF")
+            return
+        }
+        let note = PDFAnnotation(bounds: CGRect(x: 30, y: 40, width: 80, height: 20), forType: .text, withProperties: nil)
+        note.contents = "Reviewer note"
+        page.addAnnotation(note)
+        let field = PDFAnnotation(bounds: CGRect(x: 30, y: 80, width: 180, height: 24), forType: .widget, withProperties: nil)
+        field.fieldName = "FullName"
+        field.widgetStringValue = "Alice"
+        page.addAnnotation(field)
+        XCTAssertTrue(pdf.write(to: url))
+
+        let document = try await DocumentProcessor().process(url: url)
+        let annotations = document.pages[0].annotations
+
+        XCTAssertTrue(annotations.contains { $0.type.lowercased() == "text" && $0.contents == "Reviewer note" })
+        XCTAssertTrue(annotations.contains { $0.type.lowercased() == "widget" && $0.fieldName == "FullName" && $0.value == "Alice" })
+        XCTAssertTrue(document.pages[0].links.isEmpty)
+    }
+
     func testUnsupportedFileThrowsReadableError() async {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)

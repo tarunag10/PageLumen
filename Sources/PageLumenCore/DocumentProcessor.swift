@@ -104,7 +104,8 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
                     ocrStatus: .pending,
                     blocks: [],
                     pageLabel: pdfPage.label,
-                    links: pdfLinks(for: pdfPage, in: pdf, pageNumber: index + 1)
+                    links: pdfLinks(for: pdfPage, in: pdf, pageNumber: index + 1),
+                    annotations: pdfAnnotations(for: pdfPage, pageNumber: index + 1)
                 )
             },
             outline: pdfOutline(pdf),
@@ -199,6 +200,21 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
                 label: annotation.contents,
                 url: url,
                 targetPageNumber: targetPageNumber
+            )
+        }
+    }
+
+    private func pdfAnnotations(for page: PDFPage, pageNumber: Int) -> [ReaderAnnotation] {
+        page.annotations.compactMap { annotation in
+            guard annotation.type?.lowercased() != "link" else { return nil }
+            let bounds = annotation.bounds
+            return ReaderAnnotation(
+                pageNumber: pageNumber,
+                type: annotation.type ?? "unknown",
+                bounds: BoundingBox(x: bounds.origin.x, y: bounds.origin.y, width: bounds.width, height: bounds.height),
+                contents: annotation.contents,
+                fieldName: annotation.fieldName,
+                value: annotation.widgetStringValue
             )
         }
     }
