@@ -1,13 +1,27 @@
 import AVFoundation
 import Foundation
 
+protocol AudioSpeechSynthesizing: AnyObject {
+    func write(_ utterance: AVSpeechUtterance, toBufferCallback callback: @escaping (AVAudioBuffer) -> Void)
+    @discardableResult func stopSpeaking(at boundary: AVSpeechBoundary) -> Bool
+}
+
+extension AVSpeechSynthesizer: AudioSpeechSynthesizing {}
+
 @MainActor
 public final class AudioExportService {
-    private var activeSynthesizer: AVSpeechSynthesizer?
+    private var activeSynthesizer: (any AudioSpeechSynthesizing)?
     private var activeCollector: AudioBufferCollector?
     private var activeProgress: (@Sendable (AudioExportProgress) -> Void)?
+    private let makeSynthesizer: @MainActor () -> any AudioSpeechSynthesizing
 
-    public init() {}
+    public init() {
+        self.makeSynthesizer = { AVSpeechSynthesizer() }
+    }
+
+    init(makeSynthesizer: @escaping @MainActor () -> any AudioSpeechSynthesizing) {
+        self.makeSynthesizer = makeSynthesizer
+    }
 
     public func export(
         text: String,
@@ -38,7 +52,7 @@ public final class AudioExportService {
             interleaved: format.isInterleaved
         )
 
-        let synthesizer = AVSpeechSynthesizer()
+        let synthesizer = makeSynthesizer()
         let utterance = AVSpeechUtterance(string: trimmed)
         utterance.voice = voiceIdentifier.flatMap(AVSpeechSynthesisVoice.init(identifier:))
             ?? AVSpeechSynthesisVoice(language: language)

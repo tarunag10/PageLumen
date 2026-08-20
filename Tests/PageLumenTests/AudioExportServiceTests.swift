@@ -1,3 +1,4 @@
+import AVFoundation
 import Foundation
 import PageLumenCore
 import XCTest
@@ -75,4 +76,40 @@ final class AudioExportServiceTests: XCTestCase {
             "Audio export did not produce a readable audio file."
         )
     }
+
+    func testInjectedSpeechEngineKeepsExportBoundaryDeterministic() async {
+        let engine = RecordingSpeechEngine()
+        let service = AudioExportService(makeSynthesizer: { engine })
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("PageLumen-AudioExport-fake-\(UUID().uuidString)")
+            .appendingPathExtension("m4a")
+
+        do {
+            try await service.export(text: "hello", to: url, language: "en-GB", voiceIdentifier: "voice.test")
+            XCTFail("The fake engine emits no audio and should produce invalidOutput")
+        } catch let error as AudioExportError {
+            if case .invalidOutput = error {
+                // Expected: the fake engine intentionally emits a zero-length buffer.
+            } else {
+                XCTFail("Expected invalid output, got \(error)")
+            }
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+        XCTAssertTrue(engine.didWrite)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
+    }
+}
+
+private final class RecordingSpeechEngine: NSObject, AudioSpeechSynthesizing {
+    private(set) var didWrite = false
+
+    func write(_ utterance: AVSpeechUtterance, toBufferCallback callback: @escaping (AVAudioBuffer) -> Void) {
+        didWrite = true
+        let format = AVAudioFormat(standardFormatWithSampleRate: 22_050, channels: 1)!
+        callback(AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 1)!)
+    }
+
+    @discardableResult
+    func stopSpeaking(at boundary: AVSpeechBoundary) -> Bool { true }
 }

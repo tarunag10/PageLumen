@@ -507,7 +507,7 @@ participant and physical-device gates remain open.
 
 ### 7.1 Test strategy
 
-- [ ] Keep existing unit tests and add protocol-fake tests for every external/platform boundary. Stirling, translation, persistence, DOCX, PDF operations, and screenshot command boundaries now have injectable fakes; AVSpeech, ScreenCaptureKit picker UI, and system participant paths still require platform-specific coverage.
+- [ ] Keep existing unit tests and add protocol-fake tests for every external/platform boundary. Stirling, translation, persistence, DOCX, PDF operations, screenshot command, and AVSpeech synthesis boundaries now have injectable fakes; ScreenCaptureKit picker UI and system participant paths still require platform-specific coverage.
 - [ ] Add XCUITest coverage for import, review queue, export confirmation, settings, dark/light appearance, and denied permission recovery. The deterministic `-ui-testing-fixture` flow now loads the bounded demo and covers Review Queue/Continue plus export controls; settings, appearance, import/permission recovery, and participant execution remain open.
 - [x] Add fixture-corpus regression tests and performance baselines separate from fast unit tests. `FixtureCorpusTests` exercises the bounded fixture set independently, while `DocumentProcessorTests` enforce the 10/50-page embedded-text wall-time guards recorded in `docs/performance-baseline-2026-08-20.md`; scanned-image OCR and peak-memory measurements remain physical-device gates.
 - [x] Add snapshot tests only where they are stable and actionable. Export snapshot coverage is deterministic and text-based; UI screenshots remain a separate manual/accessibility concern.
