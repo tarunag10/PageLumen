@@ -107,7 +107,8 @@ public final class WatchFolderMonitor: @unchecked Sendable {
     public func start(
         bookmark: WatchFolderBookmark,
         intervalNanoseconds: UInt64 = 5_000_000_000,
-        onCandidates: @escaping @Sendable ([WatchFolderCandidate]) async -> Void
+        onCandidates: @escaping @Sendable ([WatchFolderCandidate]) async -> Void,
+        onError: @escaping @Sendable (WatchFolderError) async -> Void = { _ in }
     ) throws {
         stop()
         let folder = try bookmark.resolve()
@@ -118,9 +119,18 @@ public final class WatchFolderMonitor: @unchecked Sendable {
         task = Task { [scanner] in
             var seen = Set<URL>()
             while !Task.isCancelled {
-                if let candidates = try? scanner.candidates(in: folder, excluding: seen), !candidates.isEmpty {
-                    seen.formUnion(candidates.map(\.url))
-                    await onCandidates(candidates)
+                do {
+                    let candidates = try scanner.candidates(in: folder, excluding: seen)
+                    if !candidates.isEmpty {
+                        seen.formUnion(candidates.map(\.url))
+                        await onCandidates(candidates)
+                    }
+                } catch let error as WatchFolderError {
+                    await onError(error)
+                    break
+                } catch {
+                    await onError(.inaccessible)
+                    break
                 }
                 do {
                     try await Task.sleep(nanoseconds: intervalNanoseconds)

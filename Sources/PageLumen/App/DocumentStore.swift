@@ -283,6 +283,13 @@ final class DocumentStore {
                     })
                     self.statusMessage = "\(self.watchFolderCandidates.count) watch-folder file\(self.watchFolderCandidates.count == 1 ? "" : "s") awaiting confirmation"
                 }
+            } onError: { [weak self] error in
+                await MainActor.run {
+                    guard let self else { return }
+                    self.watchFolderEnabled = false
+                    self.repositoryPreferences.set(false, forKey: DocumentRepositorySettings.watchFolderEnabledKey)
+                    self.statusMessage = "Watch folder stopped: \(error.localizedDescription)"
+                }
             }
         } catch {
             watchFolderEnabled = false
