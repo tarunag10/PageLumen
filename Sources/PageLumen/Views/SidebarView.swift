@@ -48,6 +48,8 @@ struct SidebarView: View {
                             }
                             .buttonStyle(.plain)
                             .disabled(item.document == nil)
+                            .accessibilityLabel("\(item.fileName), \(detail(for: item))")
+                            .accessibilityHint(item.document == nil ? "This file is not available to review." : "Open this imported document in Review.")
                         }
                     }
                 }
@@ -85,6 +87,8 @@ struct SidebarView: View {
                                     }
                                 }
                                 .buttonStyle(.plain)
+                                .accessibilityLabel("\(document.title), \(librarySubtitle(for: document))")
+                                .accessibilityHint("Open this document in Review.")
                             }
                         }
                     }
@@ -119,6 +123,8 @@ struct SidebarView: View {
                                 }
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel("Heading \(item.title), page \(item.pageNumber)")
+                            .accessibilityHint("Open this heading in Review.")
                         }
                     }
                 }
@@ -184,6 +190,8 @@ struct SidebarView: View {
             }
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("\(document.title), \(subtitle)")
+        .accessibilityHint("Open this document in Review.")
     }
 }
 
@@ -227,6 +235,7 @@ private struct SidebarHeader: View {
 }
 
 private struct SidebarRow: View {
+    @Environment(DocumentStore.self) private var store
     let title: String
     let systemImage: String
     let tag: DocumentStore.Destination
@@ -235,6 +244,9 @@ private struct SidebarRow: View {
         Label(title, systemImage: systemImage)
             .tag(tag)
             .font(.callout.weight(.medium))
+            .disabled(!store.canNavigate(to: tag))
+            .accessibilityLabel(title)
+            .accessibilityValue(store.canNavigate(to: tag) ? "Available" : "Unavailable until a document is imported")
     }
 }
 
