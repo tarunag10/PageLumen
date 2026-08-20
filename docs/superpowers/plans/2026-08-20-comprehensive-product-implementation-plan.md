@@ -325,7 +325,7 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 - [x] Add a privacy-safe `GroundedIntelligenceResult` envelope for summaries. Generated results carry deterministic page/block citations plus uncertainty notes; unavailable/failed results carry no source excerpts. The adapter uses bounded source blocks and explicitly reports omitted-block scope. Structured review actions and source-text-free Codable locations are now included; selection-aware prompting and Foundation Models `@Generable` wiring remain open.
 - [x] Pass only bounded, selected, source-labelled context. `IntelligenceContextBuilder` resolves selected block IDs in reading order, applies deterministic block/character bounds, labels each prompt block with page and inferred section, and emits omission page/section metadata without source excerpts. `ExplanationEngine` exposes selection-scoped grounded and deterministic fallback summaries; no chat UI is included.
 - [x] Support a deliberate “summarise selection,” “explain table,” “describe figure,” “study notes,” and “compare passages” set before adding an open-ended chat interface. `IntelligenceTaskMode` and bounded, citation-oriented prompt contracts now enumerate the five operations; provider/UI wiring and eligible-device participant validation remain release gates.
-- [ ] Preserve session/model/provider metadata in provenance but do not persist full prompts unless the person opts in.
+- [x] Preserve session/model/provider metadata in provenance but do not persist full prompts unless the person opts in. `AISummaryProvenance` and `AIBlockLineage` retain schema/session/request/provider/model/time and bounded page/block citations while excluding prompts, responses, diagnostics, and excerpts.
 - [x] Provide a deterministic fallback `ExplanationEngine` result for unsupported Macs and model failures. `deterministicFallbackSummary` preserves local citations and records a sanitized reason plus explicit fallback uncertainty metadata.
 
 ### 4.3 Evaluation harness
@@ -339,7 +339,7 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 ### 4.4 App Intents and on-screen awareness
 
 - [x] Promote user-recognisable document and finding concepts to `AppEntity` types, with privacy-safe display representations. Documents expose bounded titles/counts only; findings expose stable opaque IDs, page/severity/kind, and no OCR detail or compatibility IDs. Deterministic tests cover empty libraries, intelligence disabled, and raw OCR disclosure boundaries.
-- [ ] Use intents for bounded actions only; never make all local document text generally discoverable by default.
+- [x] Use intents for bounded actions only; never make all local document text generally discoverable by default. App Intents expose explicit document/file actions, bounded local search, unresolved findings, tagged HTML export, and current-summary retrieval; no library-wide raw-text entity is published.
 - [ ] Evaluate newer entity schemas/view annotations only after confirming they expose no unwanted private context.
 - [ ] Test intents with empty library, revoked permissions, unsupported macOS, and a disabled-intelligence preference. Deterministic empty-library/entity and retention-gate coverage is now present in `AppIntentExportTests`; revoked-permission, unsupported-macOS, and disabled-intelligence participant/system gates remain release work.
 
