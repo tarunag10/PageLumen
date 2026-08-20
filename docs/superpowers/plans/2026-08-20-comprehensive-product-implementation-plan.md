@@ -509,7 +509,7 @@ participant and physical-device gates remain open.
 
 - [ ] Keep existing unit tests and add protocol-fake tests for every external/platform boundary.
 - [ ] Add XCUITest coverage for import, review queue, export confirmation, settings, dark/light appearance, and denied permission recovery.
-- [ ] Add fixture-corpus regression tests and performance baselines separate from fast unit tests.
+- [x] Add fixture-corpus regression tests and performance baselines separate from fast unit tests. `FixtureCorpusTests` exercises the bounded fixture set independently, while `DocumentProcessorTests` enforce the 10/50-page embedded-text wall-time guards recorded in `docs/performance-baseline-2026-08-20.md`; scanned-image OCR and peak-memory measurements remain physical-device gates.
 - [x] Add snapshot tests only where they are stable and actionable. Export snapshot coverage is deterministic and text-based; UI screenshots remain a separate manual/accessibility concern.
 - [ ] Run tests on the minimum supported macOS and current macOS/Xcode; manually test Apple Intelligence on eligible and ineligible Macs.
 
