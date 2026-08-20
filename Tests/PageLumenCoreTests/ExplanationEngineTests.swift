@@ -103,6 +103,46 @@ final class ExplanationEngineTests: XCTestCase {
         XCTAssertTrue(SummaryEvaluator.evaluate(grounded, against: document).passed)
     }
 
+    func testGroundedIntelligenceResultDistinguishesUnavailableWithoutSourceContent() async {
+        let document = SampleDataFactory.makeDemoDocument()
+        let result = await ExplanationEngine().groundedIntelligenceSummary(for: document, length: .short)
+
+        switch result {
+        case .generated(let summary):
+            XCTAssertFalse(summary.text.isEmpty)
+            XCTAssertFalse(summary.citations.isEmpty)
+            XCTAssertTrue(summary.citations.allSatisfy { citation in
+                document.allBlocks.contains(where: { block in block.id == citation.blockID })
+            })
+        case .unavailable(let availability):
+            XCTAssertNil(result.summary)
+            if case .available = availability {
+                XCTFail("An available model should produce a generated or failed result")
+            }
+        case .failed(let reason):
+            XCTAssertNil(result.summary)
+            XCTAssertFalse(reason.isEmpty)
+        }
+    }
+
+    func testGroundedSummaryNewFieldsRoundTripAndRemainOptional() throws {
+        let summary = GroundedSummary(
+            text: "Draft",
+            citations: [SummaryCitation(pageNumber: 2, blockID: UUID(), excerpt: "Source")],
+            groundingWarning: "Verify",
+            uncertaintyNotes: ["Only selected blocks were provided"],
+            unsupportedClaims: ["Claim requiring review"]
+        )
+        let data = try JSONEncoder().encode(summary)
+        let decoded = try JSONDecoder().decode(GroundedSummary.self, from: data)
+        XCTAssertEqual(decoded, summary)
+
+        let legacy = #"{"text":"Legacy","citations":[],"groundingWarning":null}"#.data(using: .utf8)!
+        let legacyDecoded = try JSONDecoder().decode(GroundedSummary.self, from: legacy)
+        XCTAssertEqual(legacyDecoded.uncertaintyNotes, [])
+        XCTAssertEqual(legacyDecoded.unsupportedClaims, [])
+    }
+
     private func makeMultiSectionDocument() -> ReaderDocument {
         let introHeading = TextBlock(pageNumber: 1, type: .heading, text: "Introduction", bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20), confidence: 0.95, readingOrderIndex: 0)
         let introBody = TextBlock(pageNumber: 1, type: .paragraph, text: "This document summarizes the audit findings.", bounds: BoundingBox(x: 0, y: 40, width: 100, height: 20), confidence: 0.95, readingOrderIndex: 1)

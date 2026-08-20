@@ -313,9 +313,10 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 
 **Files:** evolve `IntelligentExplainer.swift`, `ExplanationEngine.swift`, `DocumentStore.swift`, Settings, tests
 
-- [ ] Replace empty-string error swallowing with `Result`/typed `IntelligenceError` and visible unavailable/model-not-ready states.
+- [x] Replace empty-string error swallowing with `IntelligentExplainerResult` and visible unavailable/model-not-ready states; legacy string methods remain compatible while the typed path preserves failure reasons.
 - [ ] Use structured generable output for summaries and descriptions: body, cited page/block IDs, uncertainty notes, unsupported claims, and suggested review actions.
-- [ ] Pass only bounded, selected, source-labelled context. Summarisation must state omitted pages/sections rather than silently treating a prefix as the whole document.
+- [x] Add a privacy-safe `GroundedIntelligenceResult` envelope for summaries. Generated results carry deterministic page/block citations plus uncertainty notes; unavailable/failed results carry no source excerpts. The adapter uses bounded source blocks and explicitly reports omitted-block scope. Foundation Models `@Generable` wiring and suggested review actions remain open.
+- [ ] Pass only bounded, selected, source-labelled context. The current prefix-bounded adapter reports omitted blocks; selection-aware prompting and omitted page/section labels remain open.
 - [ ] Support a deliberate “summarise selection,” “explain table,” “describe figure,” “study notes,” and “compare passages” set before adding an open-ended chat interface.
 - [ ] Preserve session/model/provider metadata in provenance but do not persist full prompts unless the person opts in.
 - [ ] Provide a deterministic fallback `ExplanationEngine` result for unsupported Macs and model failures.

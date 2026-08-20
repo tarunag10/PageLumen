@@ -30,11 +30,48 @@ public struct GroundedSummary: Codable, Equatable, Sendable {
     public let text: String
     public let citations: [SummaryCitation]
     public let groundingWarning: String?
+    public let uncertaintyNotes: [String]
+    public let unsupportedClaims: [String]
 
-    public init(text: String, citations: [SummaryCitation], groundingWarning: String? = nil) {
+    public init(
+        text: String,
+        citations: [SummaryCitation],
+        groundingWarning: String? = nil,
+        uncertaintyNotes: [String] = [],
+        unsupportedClaims: [String] = []
+    ) {
         self.text = text
         self.citations = citations
         self.groundingWarning = groundingWarning
+        self.uncertaintyNotes = uncertaintyNotes
+        self.unsupportedClaims = unsupportedClaims
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case text, citations, groundingWarning, uncertaintyNotes, unsupportedClaims
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        text = try container.decode(String.self, forKey: .text)
+        citations = try container.decode([SummaryCitation].self, forKey: .citations)
+        groundingWarning = try container.decodeIfPresent(String.self, forKey: .groundingWarning)
+        uncertaintyNotes = try container.decodeIfPresent([String].self, forKey: .uncertaintyNotes) ?? []
+        unsupportedClaims = try container.decodeIfPresent([String].self, forKey: .unsupportedClaims) ?? []
+    }
+}
+
+/// A privacy-safe boundary for an intelligence request. Only a generated
+/// result carries source excerpts; unavailable and failed outcomes carry no
+/// document content and can therefore be surfaced without leaking prompts.
+public enum GroundedIntelligenceResult: Equatable, Sendable {
+    case generated(GroundedSummary)
+    case unavailable(IntelligentExplainerAvailability)
+    case failed(reason: String)
+
+    public var summary: GroundedSummary? {
+        if case .generated(let summary) = self { return summary }
+        return nil
     }
 }
 
@@ -195,6 +232,54 @@ public struct ExplanationEngine: Sendable {
             ? "Verify this summary against the original source before relying on it."
             : nil
         return GroundedSummary(text: text, citations: citations, groundingWarning: warning)
+    }
+
+    /// Requests an on-device summary while retaining deterministic source
+    /// citations. The result never falls back to an empty string: callers can
+    /// distinguish an unavailable model from a failed request and decide how
+    /// to present or retry it. Prompts and model errors are not persisted.
+    public func groundedIntelligenceSummary(
+        for document: ReaderDocument,
+        length: SummaryLength
+    ) async -> GroundedIntelligenceResult {
+        let sourceBlocks = document.pages
+            .flatMap { DocumentEditing.exportableBlocks(on: $0, includeHeadersAndFooters: false) }
+        guard !sourceBlocks.isEmpty else {
+            return .failed(reason: "No readable extracted text is available yet.")
+        }
+
+        let result = await IntelligentExplainer().summaryResult(for: document, length: length)
+        switch result {
+        case .unavailable(let availability):
+            return .unavailable(availability)
+        case .failed(let reason):
+            return .failed(reason: reason)
+        case .generated(let text):
+            let selected = Array(sourceBlocks.prefix(maxCitationBlocks(for: length)))
+            let citations = selected.map {
+                SummaryCitation(
+                    pageNumber: $0.pageNumber,
+                    blockID: $0.id,
+                    excerpt: String(cleanText($0.text).prefix(240))
+                )
+            }
+            var notes: [String] = []
+            if selected.count < sourceBlocks.count {
+                notes.append("The model received \(selected.count) of \(sourceBlocks.count) readable source blocks.")
+            }
+            if document.pages.contains(where: { $0.warning != nil }) {
+                notes.append("One or more source pages contain extraction warnings.")
+            }
+            let warning = notes.isEmpty ? nil : "Verify this generated draft against the original source before relying on it."
+            return .generated(
+                GroundedSummary(
+                    text: text,
+                    citations: citations,
+                    groundingWarning: warning,
+                    uncertaintyNotes: notes
+                )
+            )
+        }
     }
 
     private func maxCitationBlocks(for length: SummaryLength) -> Int {
