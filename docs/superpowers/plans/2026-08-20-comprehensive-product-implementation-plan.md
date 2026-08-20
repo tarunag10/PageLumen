@@ -185,7 +185,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 **Files:** `DocumentProcessor.swift`, fixtures, performance tests
 
 - [x] Replace all-page pre-rendering with a bounded producer/consumer pipeline. PDF processing now renders and recognizes one page at a time in deterministic order.
-- [x] Render only scanned/no-embedded-text pages, downsample to a documented OCR target DPI, and release each bitmap immediately after recognition. Embedded-text pages bypass rendering; bounded pixel/page budgets reject unsafe inputs.
+- [ ] Render only scanned/no-embedded-text pages, downsample to a documented OCR target DPI, and release each bitmap immediately after recognition. Embedded-text pages bypass rendering and one-page-at-a-time release is shipped, but target-DPI rendering remains open.
 - [x] Cap in-flight renders/OCR tasks using device capacity and a user-visible “processing pages x of y” state; permit cancellation at page boundaries. The current implementation intentionally caps concurrency at one page to preserve memory and cancellation determinism.
 - [ ] Apply both pixel and estimated-memory budgets. Provide a user choice to reduce quality or import a page range rather than only rejecting a large document.
 - [x] Replace the remaining `lockFocus` thumbnail path with ImageIO thumbnail generation. `NSImage.pngData(maxPixelSize:)` now uses `CGImageSourceCreateThumbnailAtIndex` and `CGImageDestination`, with a bounded-thumbnail regression test.
