@@ -301,6 +301,30 @@ final class DocumentStore {
         statusMessage = count == 0 ? "No recent documents to forget" : "Forgot \(count) recent document\(count == 1 ? "" : "s")"
     }
 
+    /// Removes one retained library copy without touching its source file.
+    /// If the active document is removed, return to the import step.
+    func forgetRecentDocument(_ selectedDocument: ReaderDocument) {
+        let wasActive = selectedDocument.id == document.id
+        recentDocuments.removeAll { $0.id == selectedDocument.id }
+        do {
+            try persisting.delete(id: selectedDocument.id)
+        } catch {
+            statusMessage = "Could not forget \(selectedDocument.title): \(error.localizedDescription)"
+            if let restored = try? persisting.recentDocuments() {
+                recentDocuments = restored
+            }
+            return
+        }
+
+        if wasActive {
+            document = Self.makeInitialDocument()
+            selectedPageNumber = 1
+            selectedBlockID = nil
+            selectedDestination = .home
+        }
+        statusMessage = "Forgot \(selectedDocument.title); source files were not deleted"
+    }
+
     func openDocumentPanel() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.pdf, .png, .jpeg, .tiff, .heic]

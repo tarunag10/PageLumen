@@ -11,5 +11,6 @@ public protocol DocumentPersisting: Sendable {
     func save(_ document: ReaderDocument) throws
     func load(id: UUID) throws -> ReaderDocument?
     func recentDocuments() throws -> [ReaderDocument]
+    func delete(id: UUID) throws
     func forgetAll() throws
 }

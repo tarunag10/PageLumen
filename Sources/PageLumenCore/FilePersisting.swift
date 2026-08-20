@@ -49,6 +49,12 @@ public final class FilePersisting: DocumentPersisting, @unchecked Sendable {
         try loadAll()
     }
 
+    public func delete(id: UUID) throws {
+        var documents = try loadAll()
+        documents.removeAll { $0.id == id }
+        try persist(documents)
+    }
+
     public func forgetAll() throws {
         try persist([])
     }

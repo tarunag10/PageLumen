@@ -28,6 +28,9 @@ This page summarises the privacy commitments that PageLumen makes to its users. 
 - Turning the setting off is reversible and does not delete recent metadata,
   source files, or existing user data. Use the separate library deletion
   controls when deletion is intended.
+- Use the recent-document context menu to forget one retained PageLumen copy,
+  or **Settings → Library → Forget all recent documents** to clear the whole
+  library. These actions never delete the original source file.
 
 ## Exported JSON and Source URLs
 

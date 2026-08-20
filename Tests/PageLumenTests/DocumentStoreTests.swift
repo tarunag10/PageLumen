@@ -196,6 +196,34 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertNotEqual(store.recentDocuments.count, initial)
     }
 
+    func testForgetRecentDocumentRemovesOnlySelectedEntryAndPreservesSource() throws {
+        let persisting = InMemoryPersisting()
+        let store = DocumentStore(persisting: persisting)
+        let retained = store.recentDocuments[0]
+        var second = SampleDataFactory.makeDemoDocument()
+        second.title = "Second retained document"
+        try persisting.save(second)
+        store.recentDocuments = try persisting.recentDocuments()
+
+        store.forgetRecentDocument(retained)
+
+        XCTAssertNil(store.recentDocuments.first(where: { $0.id == retained.id }))
+        XCTAssertNotNil(store.recentDocuments.first(where: { $0.id == second.id }))
+        XCTAssertTrue(store.statusMessage.contains("source files were not deleted"))
+    }
+
+    func testForgetActiveRecentDocumentReturnsToHome() {
+        let persisting = InMemoryPersisting()
+        let store = DocumentStore(persisting: persisting)
+        let active = store.document
+
+        store.forgetRecentDocument(active)
+
+        XCTAssertEqual(store.selectedDestination, .home)
+        XCTAssertTrue(store.recentDocuments.isEmpty)
+        XCTAssertNotEqual(store.document.id, active.id)
+    }
+
     func testDebouncedUpdateBlockOnlyLandsLastValue() {
         let store = DocumentStore(persisting: InMemoryPersisting())
         let block = store.document.pages[0].blocks[0]
@@ -368,5 +396,10 @@ private final class InMemoryPersisting: DocumentPersisting, @unchecked Sendable 
     func forgetAll() throws {
         storage.removeAll()
         order.removeAll()
+    }
+
+    func delete(id: UUID) throws {
+        storage.removeValue(forKey: id)
+        order.removeAll { $0 == id }
     }
 }

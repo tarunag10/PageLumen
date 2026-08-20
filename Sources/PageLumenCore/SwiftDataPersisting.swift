@@ -78,6 +78,18 @@ public final class SwiftDataPersisting: DocumentPersisting, @unchecked Sendable 
         }
     }
 
+    public func delete(id: UUID) throws {
+        let context = ModelContext(modelContainer)
+        let targetID = id
+        let descriptor = FetchDescriptor<PersistedDocument>(
+            predicate: #Predicate { $0.id == targetID }
+        )
+        for document in try context.fetch(descriptor) {
+            context.delete(document)
+        }
+        try context.save()
+    }
+
     public func forgetAll() throws {
         let context = ModelContext(modelContainer)
         try context.delete(model: PersistedDocument.self)

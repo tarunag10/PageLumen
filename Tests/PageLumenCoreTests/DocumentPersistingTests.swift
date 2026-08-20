@@ -66,6 +66,21 @@ final class DocumentPersistingTests: XCTestCase {
         XCTAssertNil(loaded)
     }
 
+    func testDeleteRemovesOnlyTheRequestedDocument() throws {
+        let url = tempDirectory.appendingPathComponent("recent.json")
+        let persisting = FilePersisting(fileURL: url)
+        let first = SampleDataFactory.makeDemoDocument()
+        let second = makeAlternateDocument(title: "Other")
+        try persisting.save(first)
+        try persisting.save(second)
+
+        try persisting.delete(id: first.id)
+
+        XCTAssertNil(try persisting.load(id: first.id))
+        XCTAssertEqual(try persisting.load(id: second.id)?.title, "Other")
+        XCTAssertEqual(try persisting.recentDocuments().count, 1)
+    }
+
     func testLoadFromMissingFileReturnsEmpty() throws {
         let url = tempDirectory.appendingPathComponent("does-not-exist.json")
         let persisting = FilePersisting(fileURL: url)

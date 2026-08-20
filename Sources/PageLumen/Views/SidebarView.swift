@@ -3,6 +3,7 @@ import SwiftUI
 
 struct SidebarView: View {
     @Environment(DocumentStore.self) private var store
+    @State private var documentToForget: ReaderDocument?
     // Re-render when the high-contrast toggle changes so AccessibleStyle tokens
     // (border, elevatedBackground) pick up the new value.
     @AppStorage("boostContrast") private var boostContrast = false
@@ -87,6 +88,11 @@ struct SidebarView: View {
                                     }
                                 }
                                 .buttonStyle(.plain)
+                                .contextMenu {
+                                    Button("Forget Recent Document", role: .destructive) {
+                                        documentToForget = document
+                                    }
+                                }
                                 .accessibilityLabel("\(document.title), \(librarySubtitle(for: document))")
                                 .accessibilityHint("Open this document in Review.")
                             }
@@ -141,6 +147,25 @@ struct SidebarView: View {
                 status: store.statusMessage
             )
         }
+        .confirmationDialog(
+            "Forget recent document?",
+            isPresented: Binding(
+                get: { documentToForget != nil },
+                set: { if !$0 { documentToForget = nil } }
+            ),
+            titleVisibility: .visible,
+            presenting: documentToForget
+        ) { document in
+            Button("Forget \(document.title)", role: .destructive) {
+                store.forgetRecentDocument(document)
+                documentToForget = nil
+            }
+            Button("Cancel", role: .cancel) {
+                documentToForget = nil
+            }
+        } message: { document in
+            Text("This removes the retained PageLumen copy. The original source file at \(document.sourceURL?.path ?? "its original location") is not deleted.")
+        }
     }
 
     private func detail(for item: BatchImportItem) -> String {
@@ -190,6 +215,11 @@ struct SidebarView: View {
             }
         }
         .buttonStyle(.plain)
+        .contextMenu {
+            Button("Forget Recent Document", role: .destructive) {
+                documentToForget = document
+            }
+        }
         .accessibilityLabel("\(document.title), \(subtitle)")
         .accessibilityHint("Open this document in Review.")
     }
