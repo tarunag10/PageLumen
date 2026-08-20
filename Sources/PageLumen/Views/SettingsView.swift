@@ -41,9 +41,7 @@ struct SettingsView: View {
             Section("Library") {
                 Toggle("Keep searchable local copies", isOn: $keepSearchableLocalCopies)
                     .onChange(of: keepSearchableLocalCopies) { _, enabled in
-                        store.statusMessage = enabled
-                            ? "Searchable local copies enabled for future library searches"
-                            : "Searchable local copies disabled; existing recents remain available"
+                        store.setKeepSearchableLocalCopies(enabled)
                     }
                 Text("Off by default. When enabled, PageLumen may search retained OCR text on this Mac. Turning it off stops library search without deleting existing recent documents or source files.")
                     .font(.callout)

@@ -106,9 +106,10 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertEqual(store.selectedPageNumber, result.pageNumber)
         XCTAssertEqual(store.selectedBlockID, result.blockID)
 
-        preferences.set(false, forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey)
-        store.searchLibrary(query: "import")
+        store.setKeepSearchableLocalCopies(false)
         XCTAssertTrue(store.librarySearchResults.isEmpty)
+        XCTAssertTrue(store.librarySearchQuery.isEmpty)
+        XCTAssertEqual(store.recentDocuments.count, 1)
     }
 
     func testExportAvailabilityBlocksTranslationInPrivacyMode() {

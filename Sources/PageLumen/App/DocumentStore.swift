@@ -523,6 +523,19 @@ final class DocumentStore {
         }
     }
 
+    /// Disables searchable retention and clears the active result/index view;
+    /// retained documents and original source files are intentionally kept.
+    func setKeepSearchableLocalCopies(_ enabled: Bool) {
+        repositoryPreferences.set(enabled, forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey)
+        if !enabled {
+            librarySearchResults.removeAll()
+            librarySearchQuery = ""
+            statusMessage = "Searchable local copies removed; recent documents and source files were kept"
+        } else {
+            statusMessage = "Searchable local copies enabled for future library searches"
+        }
+    }
+
     func openLibrarySearchResult(_ result: LibrarySearchResult) {
         guard let selected = recentDocuments.first(where: { $0.id == result.documentID }) else {
             statusMessage = "The matching document is no longer in the local library"
