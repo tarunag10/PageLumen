@@ -63,6 +63,7 @@
 		9229D02CF746CDCEF09FCCD0 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = FB754BCE5405A063F876F568 /* ZIPFoundation */; };
 		925D49B3592958D424690066 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51ED10D17EEF3D8A5A4C74B0 /* Models.swift */; };
 		9552444629A0DDE1575AAB6A /* WatchFolder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 543E401D8D1A3EDD97BEF98B /* WatchFolder.swift */; };
+		9788D2F145A6636F59C3C29A /* IntelligenceContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0159F39C9D6F22A50399E8F3 /* IntelligenceContext.swift */; };
 		980DA7777ADB7F1A59BDFF78 /* testDemoMarkdownExportSnapshot.demo-markdown.txt in Resources */ = {isa = PBXBuildFile; fileRef = 92832413AD44B5374333958E /* testDemoMarkdownExportSnapshot.demo-markdown.txt */; };
 		994F831FCCAAD4AFF874B8C4 /* TranslationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68E1FFE567A7A567DD135156 /* TranslationServiceTests.swift */; };
 		9BB2D8018274A4572D046759 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DE6C1C05D94652978F76FE97 /* Assets.xcassets */; };
@@ -190,6 +191,7 @@
 
 /* Begin PBXFileReference section */
 		00AF4251449A663E30C2BE37 /* PDFUADirection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFUADirection.swift; sourceTree = "<group>"; };
+		0159F39C9D6F22A50399E8F3 /* IntelligenceContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligenceContext.swift; sourceTree = "<group>"; };
 		01C6609B23473073ABF51DAC /* DocumentEditing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentEditing.swift; sourceTree = "<group>"; };
 		05D794E3270A74F25DD799CF /* IntelligentExplainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligentExplainer.swift; sourceTree = "<group>"; };
 		06110C3339DFA38795DCB525 /* DocumentComparisonTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentComparisonTests.swift; sourceTree = "<group>"; };
@@ -351,6 +353,7 @@
 				91891F3D7C1C6D153F3EEF5D /* ExportEngine.swift */,
 				71B22B2730AC3F22993E02AC /* FilePersisting.swift */,
 				C5C82C9B5CCBD7D4A6968E44 /* HTMLExportContract.swift */,
+				0159F39C9D6F22A50399E8F3 /* IntelligenceContext.swift */,
 				87A8C7185AE46050BBEB635E /* IntelligenceMode.swift */,
 				05D794E3270A74F25DD799CF /* IntelligentExplainer.swift */,
 				AEC0C37527FA1BDB9FDF2FB9 /* LayoutAnalyzer.swift */,
@@ -772,6 +775,7 @@
 				D8325C91EAF7CAA15191CFBF /* ExportEngine.swift in Sources */,
 				917506230FA510527742510D /* FilePersisting.swift in Sources */,
 				228485004DA6A3C1050EE2B3 /* HTMLExportContract.swift in Sources */,
+				9788D2F145A6636F59C3C29A /* IntelligenceContext.swift in Sources */,
 				E50D35E6E83FAD0657CD95D2 /* IntelligenceMode.swift in Sources */,
 				11F723CD215E178DF2C5A875 /* IntelligentExplainer.swift in Sources */,
 				D9D9C71DB0E61D7E7560D3A4 /* LayoutAnalyzer.swift in Sources */,
@@ -1187,8 +1191,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/weichsel/ZIPFoundation.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.9.20;
+				kind = exactVersion;
+				version = 0.9.20;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

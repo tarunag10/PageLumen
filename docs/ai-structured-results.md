@@ -40,5 +40,15 @@ The contract is covered by `ExplanationEngineTests` for:
 2. Codable round trips, including legacy summaries without the new fields;
 3. unavailable and failed serialization without source disclosure.
 
-Model quality, selection-aware prompting, and the evaluation corpus remain
+`IntelligenceContextBuilder` now provides the bounded request boundary. It
+resolves an optional set of selected block IDs in reading order, labels each
+provided passage with its page/block location and inferred heading section,
+and applies both a deterministic block limit and character limit. The
+resulting `IntelligenceContextMetadata` records included and omitted page
+numbers and section labels, plus counts, without storing omitted passages.
+`ExplanationEngine` exposes the same selection scope through grounded and
+deterministic fallback summaries. This is deliberately a summary operation;
+there is no open-ended chat surface.
+
+Model quality, remaining task-specific modes, and the evaluation corpus remain
 separate release gates.

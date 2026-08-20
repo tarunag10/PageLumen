@@ -87,6 +87,71 @@ final class IntelligentExplainerTests: XCTestCase {
         XCTAssertEqual(options.maxSentences, 0)
     }
 
+    func testSelectionContextIsSourceLabelledAndReportsOmittedLocations() {
+        let headingOne = TextBlock(pageNumber: 1, type: .heading, text: "Introduction", bounds: .init(x: 0, y: 0, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 0)
+        let bodyOne = TextBlock(pageNumber: 1, type: .paragraph, text: "Selected source passage.", bounds: .init(x: 0, y: 30, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 1)
+        let headingTwo = TextBlock(pageNumber: 2, type: .heading, text: "Appendix", bounds: .init(x: 0, y: 0, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 0)
+        let bodyTwo = TextBlock(pageNumber: 2, type: .paragraph, text: "Omitted source passage.", bounds: .init(x: 0, y: 30, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 1)
+        var document = ReaderDocument(title: "Context", sourceType: .sample, pages: [
+            ReaderPage(pageNumber: 1, size: .init(width: 100, height: 100), blocks: [headingOne, bodyOne]),
+            ReaderPage(pageNumber: 2, size: .init(width: 100, height: 100), blocks: [headingTwo, bodyTwo])
+        ])
+        document.pages[1].pageLabel = "ii"
+
+        let context = IntelligenceContextBuilder.summary(
+            for: document,
+            length: .detailed,
+            selectedBlockIDs: [bodyOne.id]
+        )
+
+        XCTAssertTrue(context.metadata.isSelectionScoped)
+        XCTAssertEqual(context.metadata.requestedBlockCount, 1)
+        XCTAssertEqual(context.metadata.includedBlockCount, 1)
+        XCTAssertEqual(context.metadata.omittedBlockCount, 3)
+        XCTAssertEqual(context.metadata.includedPageNumbers, [1])
+        XCTAssertTrue(context.metadata.omittedPageNumbers.contains(2))
+        XCTAssertEqual(context.metadata.includedSectionLabels, ["Introduction"])
+        XCTAssertTrue(context.metadata.omittedSectionLabels.contains("Appendix"))
+        XCTAssertTrue(context.prompt.contains("Source page 1"))
+        XCTAssertTrue(context.prompt.contains("section \"Introduction\""))
+        XCTAssertTrue(context.prompt.contains("Omitted source locations"))
+        XCTAssertTrue(context.prompt.contains("pages 1, 2"))
+        XCTAssertTrue(context.prompt.contains("content not provided"))
+        XCTAssertFalse(context.prompt.contains("Omitted source passage."))
+    }
+
+    func testContextBoundsBlocksAndCharacterLengthDeterministically() {
+        let blocks = (1...20).map { index in
+            TextBlock(pageNumber: index, type: .paragraph, text: "Passage \(index) \(String(repeating: "x", count: 400))", bounds: .init(x: 0, y: 0, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 0)
+        }
+        let document = ReaderDocument(title: "Large", sourceType: .sample, pages: blocks.map {
+            ReaderPage(pageNumber: $0.pageNumber, size: .init(width: 100, height: 100), blocks: [$0])
+        })
+        let first = IntelligenceContextBuilder.summary(for: document, length: .short, maximumCharacters: 800)
+        let second = IntelligenceContextBuilder.summary(for: document, length: .short, maximumCharacters: 800)
+
+        XCTAssertEqual(first, second)
+        XCTAssertEqual(first.metadata.includedBlockCount, 4)
+        XCTAssertEqual(first.metadata.omittedBlockCount, 16)
+        XCTAssertLessThanOrEqual(first.prompt.count, 850)
+        XCTAssertTrue(first.prompt.contains("truncated by PageLumen"))
+    }
+
+    func testSelectionSummaryFallsBackToSelectedBlocksOnly() {
+        let first = TextBlock(pageNumber: 1, type: .paragraph, text: "Chosen passage.", bounds: .init(x: 0, y: 0, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 0)
+        let second = TextBlock(pageNumber: 1, type: .paragraph, text: "Not chosen passage.", bounds: .init(x: 0, y: 30, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 1)
+        let document = ReaderDocument(title: "Selected", sourceType: .sample, pages: [
+            ReaderPage(pageNumber: 1, size: .init(width: 100, height: 100), blocks: [first, second])
+        ])
+        let summary = ExplanationEngine().groundedSummary(for: document, length: .short, selectedBlockIDs: [first.id])
+
+        XCTAssertTrue(summary.text.contains("Chosen passage."))
+        XCTAssertFalse(summary.text.contains("Not chosen passage."))
+        XCTAssertEqual(summary.contextMetadata?.requestedBlockCount, 1)
+        XCTAssertEqual(summary.contextMetadata?.omittedBlockCount, 1)
+        XCTAssertEqual(summary.citations.map(\.blockID), [first.id])
+    }
+
     func testTableAndFigureExplainersReturnEmptyOrFallback() async {
         let explainer = IntelligentExplainer()
         let table = TableRegion(

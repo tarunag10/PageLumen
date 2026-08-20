@@ -90,6 +90,9 @@ public struct GroundedSummary: Codable, Equatable, Sendable {
     /// excerpts so privacy-sensitive consumers can use IDs only.
     public let citedPageBlockIDs: [GroundedSourceReference]
     public let suggestedReviewActions: [GroundedReviewAction]
+    /// Omission and selection scope for the provider request.  This metadata
+    /// contains locations and counts only; it never stores prompt excerpts.
+    public let contextMetadata: IntelligenceContextMetadata?
 
     public init(
         text: String,
@@ -98,7 +101,8 @@ public struct GroundedSummary: Codable, Equatable, Sendable {
         uncertaintyNotes: [String] = [],
         unsupportedClaims: [String] = [],
         citedPageBlockIDs: [GroundedSourceReference]? = nil,
-        suggestedReviewActions: [GroundedReviewAction] = []
+        suggestedReviewActions: [GroundedReviewAction] = [],
+        contextMetadata: IntelligenceContextMetadata? = nil
     ) {
         self.text = text
         self.citations = citations
@@ -109,11 +113,12 @@ public struct GroundedSummary: Codable, Equatable, Sendable {
             GroundedSourceReference(pageNumber: $0.pageNumber, blockID: $0.blockID)
         }
         self.suggestedReviewActions = suggestedReviewActions
+        self.contextMetadata = contextMetadata
     }
 
     private enum CodingKeys: String, CodingKey {
         case text, citations, groundingWarning, uncertaintyNotes, unsupportedClaims,
-             citedPageBlockIDs, suggestedReviewActions
+             citedPageBlockIDs, suggestedReviewActions, contextMetadata
     }
 
     public init(from decoder: Decoder) throws {
@@ -126,6 +131,7 @@ public struct GroundedSummary: Codable, Equatable, Sendable {
         citedPageBlockIDs = try container.decodeIfPresent([GroundedSourceReference].self, forKey: .citedPageBlockIDs)
             ?? citations.map { GroundedSourceReference(pageNumber: $0.pageNumber, blockID: $0.blockID) }
         suggestedReviewActions = try container.decodeIfPresent([GroundedReviewAction].self, forKey: .suggestedReviewActions) ?? []
+        contextMetadata = try container.decodeIfPresent(IntelligenceContextMetadata.self, forKey: .contextMetadata)
     }
 }
 
@@ -323,11 +329,26 @@ public struct ExplanationEngine: Sendable {
     /// blocks that support it. This is the contract used by AI and export
     /// surfaces: a result is either cited or explicitly marked as needing
     /// source verification.
-    public func groundedSummary(for document: ReaderDocument, length: SummaryLength) -> GroundedSummary {
+    public func groundedSummary(
+        for document: ReaderDocument,
+        length: SummaryLength,
+        selectedBlockIDs: Set<UUID>? = nil
+    ) -> GroundedSummary {
         let blocks = document.pages
             .flatMap { DocumentEditing.exportableBlocks(on: $0, includeHeadersAndFooters: false) }
-        let text = betterSummary(for: document, length: length)
-        let selected = Array(blocks.prefix(maxCitationBlocks(for: length)))
+        let scopedBlocks: [TextBlock]
+        if let selectedBlockIDs, !selectedBlockIDs.isEmpty {
+            scopedBlocks = blocks.filter { selectedBlockIDs.contains($0.id) }
+        } else {
+            scopedBlocks = blocks
+        }
+        let selected = Array(scopedBlocks.prefix(maxCitationBlocks(for: length)))
+        let text = selectedBlockIDs == nil || selectedBlockIDs?.isEmpty == true
+            ? betterSummary(for: document, length: length)
+            : deterministicSummary(for: selected, length: length, document: document)
+        let contextMetadata = selectedBlockIDs.map {
+            IntelligenceContextBuilder.summary(for: document, length: length, selectedBlockIDs: $0).metadata
+        }
         let citations = selected.map {
             SummaryCitation(
                 pageNumber: $0.pageNumber,
@@ -348,10 +369,11 @@ public struct ExplanationEngine: Sendable {
             uncertaintyNotes: notes,
             suggestedReviewActions: reviewActions(
                 selected: selected,
-                totalSourceBlockCount: blocks.count,
+                totalSourceBlockCount: scopedBlocks.count,
                 document: document,
                 unsupportedClaims: []
-            )
+            ),
+            contextMetadata: contextMetadata
         )
     }
 
@@ -363,9 +385,10 @@ public struct ExplanationEngine: Sendable {
     public func deterministicFallbackSummary(
         for document: ReaderDocument,
         length: SummaryLength,
-        reason: String
+        reason: String,
+        selectedBlockIDs: Set<UUID>? = nil
     ) -> GroundedSummary {
-        let baseline = groundedSummary(for: document, length: length)
+        let baseline = groundedSummary(for: document, length: length, selectedBlockIDs: selectedBlockIDs)
         let safeReason = reason
             .replacingOccurrences(of: "\n", with: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -383,7 +406,8 @@ public struct ExplanationEngine: Sendable {
                     title: "Verify the deterministic summary",
                     reason: "No generative model was used; compare the draft with the cited source blocks."
                 )
-            ]
+            ],
+            contextMetadata: baseline.contextMetadata
         )
     }
 
@@ -393,7 +417,8 @@ public struct ExplanationEngine: Sendable {
     /// to present or retry it. Prompts and model errors are not persisted.
     public func groundedIntelligenceSummary(
         for document: ReaderDocument,
-        length: SummaryLength
+        length: SummaryLength,
+        selectedBlockIDs: Set<UUID>? = nil
     ) async -> GroundedIntelligenceResult {
         let sourceBlocks = document.pages
             .flatMap { DocumentEditing.exportableBlocks(on: $0, includeHeadersAndFooters: false) }
@@ -401,7 +426,11 @@ public struct ExplanationEngine: Sendable {
             return .failed(reason: "No readable extracted text is available yet.")
         }
 
-        let result = await IntelligentExplainer().summaryResult(for: document, length: length)
+        let result = await IntelligentExplainer().summaryResult(
+            for: document,
+            length: length,
+            selectedBlockIDs: selectedBlockIDs
+        )
         switch result {
         case .unavailable(let availability):
             return .unavailable(availability)
@@ -411,7 +440,15 @@ public struct ExplanationEngine: Sendable {
             // policy reason; it must never echo a prompt or source excerpt.
             return .failed(reason: "On-device intelligence request failed: \(safeDiagnostic(reason))")
         case .generated(let text):
-            let selected = Array(sourceBlocks.prefix(maxCitationBlocks(for: length)))
+            let scopedBlocks = selectedBlockIDs.flatMap { ids in
+                sourceBlocks.filter { ids.contains($0.id) }
+            } ?? sourceBlocks
+            let selected = Array(scopedBlocks.prefix(maxCitationBlocks(for: length)))
+            let contextMetadata = IntelligenceContextBuilder.summary(
+                for: document,
+                length: length,
+                selectedBlockIDs: selectedBlockIDs
+            ).metadata
             let citations = selected.map {
                 SummaryCitation(
                     pageNumber: $0.pageNumber,
@@ -420,8 +457,8 @@ public struct ExplanationEngine: Sendable {
                 )
             }
             var notes: [String] = []
-            if selected.count < sourceBlocks.count {
-                notes.append("The model received \(selected.count) of \(sourceBlocks.count) readable source blocks.")
+            if contextMetadata.omittedBlockCount > 0 {
+                notes.append("The model received \(contextMetadata.includedBlockCount) of \(contextMetadata.sourceBlockCount) readable source blocks.")
             }
             if document.pages.contains(where: { $0.warning != nil }) {
                 notes.append("One or more source pages contain extraction warnings.")
@@ -429,7 +466,7 @@ public struct ExplanationEngine: Sendable {
             let warning = notes.isEmpty ? nil : "Verify this generated draft against the original source before relying on it."
             let actions = reviewActions(
                 selected: selected,
-                totalSourceBlockCount: sourceBlocks.count,
+                totalSourceBlockCount: scopedBlocks.count,
                 document: document,
                 unsupportedClaims: []
             )
@@ -439,10 +476,37 @@ public struct ExplanationEngine: Sendable {
                     citations: citations,
                     groundingWarning: warning,
                     uncertaintyNotes: notes,
-                    suggestedReviewActions: actions
+                    suggestedReviewActions: actions,
+                    contextMetadata: contextMetadata
                 )
             )
         }
+    }
+
+    /// A selection-scoped local summary used when intelligence is disabled or
+    /// unavailable.  It deliberately uses only the selected blocks so the
+    /// fallback has the same scope as the opted-in request.
+    private func deterministicSummary(
+        for blocks: [TextBlock],
+        length: SummaryLength,
+        document: ReaderDocument
+    ) -> String {
+        guard !blocks.isEmpty else { return "No readable extracted text is available for this selection." }
+        let limit: Int
+        switch length {
+        case .short: limit = 2
+        case .medium: limit = 5
+        case .detailed: limit = 10
+        }
+        let body = blocks.prefix(limit).map { block in
+            let prefix = block.type == .heading ? "Section: " : "Page \(block.pageNumber): "
+            return prefix + speechFriendly(block)
+        }
+        var result = body.joined(separator: " ")
+        if document.pages.contains(where: { $0.warning != nil }) {
+            result += " Some pages include confidence warnings, so review the source before sharing."
+        }
+        return result
     }
 
     private func reviewActions(

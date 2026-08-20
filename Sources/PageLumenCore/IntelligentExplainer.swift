@@ -110,13 +110,33 @@ public struct IntelligentExplainer: Sendable {
     }
 
     public func summaryResult(for document: ReaderDocument, length: SummaryLength) async -> IntelligentExplainerResult {
+        await summaryResult(for: document, length: length, selectedBlockIDs: nil)
+    }
+
+    /// Requests a summary for an explicit block selection.  The selection is
+    /// resolved and bounded before any provider call; unknown IDs are ignored
+    /// and the provider sees source labels plus an omission notice, never an
+    /// unbounded document dump.
+    public func summaryResult(
+        for document: ReaderDocument,
+        length: SummaryLength,
+        selectedBlockIDs: Set<UUID>?
+    ) async -> IntelligentExplainerResult {
         guard #available(macOS 26.0, *) else {
             return .unavailable(.notSupported)
         }
         guard case .available = availability else {
             return .unavailable(availability)
         }
-        return await summarizeOnMacOS26(document: document, length: length)
+        let context = IntelligenceContextBuilder.summary(
+            for: document,
+            length: length,
+            selectedBlockIDs: selectedBlockIDs
+        )
+        guard context.metadata.includedBlockCount > 0 else {
+            return .failed(reason: "No readable extracted text is available for this selection.")
+        }
+        return await summarizeOnMacOS26(context: context)
     }
 
     public func explain(table: TableRegion) async -> String {
@@ -165,14 +185,13 @@ public struct IntelligentExplainer: Sendable {
     }
 
     @available(macOS 26.0, *)
-    private func summarizeOnMacOS26(document: ReaderDocument, length: SummaryLength) async -> IntelligentExplainerResult {
+    private func summarizeOnMacOS26(context: BoundedIntelligenceContext) async -> IntelligentExplainerResult {
         #if canImport(FoundationModels)
         let model = SystemLanguageModel.default
         guard case .available = model.availability else { return .unavailable(Self.checkAvailabilityOnMacOS26()) }
         do {
             let session = LanguageModelSession()
-            let prompt = Self.summaryPrompt(document: document, length: length)
-            let response = try await session.respond(to: prompt)
+            let response = try await session.respond(to: context.prompt)
             let text = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
             return text.isEmpty ? .failed(reason: "The on-device model returned an empty response.") : .generated(text)
         } catch {
@@ -237,15 +256,6 @@ public struct IntelligentExplainer: Sendable {
     }
 
     @available(macOS 26.0, *)
-    private static func summaryPrompt(document: ReaderDocument, length: SummaryLength) -> String {
-        let body = document.allBlocks
-            .prefix(blockBudget(for: length))
-            .map { "Page \($0.pageNumber): \($0.text)" }
-            .joined(separator: "\n")
-        let audience = audienceHint(for: length)
-        return "Summarize the following extracted document text in \(audience). Ground every sentence in the provided text only; do not add outside knowledge. Do not invent figures, tables, or values.\n\n\(body)"
-    }
-
     @available(macOS 26.0, *)
     private static func tablePrompt(table: TableRegion) -> String {
         let rows = table.rows.map { $0.joined(separator: " | ") }.joined(separator: "\n")
@@ -258,22 +268,5 @@ public struct IntelligentExplainer: Sendable {
         return "Describe the following \(typeText) in plain language for a screen-reader user, grounded only in the visible text. Mention uncertainty if the confidence is below 0.75 or uncertainty notes are present.\nConfidence: \(figure.confidence)\nUncertainty notes: \(figure.uncertaintyNotes.joined(separator: "; "))\n\nVisible text: \(figure.visibleText)"
     }
 
-    @available(macOS 26.0, *)
-    private static func blockBudget(for length: SummaryLength) -> Int {
-        switch length {
-        case .short: return 4
-        case .medium: return 8
-        case .detailed: return 16
-        }
-    }
-
-    @available(macOS 26.0, *)
-    private static func audienceHint(for length: SummaryLength) -> String {
-        switch length {
-        case .short: return "one or two sentences"
-        case .medium: return "a short paragraph"
-        case .detailed: return "a detailed walkthrough"
-        }
-    }
     #endif
 }
