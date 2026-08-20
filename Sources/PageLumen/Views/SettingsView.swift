@@ -125,6 +125,13 @@ struct SettingsView: View {
 
             Section("On-device AI") {
                 Toggle("Use Apple Intelligence for summaries", isOn: $useOnDeviceAI)
+                    .onChange(of: useOnDeviceAI) { _, enabled in
+                        store.regenerateSummary()
+                        store.statusMessage = enabled
+                            ? "Apple Intelligence enabled; regenerating the current summary when available"
+                            : "Apple Intelligence disabled; using deterministic summaries"
+                    }
+                    .accessibilityHint("Regenerates the current summary with the selected on-device setting")
                 let availability = IntelligentExplainer().availability
                 switch availability {
                 case .available:
