@@ -208,7 +208,17 @@ extension Notification.Name {
 enum PageLumenCoreSummaryBridge {
     @MainActor
     static func currentSummary() -> String? {
-        nil
+        guard let repository = PageLumenIntentBridge.repository() else { return nil }
+        return currentSummary(from: repository)
+    }
+
+    static func currentSummary(from repository: any DocumentRepository) -> String? {
+        do {
+            guard let metadata = try repository.recentMetadata().first else { return nil }
+            return try repository.document(id: metadata.id)?.summary
+        } catch {
+            return nil
+        }
     }
 }
 

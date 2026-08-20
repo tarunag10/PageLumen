@@ -50,6 +50,26 @@ final class AppIntentExportTests: XCTestCase {
         XCTAssertTrue(findings.allSatisfy { !$0.isResolved })
     }
 
+    func testSummaryBridgeReturnsLatestSummaryAndNilForEmptyLibrary() {
+        let empty = IntentRepositoryStub()
+        XCTAssertNil(PageLumenCoreSummaryBridge.currentSummary(from: empty))
+
+        let document = ReaderDocument(title: "Summary", sourceType: .sample, pages: [], summary: "Grounded local summary")
+        let metadata = DocumentMetadata(
+            id: document.id,
+            title: document.title,
+            sourceType: document.sourceType,
+            sourceURL: nil,
+            createdAt: document.createdAt,
+            language: nil,
+            processingStatus: .complete,
+            pageCount: 0,
+            unresolvedFindingCount: 0
+        )
+        let populated = IntentRepositoryStub(metadata: [metadata], document: document)
+        XCTAssertEqual(PageLumenCoreSummaryBridge.currentSummary(from: populated), "Grounded local summary")
+    }
+
     func testOpenIntentNotificationHelpersCarryOnlySelectedResource() {
         let center = NotificationCenter()
         let url = URL(fileURLWithPath: "/tmp/report.pdf")
@@ -123,16 +143,18 @@ final class AppIntentExportTests: XCTestCase {
 private final class IntentRepositoryStub: DocumentRepository, @unchecked Sendable {
     let metadata: [DocumentMetadata]
     let searchResults: [LibrarySearchResult]
+    let documentValue: ReaderDocument?
     private(set) var lastSearchLimit: Int?
 
-    init(metadata: [DocumentMetadata] = [], searchResults: [LibrarySearchResult] = []) {
+    init(metadata: [DocumentMetadata] = [], searchResults: [LibrarySearchResult] = [], document: ReaderDocument? = nil) {
         self.metadata = metadata
         self.searchResults = searchResults
+        self.documentValue = document
     }
 
     func recentMetadata() throws -> [DocumentMetadata] { metadata }
     func metadata(id: UUID) throws -> DocumentMetadata? { metadata.first { $0.id == id } }
-    func document(id: UUID) throws -> ReaderDocument? { nil }
+    func document(id: UUID) throws -> ReaderDocument? { documentValue?.id == id ? documentValue : nil }
     func search(query: String, limit: Int) throws -> [LibrarySearchResult] {
         lastSearchLimit = limit
         return Array(searchResults.prefix(limit))
