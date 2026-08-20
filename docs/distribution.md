@@ -55,6 +55,23 @@ The validator prints bundle metadata, signing details, entitlements, strict code
 
 ## Archive diagnostics and evidence boundaries
 
+## CI evidence boundary
+
+GitHub Actions runs package tests, the bounded fixture-corpus contract, local
+quality gates, release-manifest validation, and an unsigned Xcode build. The
+workflow intentionally has no Apple signing or notarization secrets. The
+versioned contract is [`docs/release-manifest-v1.json`](release-manifest-v1.json)
+and is checked locally with:
+
+```sh
+script/validate_release_manifest.sh
+script/validate_fixture_corpus.sh
+```
+
+Passing CI proves source-level and unsigned-build checks only; it does not
+prove a signed archive, notarization, Gatekeeper acceptance, App Review, or
+live-store availability.
+
 When diagnosing an archive failure, use an isolated derived-data directory and
 keep the signing mode explicit:
 

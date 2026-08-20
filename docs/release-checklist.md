@@ -11,6 +11,10 @@ App Store review or live availability.
 - [ ] Exported artifact is validated with `codesign --verify --deep --strict`.
 - [ ] `git diff --check` and dependency/license review pass.
 - [ ] Fixture, malformed-input, and performance smoke tests pass.
+- [x] CI validates package tests, an unsigned Xcode build, local quality gates,
+      the bounded fixture manifests, and the release-evidence manifest. CI does
+      not hold signing credentials or claim notarization/App Review/live-store
+      evidence.
 
 ## Manual gates
 

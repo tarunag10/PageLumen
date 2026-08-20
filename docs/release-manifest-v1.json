@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "product": "PageLumen",
+  "minimumMacOS": "14.0",
+  "artifactPolicy": {
+    "ci": "unsigned-build-only",
+    "distribution": "signed-archive-required"
+  },
+  "requiredEvidence": [
+    "archive",
+    "bundle-validation",
+    "privacy-manifest",
+    "entitlements",
+    "checksum",
+    "external-state-disclosure"
+  ],
+  "signing": {
+    "requiredForDistribution": true,
+    "ciSigning": "disabled"
+  },
+  "externalStateDisclosure": "Local CI, archive, and bundle validation do not prove notarization, App Review, or live-store availability.",
+  "versionSource": "project.yml"
+}

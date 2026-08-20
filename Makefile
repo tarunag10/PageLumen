@@ -1,4 +1,4 @@
-.PHONY: help test build release lint quality clean
+.PHONY: help test build release lint quality fixtures release-manifest clean
 
 APP_NAME := PageLumen
 SCHEME := PageLumen
@@ -10,6 +10,8 @@ help:
 	@echo "  make release   - build the app (Release) and produce an archive"
 	@echo "  make lint      - run swift test + release build"
 	@echo "  make quality   - run local privacy, artifact, and whitespace gates"
+	@echo "  make fixtures  - validate the versioned fixture and AI evaluation manifests"
+	@echo "  make release-manifest - validate the unsigned CI/release evidence contract"
 	@echo "  make clean     - remove .build, dist, DerivedData"
 
 test:
@@ -27,6 +29,12 @@ lint:
 
 quality:
 	./script/quality_gates.sh
+
+fixtures:
+	./script/validate_fixture_corpus.sh
+
+release-manifest:
+	./script/validate_release_manifest.sh
 
 clean:
 	rm -rf .build dist DerivedData

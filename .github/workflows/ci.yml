@@ -7,8 +7,15 @@ on:
       - main
       - "codex/**"
 
+permissions:
+  contents: read
+
+concurrency:
+  group: pagelumen-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  package-tests:
     name: Swift tests
     runs-on: macos-latest
     steps:
@@ -16,15 +23,51 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run tests
-        run: swift test
+        run: swift test -Xswiftc -gnone --parallel
+
+  fixture-corpus:
+    name: Fixture corpus contract
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate fixture manifests
+        run: ./script/validate_fixture_corpus.sh
+
+      - name: Run corpus regression tests
+        run: swift test -Xswiftc -gnone --filter FixtureCorpusTests
+
+  quality:
+    name: Quality gates
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run local quality gates
+        run: ./script/quality_gates.sh
+
+  release-manifest:
+    name: Release manifest validation
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate release evidence contract
+        run: ./script/validate_release_manifest.sh
 
   build:
     name: Xcode build
     runs-on: macos-latest
-    needs: test
+    needs: package-tests
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Build with xcodebuild
-        run: xcodebuild -project PageLumen.xcodeproj -scheme PageLumen -configuration Debug -destination 'generic/platform=macOS' build
+        run: >-
+          xcodebuild -project PageLumen.xcodeproj -scheme PageLumen
+          -configuration Debug -destination 'generic/platform=macOS' build
+          CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
