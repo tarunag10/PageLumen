@@ -187,7 +187,7 @@ struct SettingsView: View {
                         .foregroundStyle(AccessibleStyle.secondaryText)
                 }
 
-                Text("On-device translation, private and free. The selected language is used by the Translate & Export action.")
+                Text("On-device translation, private and free. The selected language is used by the Translate and Export Markdown action.")
                     .font(.callout)
                     .foregroundStyle(AccessibleStyle.secondaryText)
             }

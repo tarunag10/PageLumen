@@ -13,7 +13,7 @@ public enum ExportFormat: String, CaseIterable, Identifiable, Codable, Sendable 
     case accessibilityReport = "Accessibility Report"
     case audio = "Audio"
     case docx = "DOCX"
-    case translated = "Translate & Export Markdown"
+    case translated = "Translate and Export Markdown"
 
     public var id: String { rawValue }
 

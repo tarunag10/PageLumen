@@ -727,7 +727,7 @@ final class DocumentStore {
                 let markdown = ExportEngine().markdown(for: translatedDoc, options: options)
                 let data = Data(markdown.utf8)
                 try data.write(to: url, options: .atomic)
-                statusMessage = "Exported Translated Markdown to \(url.lastPathComponent)"
+                statusMessage = "Exported translated Markdown to \(url.lastPathComponent)"
             } catch {
                 statusMessage = "Translation export failed: \(error.localizedDescription)"
             }

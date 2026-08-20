@@ -113,7 +113,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [ ] Before displaying a target language, use language-availability APIs and distinguish: installed, downloadable with user approval, unsupported, and failed.
 - [x] Translate blocks while preserving block IDs/bounds and record `translatedFrom`, `translationTargetLanguage`, and `translationEngine` metadata.
 - [ ] Never create a translated export if translation was unavailable or if the returned text is unchanged for a source/target pair that should differ. Surface a recoverable error instead.
-- [ ] Rename the export action to `Translate and Export Markdown` until additional output formats are intentionally supported.
+- [x] Rename the export action to `Translate and Export Markdown` until additional output formats are intentionally supported.
 - [ ] On macOS 14, hide or disable the action with an explanatory label; do not create an incorrectly labelled source-language export.
 - [ ] Add deterministic fake translation-provider tests for successful mapping, availability states, cancellation, partial failure, and unchanged-output detection. Do not make CI depend on downloaded language models.
 
