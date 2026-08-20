@@ -26,6 +26,16 @@ final class ExportEngineTests: XCTestCase {
         XCTAssertTrue(html.contains("<figure>"))
     }
 
+    func testTaggedHTMLAnchorsTableBlocksToStableBlockIDs() {
+        let document = SampleDataFactory.makeDemoDocument()
+        let tableBlock = document.pages[0].blocks.first { $0.type == .table }
+
+        let html = ExportEngine().taggedHTML(for: document, options: .full)
+
+        XCTAssertNotNil(tableBlock)
+        XCTAssertTrue(html.contains("id=\"block-\(tableBlock!.id.uuidString.lowercased())\""))
+    }
+
     func testPDFExportReturnsPDFData() {
         let document = SampleDataFactory.makeDemoDocument()
 

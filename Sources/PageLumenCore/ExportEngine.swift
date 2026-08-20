@@ -422,7 +422,7 @@ public struct ExportEngine: Sendable {
                     body.append("<h3 id=\"\(blockID)\" data-page=\"\(block.pageNumber)\">\(escape(block.text))</h3>")
                 case .table where options.includeTables:
                     if let table = page.tables.first(where: { $0.bounds == block.bounds }) {
-                        body.append(htmlTable(table.rows, pageNumber: page.pageNumber))
+                        body.append(htmlTable(table.rows, pageNumber: page.pageNumber, blockID: blockID))
                         if !table.explanation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                             body.append("<p><strong>Table note:</strong> \(escape(table.explanation))</p>")
                         }
@@ -616,10 +616,11 @@ public struct ExportEngine: Sendable {
             .joined(separator: "\n")
     }
 
-    private func htmlTable(_ rows: [[String]], pageNumber: Int? = nil) -> String {
+    private func htmlTable(_ rows: [[String]], pageNumber: Int? = nil, blockID: String? = nil) -> String {
         guard let header = rows.first else { return "<table></table>" }
         let pageAttribute = pageNumber.map { " data-page=\"\($0)\"" } ?? ""
-        var html = ["<table\(pageAttribute)>", "<thead><tr>\(header.map { "<th scope=\"col\">\(escape($0))</th>" }.joined())</tr></thead>", "<tbody>"]
+        let idAttribute = blockID.map { " id=\"\($0)\"" } ?? ""
+        var html = ["<table\(idAttribute)\(pageAttribute)>", "<thead><tr>\(header.map { "<th scope=\"col\">\(escape($0))</th>" }.joined())</tr></thead>", "<tbody>"]
         for row in rows.dropFirst() {
             html.append("<tr>\(row.map { "<td>\(escape($0))</td>" }.joined())</tr>")
         }
