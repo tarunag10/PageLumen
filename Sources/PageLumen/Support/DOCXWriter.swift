@@ -2,12 +2,77 @@ import Foundation
 import PageLumenCore
 import ZIPFoundation
 
-public struct DOCXWriter: Sendable {
+/// Writes the parts of an Office Open XML package to a DOCX archive.
+///
+/// Keeping this seam separate from OOXML generation makes the package writer
+/// replaceable and keeps archive framing, path validation, and temporary-file
+/// cleanup in one audited implementation.
+public protocol DOCXArchiveWriting: Sendable {
+    func write(parts: [String: Data]) -> Data
+}
+
+/// The shipping DOCX archive implementation. ZIPFoundation owns ZIP framing,
+/// CRC calculation, and archive path handling; PageLumen does not maintain a
+/// second ZIP implementation.
+public struct ZIPFoundationDOCXArchiveWriter: DOCXArchiveWriting, Sendable {
     public init() {}
+
+    public func write(parts: [String: Data]) -> Data {
+        guard !parts.isEmpty,
+              parts.keys.allSatisfy(Self.isSafePartPath),
+              parts.values.allSatisfy({ $0.count <= Int(UInt32.max) }) else {
+            return Data()
+        }
+
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pagelumen-docx-\(UUID().uuidString)", isDirectory: false)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        do {
+            guard let destination = Archive(url: url, accessMode: .create) else { return Data() }
+            for (path, payload) in parts.sorted(by: { $0.key < $1.key }) {
+                try destination.addEntry(
+                    with: path,
+                    type: .file,
+                    uncompressedSize: UInt32(payload.count),
+                    // Store OOXML parts without compression so lightweight
+                    // package inspectors can validate them without a
+                    // decompressor. ZIPFoundation still owns archive framing.
+                    compressionMethod: .none
+                ) { position, size in
+                    let start = Int(position)
+                    let end = min(start + size, payload.count)
+                    return start < end ? payload.subdata(in: start..<end) : Data()
+                }
+            }
+            return try Data(contentsOf: url)
+        } catch {
+            // DOCXWriter's public API is intentionally non-throwing to retain
+            // compatibility with the existing save-panel flow.
+            return Data()
+        }
+    }
+
+    private static func isSafePartPath(_ path: String) -> Bool {
+        guard !path.isEmpty, !path.hasPrefix("/"), !path.contains("\\") else { return false }
+        return path.split(separator: "/", omittingEmptySubsequences: false).allSatisfy { $0 != ".." && $0 != "." && !$0.isEmpty }
+    }
+}
+
+public struct DOCXWriter: Sendable {
+    private let archiveWriter: any DOCXArchiveWriting
+
+    public init() {
+        self.init(archiveWriter: ZIPFoundationDOCXArchiveWriter())
+    }
+
+    public init(archiveWriter: any DOCXArchiveWriting = ZIPFoundationDOCXArchiveWriter()) {
+        self.archiveWriter = archiveWriter
+    }
 
     public func data(for document: ReaderDocument, options: ExportOptions) -> Data {
         let archive = buildArchive(for: document, options: options)
-        return zipStore(archive: archive)
+        return archiveWriter.write(parts: archive)
     }
 
     private func buildArchive(for document: ReaderDocument, options: ExportOptions) -> [String: Data] {
@@ -121,177 +186,4 @@ public struct DOCXWriter: Sendable {
             .replacingOccurrences(of: "'", with: "&apos;")
     }
 
-    private func zipStore(archive: [String: Data]) -> Data {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("pagelumen-\(UUID().uuidString)", isDirectory: false)
-        defer { try? FileManager.default.removeItem(at: url) }
-
-        do {
-            guard let destination = Archive(url: url, accessMode: .create) else { return Data() }
-            for (path, payload) in archive.sorted(by: { $0.key < $1.key }) {
-                try destination.addEntry(
-                    with: path,
-                    type: .file,
-                    uncompressedSize: UInt32(payload.count),
-                    // Keep OOXML parts uncompressed so independent lightweight
-                    // inspectors can validate package contents without a
-                    // decompressor. ZIPFoundation still owns archive framing,
-                    // CRCs, and path safety.
-                    compressionMethod: .none
-                ) { position, size in
-                    let start = Int(position)
-                    let end = min(start + size, payload.count)
-                    return start < end ? payload.subdata(in: start..<end) : Data()
-                }
-            }
-            return try Data(contentsOf: url)
-        } catch {
-            // Export APIs are intentionally non-throwing for compatibility with
-            // the existing save-panel flow. The caller receives an empty result
-            // and can surface a recoverable export error from the save layer.
-            return Data()
-        }
-    }
-}
-
-private struct ZipStoreEntry {
-    let name: String
-    let payload: Data
-    let crc32: UInt32
-    let modificationDate: UInt16
-    let modificationTime: UInt16
-
-    init(name: String, payload: Data) {
-        self.name = name
-        self.payload = payload
-        self.crc32 = ZipStoreEntry.crc32(payload)
-        let now = Date()
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "UTC") ?? .current
-        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: now)
-        let year = max(0, (components.year ?? 1980) - 1980)
-        let month = components.month ?? 1
-        let day = components.day ?? 1
-        let hour = components.hour ?? 0
-        let minute = components.minute ?? 0
-        let second = (components.second ?? 0) / 2
-        self.modificationDate = UInt16((year << 9) | (month << 5) | day)
-        self.modificationTime = UInt16((hour << 11) | (minute << 5) | second)
-    }
-
-    func localHeader() -> Data {
-        var data = Data()
-        data.appendLE(UInt32(0x04034b50))
-        data.appendLE(UInt16(20))
-        data.appendLE(UInt16(0))
-        data.appendLE(UInt16(0))
-        data.appendLE(modificationTime)
-        data.appendLE(modificationDate)
-        data.appendLE(crc32)
-        data.appendLE(UInt32(payload.count))
-        data.appendLE(UInt32(payload.count))
-        data.appendLE(UInt16(name.utf8.count))
-        data.appendLE(UInt16(0))
-        let nameData = Data(name.utf8)
-        data.append(nameData)
-        return data
-    }
-
-    func compressedPayload() -> Data {
-        payload
-    }
-
-    func centralDirectoryEntry(fileHeaderOffset: UInt32) -> Data {
-        var data = Data()
-        data.appendLE(UInt32(0x02014b50))
-        data.appendLE(UInt16(20))
-        data.appendLE(UInt16(20))
-        data.appendLE(UInt16(0))
-        data.appendLE(UInt16(0))
-        data.appendLE(modificationTime)
-        data.appendLE(modificationDate)
-        data.appendLE(crc32)
-        data.appendLE(UInt32(payload.count))
-        data.appendLE(UInt32(payload.count))
-        data.appendLE(UInt16(name.utf8.count))
-        data.appendLE(UInt16(0))
-        data.appendLE(UInt16(0))
-        data.appendLE(UInt16(0))
-        data.appendLE(UInt16(0))
-        data.appendLE(UInt32(0))
-        data.appendLE(fileHeaderOffset)
-        let nameData = Data(name.utf8)
-        data.append(nameData)
-        return data
-    }
-
-    static func crc32(_ data: Data) -> UInt32 {
-        var crc: UInt32 = 0xffffffff
-        for byte in data {
-            let index = Int((crc ^ UInt32(byte)) & 0xff)
-            crc = (crc >> 8) ^ Self.crcTable[index]
-        }
-        return crc ^ 0xffffffff
-    }
-
-    private static let crcTable: [UInt32] = {
-        (0..<256).map { i -> UInt32 in
-            var c = UInt32(i)
-            for _ in 0..<8 {
-                if c & 1 != 0 {
-                    c = 0xEDB88320 ^ (c >> 1)
-                } else {
-                    c = c >> 1
-                }
-            }
-            return c
-        }
-    }()
-}
-
-private struct ZipCentralDirectory {
-    var entries: [(entry: ZipStoreEntry, offset: UInt32)] = []
-
-    mutating func add(entry: ZipStoreEntry, offset: UInt32) {
-        entries.append((entry, offset))
-    }
-
-    func data() -> Data {
-        var data = Data()
-        for (entry, offset) in entries {
-            data.append(entry.centralDirectoryEntry(fileHeaderOffset: offset))
-        }
-        return data
-    }
-}
-
-private struct ZipEndOfCentralDirectory {
-    var totalEntries: UInt16 = 0
-    var centralDirectorySize: UInt32 = 0
-    var centralDirectoryOffset: UInt32 = 0
-
-    func data() -> Data {
-        var data = Data()
-        data.appendLE(UInt32(0x06054b50))
-        data.appendLE(UInt16(0))
-        data.appendLE(UInt16(0))
-        data.appendLE(totalEntries)
-        data.appendLE(totalEntries)
-        data.appendLE(centralDirectorySize)
-        data.appendLE(centralDirectoryOffset)
-        data.appendLE(UInt16(0))
-        return data
-    }
-}
-
-private extension Data {
-    mutating func appendLE(_ value: UInt16) {
-        var v = value.littleEndian
-        Swift.withUnsafeBytes(of: &v) { append(contentsOf: $0) }
-    }
-
-    mutating func appendLE(_ value: UInt32) {
-        var v = value.littleEndian
-        Swift.withUnsafeBytes(of: &v) { append(contentsOf: $0) }
-    }
 }

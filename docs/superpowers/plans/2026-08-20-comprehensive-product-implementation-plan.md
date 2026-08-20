@@ -349,9 +349,13 @@ Third-party code must be adopted only through a small, auditable decision record
 **Use:** DOCX package creation/inspection, safer archive handling, validation, progress, and cancellation.
 
 - [ ] Add as an SPM dependency to the app/core target that owns DOCX output; pin a reviewed release rather than a branch.
-- [ ] Replace low-level archive assembly incrementally behind a `DOCXArchiveWriting` protocol.
+- [x] Replace low-level archive assembly incrementally behind a `DOCXArchiveWriting` protocol.
 - [ ] Add generated-document tests that inspect required OOXML parts and open the output with an independent consumer in manual QA.
 - [ ] Update third-party notices and validate no unnecessary archive paths/data are retained.
+
+Current checkpoint: ZIPFoundation is already resolved for the shipping app target;
+`DOCXArchiveWriting` now isolates archive framing, validates package paths, and
+the focused DOCX suite covers OOXML parts, escaping, and delegation (7/7).
 
 **Why now:** It is a contained replacement for a reliability-sensitive custom implementation.
 

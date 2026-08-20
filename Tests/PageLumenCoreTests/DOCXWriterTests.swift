@@ -4,6 +4,23 @@ import XCTest
 @testable import PageLumen
 
 final class DOCXWriterTests: XCTestCase {
+    func testDOCXWriterDelegatesPackageAssemblyToArchiveWriter() {
+        let archiveWriter = RecordingDOCXArchiveWriter()
+        let result = DOCXWriter(archiveWriter: archiveWriter).data(
+            for: SampleDataFactory.makeDemoDocument(),
+            options: .full
+        )
+
+        XCTAssertEqual(result, Data([0x44, 0x4F, 0x43, 0x58]))
+        XCTAssertEqual(Set(archiveWriter.parts.keys), [
+            "[Content_Types].xml",
+            "_rels/.rels",
+            "word/_rels/document.xml.rels",
+            "word/document.xml"
+        ])
+        XCTAssertTrue(String(data: archiveWriter.parts["word/document.xml"] ?? Data(), encoding: .utf8)?.contains("IMPORT FLOW") == true)
+    }
+
     func testDOCXOutputIsAValidZipArchive() {
         let document = SampleDataFactory.makeDemoDocument()
         let data = DOCXWriter().data(for: document, options: .full)
@@ -53,6 +70,18 @@ final class DOCXWriterTests: XCTestCase {
         XCTAssertTrue(xml.contains("<w:gridCol w:w=\"2400\"/>"))
     }
 
+    func testDOCXRoundTripPreservesOOXMLTextEscaping() {
+        var document = SampleDataFactory.makeDemoDocument()
+        document.title = "A & B <review>"
+        let data = DOCXWriter().data(for: document, options: .full)
+        let entries = parseZipEntries(in: data)
+        let xml = String(data: entries.first { $0.name == "word/document.xml" }?.payload ?? Data(), encoding: .utf8) ?? ""
+
+        XCTAssertTrue(xml.contains("A &amp; B &lt;review&gt;"))
+        XCTAssertFalse(xml.contains("A & B <review>"))
+        XCTAssertTrue(xml.hasPrefix("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"))
+    }
+
     func testExportFormatDOCXExposesDocxExtension() {
         XCTAssertEqual(ExportFormat.docx.fileExtension, "docx")
         XCTAssertEqual(ExportFormat.docx.rawValue, "DOCX")
@@ -61,6 +90,15 @@ final class DOCXWriterTests: XCTestCase {
     private struct ZipEntry {
         let name: String
         let payload: Data
+    }
+
+    private final class RecordingDOCXArchiveWriter: DOCXArchiveWriting, @unchecked Sendable {
+        var parts: [String: Data] = [:]
+
+        func write(parts: [String: Data]) -> Data {
+            self.parts = parts
+            return Data([0x44, 0x4F, 0x43, 0x58])
+        }
     }
 
     private func parseZipEntries(in data: Data) -> [ZipEntry] {
