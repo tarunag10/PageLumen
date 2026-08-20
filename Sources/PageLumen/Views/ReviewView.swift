@@ -59,6 +59,7 @@ private struct ReviewHeader: View {
     @State private var showConfidenceChart = false
     @State private var showReviewQueue = false
     @State private var showEditHistory = false
+    @State private var showDocumentChanges = false
 
     var body: some View {
         @Bindable var store = store
@@ -131,6 +132,18 @@ private struct ReviewHeader: View {
                 .popover(isPresented: $showEditHistory, arrowEdge: .top) {
                     EditHistoryPopover()
                         .frame(width: 360, height: 360)
+                }
+
+                Button {
+                    showDocumentChanges = true
+                } label: {
+                    Label("Compare Edits", systemImage: "arrow.left.arrow.right")
+                }
+                .disabled(store.documentChanges.isEmpty)
+                .help("Compare current text with retained original OCR")
+                .popover(isPresented: $showDocumentChanges, arrowEdge: .top) {
+                    DocumentChangesPopover()
+                        .frame(width: 520, height: 440)
                 }
 
                 if let page = store.selectedPage {
@@ -478,6 +491,77 @@ private struct EditHistoryPopover: View {
         }
         .padding(16)
         .background(AccessibleStyle.appBackground)
+    }
+}
+
+private struct DocumentChangesPopover: View {
+    @Environment(DocumentStore.self) private var store
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Compare edits")
+                .font(.headline)
+                .foregroundStyle(AccessibleStyle.primaryText)
+            Text("Deterministic comparison of current text against retained original OCR. No AI or network processing is used.")
+                .font(.caption)
+                .foregroundStyle(AccessibleStyle.secondaryText)
+
+            if store.documentChanges.isEmpty {
+                ContentUnavailableView("No text changes", systemImage: "checkmark.circle", description: Text("Edited blocks will appear here after a text correction."))
+            } else {
+                List(store.documentChanges) { change in
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Label(change.kind.label, systemImage: change.kind.systemImage)
+                                .font(.callout.weight(.semibold))
+                                .foregroundStyle(AccessibleStyle.primaryText)
+                            Spacer()
+                            Text("Page \(change.pageNumber)")
+                                .font(.caption)
+                                .foregroundStyle(AccessibleStyle.secondaryText)
+                        }
+
+                        Text("Original")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(AccessibleStyle.secondaryText)
+                        Text(change.originalText ?? "(block was added)")
+                            .textSelection(.enabled)
+                            .foregroundStyle(AccessibleStyle.primaryText)
+                        Text("Current")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(AccessibleStyle.secondaryText)
+                        Text(change.currentText ?? "(block was removed)")
+                            .textSelection(.enabled)
+                            .foregroundStyle(AccessibleStyle.primaryText)
+                    }
+                    .padding(.vertical, 6)
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("\(change.kind.label), page \(change.pageNumber)")
+                    .accessibilityHint("Shows the original and current text for this changed source block.")
+                }
+                .listStyle(.inset)
+            }
+        }
+        .padding(16)
+        .background(AccessibleStyle.appBackground)
+    }
+}
+
+private extension DocumentChangeKind {
+    var label: String {
+        switch self {
+        case .added: return "Added block"
+        case .removed: return "Removed block"
+        case .modified: return "Edited block"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .added: return "plus.circle"
+        case .removed: return "minus.circle"
+        case .modified: return "pencil.circle"
+        }
     }
 }
 

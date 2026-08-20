@@ -338,6 +338,10 @@ final class DocumentStore {
         DocumentEditing.reviewFindings(for: document, preset: reviewPreset)
     }
 
+    var documentChanges: [DocumentChange] {
+        DocumentComparison.changes(in: document)
+    }
+
     var reviewProgress: ReviewProgress {
         DocumentEditing.reviewProgress(for: document, preset: reviewPreset)
     }
