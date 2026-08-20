@@ -310,7 +310,7 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 - [x] Add an `IntelligenceMode` setting: `Off`, `Apple Foundation Models`, and future `Downloaded local model`. It defaults to Off, migrates the legacy opt-in boolean, and supports a locally retained per-document opt-out.
 - [ ] Show availability, expected privacy boundary, device requirement, input scope, and failure state before execution.
 - [ ] Never make a generative result appear indistinguishable from extracted source text.
-- [ ] Provide “Copy with citations,” “Insert as draft,” “Replace selected description after review,” and “Discard” actions; no unattended edits.
+- [ ] Provide “Copy with citations,” “Insert as draft,” “Replace selected description after review,” and “Discard” actions; no unattended edits. “Copy with citations” is now wired to the grounded-summary contract and labels generated prose plus page/block sources; insert/replace/discard actions remain open.
 - [ ] Offer a per-document “do not use intelligence” control for sensitive material.
 
 ### 4.2 Foundation Models adapter

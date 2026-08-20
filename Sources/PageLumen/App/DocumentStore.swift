@@ -845,6 +845,25 @@ final class DocumentStore {
         statusMessage = "Copied accessible excerpt from page \(quote.pageNumber)"
     }
 
+    /// Copies a grounded draft with explicit page/block citations. The draft
+    /// is labelled as generated and never replaces extracted source content.
+    func copySummaryWithCitations() {
+        let grounded = explanationEngine.groundedSummary(for: document, length: summaryLength)
+        var output = "Generated summary (verify against the original source):\n\(grounded.text)"
+        if !grounded.citations.isEmpty {
+            output += "\n\nSources:"
+            for citation in grounded.citations {
+                output += "\n- Page \(citation.pageNumber), block \(citation.blockID.uuidString): \(citation.excerpt)"
+            }
+        }
+        if let warning = grounded.groundingWarning {
+            output += "\n\nNote: \(warning)"
+        }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(output, forType: .string)
+        statusMessage = "Copied generated summary with \(grounded.citations.count) citation\(grounded.citations.count == 1 ? "" : "s")"
+    }
+
     func changeBlockType(_ block: TextBlock, to type: BlockType) {
         guard block.type != type else { return }
         recordEdit()

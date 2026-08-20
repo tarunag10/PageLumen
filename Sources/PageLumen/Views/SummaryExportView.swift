@@ -61,6 +61,13 @@ struct SummaryExportView: View {
                         Label("Read Full Text", systemImage: "text.bubble")
                     }
 
+                    Button {
+                        store.copySummaryWithCitations()
+                    } label: {
+                        Label("Copy with Citations", systemImage: "quote.opening")
+                    }
+                    .help("Copy a generated draft labelled with page and block citations")
+
                     Spacer()
 
                     Button {

@@ -57,6 +57,19 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertNotEqual(short, detailed)
     }
 
+    func testCopySummaryWithCitationsLabelsDraftAndSources() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        NSPasteboard.general.clearContents()
+
+        store.copySummaryWithCitations()
+
+        let copied = NSPasteboard.general.string(forType: .string) ?? ""
+        XCTAssertTrue(copied.hasPrefix("Generated summary (verify against the original source):"))
+        XCTAssertTrue(copied.contains("Sources:"))
+        XCTAssertTrue(copied.contains("Page 1, block"))
+        XCTAssertTrue(store.statusMessage.contains("citation"))
+    }
+
     func testIntelligenceModeMigratesLegacyConsentAndSupportsDocumentOptOut() {
         let suiteName = "PageLumen.DocumentStoreTests.\(UUID().uuidString)"
         let preferences = UserDefaults(suiteName: suiteName)!
