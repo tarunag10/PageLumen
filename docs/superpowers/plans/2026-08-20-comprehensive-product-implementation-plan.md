@@ -311,9 +311,9 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 
 - [x] Add an `IntelligenceMode` setting: `Off`, `Apple Foundation Models`, and future `Downloaded local model`. It defaults to Off, migrates the legacy opt-in boolean, and supports a locally retained per-document opt-out.
 - [x] Show availability, expected privacy boundary, device requirement, input scope, and failure state before execution. `IntelligentExplainerAvailabilityInfo` is a privacy-safe, deterministic contract surfaced in Settings before execution.
-- [ ] Never make a generative result appear indistinguishable from extracted source text.
+- [x] Never make a generative result appear indistinguishable from extracted source text. Summary surfaces now label derived text as “Summary — not source text” or “Generated summary — not source text,” while the extracted document remains the source of record.
 - [x] Provide “Copy with citations,” “Insert as draft,” “Replace selected description after review,” and “Discard” actions; no unattended edits. The Summary workspace now holds a cited review draft separately from extracted source and requires an explicit action for insert, selected-block replacement, or discard.
-- [ ] Offer a per-document “do not use intelligence” control for sensitive material.
+- [x] Offer a per-document “do not use intelligence” control for sensitive material. Settings persists a local document-ID opt-out, disables regeneration for that document, and restores the deterministic path when enabled.
 
 ### 4.2 Foundation Models adapter
 

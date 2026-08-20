@@ -123,14 +123,26 @@ struct SummaryExportView: View {
                     .accessiblePanel()
                 }
 
-                Text(store.document.summary)
-                    .font(.title3)
-                    .foregroundStyle(AccessibleStyle.primaryText)
-                    .lineSpacing(4)
-                    .textSelection(.enabled)
-                    .padding(20)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .accessiblePanel()
+                VStack(alignment: .leading, spacing: 10) {
+                    Label(
+                        store.document.metadata["intelligenceSource"] == nil
+                            ? "Summary — not source text"
+                            : "Generated summary — not source text",
+                        systemImage: "sparkles"
+                    )
+                    .font(.headline)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
+                    .accessibilityHint("This is a derived summary. The extracted document text remains the source of record.")
+
+                    Text(store.document.summary)
+                        .font(.title3)
+                        .foregroundStyle(AccessibleStyle.primaryText)
+                        .lineSpacing(4)
+                        .textSelection(.enabled)
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessiblePanel()
 
                 VStack(alignment: .leading, spacing: 14) {
                     HStack {
