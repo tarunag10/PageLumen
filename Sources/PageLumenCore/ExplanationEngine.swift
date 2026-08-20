@@ -195,7 +195,11 @@ public enum GroundedIntelligenceResult: Codable, Equatable, Sendable {
 }
 
 public struct ExplanationEngine: Sendable {
-    public init() {}
+    private let intelligenceProvider: any IntelligenceExplaining
+
+    public init(intelligenceProvider: any IntelligenceExplaining = IntelligentExplainer()) {
+        self.intelligenceProvider = intelligenceProvider
+    }
 
     public func explain(table: TableRegion) -> String {
         let columnCount = table.rows.map(\.count).max() ?? 0
@@ -255,14 +259,14 @@ public struct ExplanationEngine: Sendable {
         let fallback = self.summary(for: document, length: length)
         guard options.useIntelligence else { return fallback }
 
-        let explainer = IntelligentExplainer()
-        guard case .available = explainer.availability else { return fallback }
+        guard case .available = intelligenceProvider.availability else { return fallback }
 
-        let intelligent = await explainer.summary(for: document, length: length)
-        if intelligent.isEmpty {
+        switch await intelligenceProvider.summaryResult(for: document, length: length, selectedBlockIDs: nil) {
+        case .generated(let intelligent) where !intelligent.isEmpty:
+            return intelligent
+        case .generated, .unavailable, .failed:
             return fallback
         }
-        return intelligent
     }
 
     public func betterSummary(for document: ReaderDocument, length: SummaryLength) -> String {
@@ -432,7 +436,7 @@ public struct ExplanationEngine: Sendable {
             return .failed(reason: "No readable extracted text is available yet.")
         }
 
-        let result = await IntelligentExplainer().summaryResult(
+        let result = await intelligenceProvider.summaryResult(
             for: document,
             length: length,
             selectedBlockIDs: selectedBlockIDs

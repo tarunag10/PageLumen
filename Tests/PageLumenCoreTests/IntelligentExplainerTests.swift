@@ -178,4 +178,44 @@ final class IntelligentExplainerTests: XCTestCase {
             XCTAssertEqual(figureExplanation, "")
         }
     }
+
+    func testExplanationEngineUsesInjectedProviderWithoutInvokingFoundationModels() async {
+        let document = SampleDataFactory.makeDemoDocument()
+        let fake = FixedIntelligenceProvider(
+            availability: .available,
+            result: .generated("Injected structured draft")
+        )
+
+        let summary = await ExplanationEngine(intelligenceProvider: fake)
+            .summary(for: document, length: .short, options: SummaryOptions(useIntelligence: true))
+
+        XCTAssertEqual(summary, "Injected structured draft")
+    }
+
+    func testExplanationEngineKeepsDeterministicFallbackForInjectedFailure() async {
+        let document = SampleDataFactory.makeDemoDocument()
+        let fake = FixedIntelligenceProvider(
+            availability: .available,
+            result: .failed(reason: "synthetic failure")
+        )
+
+        let summary = await ExplanationEngine(intelligenceProvider: fake)
+            .summary(for: document, length: .short, options: SummaryOptions(useIntelligence: true))
+
+        XCTAssertTrue(summary.contains("Page 1"))
+        XCTAssertFalse(summary.contains("synthetic failure"))
+    }
+}
+
+private struct FixedIntelligenceProvider: IntelligenceExplaining {
+    let availability: IntelligentExplainerAvailability
+    let result: IntelligentExplainerResult
+
+    func summaryResult(
+        for document: ReaderDocument,
+        length: SummaryLength,
+        selectedBlockIDs: Set<UUID>?
+    ) async -> IntelligentExplainerResult {
+        result
+    }
 }

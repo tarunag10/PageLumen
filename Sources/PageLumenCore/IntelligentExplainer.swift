@@ -89,7 +89,19 @@ public enum IntelligentExplainerResult: Equatable, Sendable {
     }
 }
 
-public struct IntelligentExplainer: Sendable {
+/// Injectable boundary for the nondeterministic/on-device provider. Production
+/// uses `IntelligentExplainer`; tests and future providers can return typed
+/// availability/failure outcomes without invoking a model.
+public protocol IntelligenceExplaining: Sendable {
+    var availability: IntelligentExplainerAvailability { get }
+    func summaryResult(
+        for document: ReaderDocument,
+        length: SummaryLength,
+        selectedBlockIDs: Set<UUID>?
+    ) async -> IntelligentExplainerResult
+}
+
+public struct IntelligentExplainer: IntelligenceExplaining, Sendable {
     public init() {}
 
     public var availability: IntelligentExplainerAvailability {
