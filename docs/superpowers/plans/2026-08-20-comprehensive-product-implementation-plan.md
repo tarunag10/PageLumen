@@ -355,12 +355,17 @@ Third-party code must be adopted only through a small, auditable decision record
 
 - [ ] Add as an SPM dependency to the app/core target that owns DOCX output; pin a reviewed release rather than a branch.
 - [x] Replace low-level archive assembly incrementally behind a `DOCXArchiveWriting` protocol.
-- [ ] Add generated-document tests that inspect required OOXML parts and open the output with an independent consumer in manual QA.
+- [x] Add generated-document tests that inspect required OOXML parts.
+- [ ] Open the generated output with an independent consumer in manual QA.
 - [ ] Update third-party notices and validate no unnecessary archive paths/data are retained.
 
 Current checkpoint: ZIPFoundation is already resolved for the shipping app target;
 `DOCXArchiveWriting` now isolates archive framing, validates package paths, and
-the focused DOCX suite covers OOXML parts, escaping, and delegation (7/7).
+`DOCXPackageValidator` performs deterministic XML, content-type, relationship,
+and required-part checks in the core target. The focused DOCX suite covers
+archive output, OOXML parts, malformed/missing package failures, escaping, and
+delegation (10/10). Independent Word/LibreOffice consumer review remains an
+explicit manual gate and is not claimed here.
 
 **Why now:** It is a contained replacement for a reliability-sensitive custom implementation.
 
