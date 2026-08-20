@@ -16,7 +16,7 @@ This page summarises the privacy commitments that PageLumen makes to its users. 
 ## No Network Calls Without Explicit Consent
 
 - The app does not make outbound network requests as part of the documented workflow.
-- A "Privacy mode" toggle lives in **Settings → Privacy**. It is on by default. When on, every code path that would otherwise touch the network is disabled; the in-app privacy badge is shown next to the export action so the user can confirm the state before saving.
+- A "Privacy mode" toggle lives in **Settings → Privacy**. It is on by default. When on, translated export is disabled because that capability may use a network-assisted translation provider. The export screen surfaces the resulting status message, so the user can confirm why that format is unavailable before saving. All other documented workflows remain local in the current build.
 - A future cloud-assisted feature, if shipped, will require an explicit, labelled opt-in before any document is transmitted.
 
 ## Exported JSON and Source URLs
