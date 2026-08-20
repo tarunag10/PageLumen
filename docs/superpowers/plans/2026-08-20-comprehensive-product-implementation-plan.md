@@ -220,7 +220,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [ ] Synchronise preview, extracted text, and issue list selection; support page-level deep links.
 - [x] Support table-grid editing with explicit column-header and row-header assignment. Review now provides validated cell editing plus explicit header row/column assignment, with semantic HTML/JSON preservation.
 - [x] Add reusable review presets for General, Legal, Academic, Receipts, Slides, and Accessibility Remediation. Settings exposes the preset and the core review engine applies only threshold/warning changes; source data remains untouched.
-- [ ] Add undo/redo for edits and an edit history view. Core bounded undo/redo for text, structure, table/figure descriptions, ordering, and review state is now shipped; the visible edit-history view and raw-OCR diff remain open. Do not overwrite raw OCR.
+- [x] Add undo/redo for edits and an edit history view. Core bounded undo/redo and an accessible, bounded labeled edit-history popover now cover text, structure, table/figure descriptions, ordering, and review state; a raw-OCR diff remains open. Do not overwrite raw OCR.
 
 **Exit gate for Phase 1:** Representative-corpus thresholds pass, the review queue is keyboard usable, memory/cancellation tests pass, and manual VoiceOver testing confirms source-to-finding navigation.
 

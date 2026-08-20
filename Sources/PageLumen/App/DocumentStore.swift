@@ -4,6 +4,18 @@ import Foundation
 import PageLumenCore
 import UniformTypeIdentifiers
 
+struct EditHistoryEntry: Identifiable, Equatable {
+    let id: UUID
+    let label: String
+    let timestamp: Date
+
+    init(label: String, timestamp: Date = Date()) {
+        self.id = UUID()
+        self.label = label
+        self.timestamp = timestamp
+    }
+}
+
 @MainActor
 @Observable
 final class DocumentStore {
@@ -83,6 +95,7 @@ final class DocumentStore {
 
     private(set) var canUndo = false
     private(set) var canRedo = false
+    private(set) var editHistory: [EditHistoryEntry] = []
 
     var libraryStorageSizeLabel: String {
         do {
@@ -850,7 +863,7 @@ final class DocumentStore {
             return
         }
         guard document.pages[pageIndex].blocks[blockIndex].text != text else { return }
-        recordEdit()
+        recordEdit("Edit block text")
         document.pages[pageIndex].blocks[blockIndex].text = text
         document.pages[pageIndex].blocks[blockIndex].provenance = BlockProvenance(
             source: .userEdit,
@@ -865,7 +878,7 @@ final class DocumentStore {
 
     func setBlockReviewed(_ block: TextBlock, isReviewed: Bool) {
         guard DocumentEditing.isReviewed(block) != isReviewed else { return }
-        recordEdit()
+        recordEdit("Change block review status")
         DocumentEditing.setBlockReviewed(id: block.id, isReviewed: isReviewed, in: &document)
         statusMessage = isReviewed ? "Marked block reviewed" : "Marked block for review"
     }
@@ -873,7 +886,7 @@ final class DocumentStore {
     func setSelectedPageReviewed(_ isReviewed: Bool) {
         guard let page = document.pages.first(where: { $0.pageNumber == selectedPageNumber }),
               page.blocks.contains(where: { DocumentEditing.isReviewed($0) != isReviewed }) else { return }
-        recordEdit()
+        recordEdit("Change page review status")
         DocumentEditing.setPageReviewed(pageNumber: selectedPageNumber, isReviewed: isReviewed, in: &document)
         statusMessage = isReviewed ? "Marked page \(selectedPageNumber) reviewed" : "Marked page \(selectedPageNumber) for review"
     }
@@ -916,7 +929,7 @@ final class DocumentStore {
 
     func insertReviewDraftAsSummary() {
         guard let draft = reviewDraft else { return }
-        recordEdit()
+        recordEdit("Insert reviewed draft")
         document.summary = draft.text
         reviewDraft = nil
         statusMessage = "Draft inserted as the document summary"
@@ -934,7 +947,7 @@ final class DocumentStore {
             statusMessage = "Select a source block before replacing its description"
             return
         }
-        recordEdit()
+        recordEdit("Replace selected description")
         document.pages[pageIndex].blocks[blockIndex].text = draft.text
         document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
         reviewDraft = nil
@@ -949,7 +962,7 @@ final class DocumentStore {
 
     func changeBlockType(_ block: TextBlock, to type: BlockType) {
         guard block.type != type else { return }
-        recordEdit()
+        recordEdit("Change block type")
         DocumentEditing.changeBlockType(id: block.id, to: type, in: &document)
         if let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == block.pageNumber }),
            let blockIndex = document.pages[pageIndex].blocks.firstIndex(where: { $0.id == block.id }) {
@@ -972,7 +985,7 @@ final class DocumentStore {
             return
         }
         guard document.pages[pageIndex].tables[tableIndex].explanation != text else { return }
-        recordEdit()
+        recordEdit("Edit table explanation")
         document.pages[pageIndex].tables[tableIndex].explanation = text
         document.pages[pageIndex].tables[tableIndex].provenance = BlockProvenance(
             source: .userEdit,
@@ -997,7 +1010,7 @@ final class DocumentStore {
         let columns = Array(Set(rowHeaderColumns.filter { validColumnIndexes.contains($0) })).sorted()
         guard document.pages[pageIndex].tables[tableIndex].columnHeaderRows != rows
                 || document.pages[pageIndex].tables[tableIndex].rowHeaderColumns != columns else { return }
-        recordEdit()
+        recordEdit("Assign table headers")
         document.pages[pageIndex].tables[tableIndex].columnHeaderRows = rows
         document.pages[pageIndex].tables[tableIndex].rowHeaderColumns = columns
         document.pages[pageIndex].tables[tableIndex].provenance = BlockProvenance(
@@ -1019,7 +1032,7 @@ final class DocumentStore {
             return
         }
         guard document.pages[pageIndex].tables[tableIndex].rows[row][column] != text else { return }
-        recordEdit()
+        recordEdit("Edit table cell")
         document.pages[pageIndex].tables[tableIndex].rows[row][column] = text
         document.pages[pageIndex].tables[tableIndex].provenance = BlockProvenance(
             source: .userEdit,
@@ -1038,7 +1051,7 @@ final class DocumentStore {
             return
         }
         guard document.pages[pageIndex].figures[figureIndex].description != text else { return }
-        recordEdit()
+        recordEdit("Edit figure description")
         document.pages[pageIndex].figures[figureIndex].description = text
         document.pages[pageIndex].figures[figureIndex].provenance = BlockProvenance(
             source: .userEdit,
@@ -1052,7 +1065,7 @@ final class DocumentStore {
     }
 
     func moveBlock(_ block: TextBlock, direction: BlockMoveDirection) {
-        recordEdit()
+        recordEdit("Reorder block")
         DocumentEditing.moveBlock(id: block.id, direction: direction, in: &document)
         document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
     }
@@ -1073,7 +1086,7 @@ final class DocumentStore {
         let clampedDestination = max(0, min(destinationIndex, blockCount - 1))
         guard sourceIndex != clampedDestination else { return }
 
-        recordEdit()
+        recordEdit("Reorder block")
         let block = document.pages[pageIndex].blocks.remove(at: sourceIndex)
         document.pages[pageIndex].blocks.insert(block, at: clampedDestination)
         DocumentEditing.renumberBlocks(on: &document.pages[pageIndex])
@@ -1096,12 +1109,16 @@ final class DocumentStore {
         statusMessage = "Redid last edit"
     }
 
-    private func recordEdit() {
+    private func recordEdit(_ label: String) {
         undoStack.append(document)
         if undoStack.count > Self.editHistoryLimit {
             undoStack.removeFirst(undoStack.count - Self.editHistoryLimit)
         }
         redoStack.removeAll(keepingCapacity: true)
+        editHistory.append(EditHistoryEntry(label: label))
+        if editHistory.count > Self.editHistoryLimit {
+            editHistory.removeFirst(editHistory.count - Self.editHistoryLimit)
+        }
         refreshEditHistoryState()
     }
 

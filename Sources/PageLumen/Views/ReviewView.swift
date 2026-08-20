@@ -56,6 +56,7 @@ private struct ReviewHeader: View {
     @Binding var showReadingOrder: Bool
     @State private var showConfidenceChart = false
     @State private var showReviewQueue = false
+    @State private var showEditHistory = false
 
     var body: some View {
         @Bindable var store = store
@@ -116,6 +117,16 @@ private struct ReviewHeader: View {
                 .popover(isPresented: $showReviewQueue, arrowEdge: .top) {
                     ReviewQueuePopover()
                         .frame(width: 360, height: 420)
+                }
+
+                Button {
+                    showEditHistory = true
+                } label: {
+                    Label("Edit History", systemImage: "clock.arrow.circlepath")
+                }
+                .popover(isPresented: $showEditHistory, arrowEdge: .top) {
+                    EditHistoryPopover()
+                        .frame(width: 360, height: 360)
                 }
 
                 if let page = store.selectedPage {
@@ -374,6 +385,40 @@ private struct ReviewQueuePopover: View {
                     }
                 }
                 .listStyle(.inset)
+            }
+        }
+        .padding(16)
+        .background(AccessibleStyle.appBackground)
+    }
+}
+
+private struct EditHistoryPopover: View {
+    @Environment(DocumentStore.self) private var store
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Edit history")
+                .font(.headline)
+                .foregroundStyle(AccessibleStyle.primaryText)
+            Text("The bounded history records reversible review actions. Source text is not duplicated here.")
+                .font(.caption)
+                .foregroundStyle(AccessibleStyle.secondaryText)
+
+            if store.editHistory.isEmpty {
+                ContentUnavailableView("No edits yet", systemImage: "clock", description: Text("Changes will appear here as you review the document."))
+            } else {
+                List(store.editHistory.reversed()) { entry in
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(entry.label)
+                            .font(.callout.weight(.semibold))
+                            .foregroundStyle(AccessibleStyle.primaryText)
+                        Text(entry.timestamp.formatted(date: .abbreviated, time: .shortened))
+                            .font(.caption)
+                            .foregroundStyle(AccessibleStyle.secondaryText)
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(entry.label), \(entry.timestamp.formatted(date: .abbreviated, time: .shortened))")
+                }
             }
         }
         .padding(16)
