@@ -21,6 +21,7 @@ OCR, and a page warning. Do not retain participant documents after the session.
 | Review navigation | VoiceOver reaches page, heading, block, finding, and quote controls in reading order. Cmd-Shift-[ and ] move between findings and wrap correctly. | |
 | Correct OCR | User can edit a block, mark it reviewed, and copy an accessible excerpt containing page/block citation. | |
 | Export | User can choose an export, understand validation findings, and recover from an unavailable format. | |
+| Optional Stirling operations | With the provider disabled by default, a tester can explicitly configure a local endpoint, understand the upload warning, confirm compression/merge, cancel an in-flight operation, and verify that the original files remain unchanged. | |
 | Search/App Intent | Search returns only retained local documents and exposes provenance; opening a result lands on the expected page. | |
 
 ## Assistive-technology matrix
@@ -33,6 +34,7 @@ OCR, and a page warning. Do not retain participant documents after the session.
 - [ ] Light and dark appearance.
 - [ ] Screen-capture permission denial and cancellation.
 - [ ] Offline operation and clearing recent documents.
+- [ ] Stirling endpoint privacy warning, confirmation, cancellation, and separate-output behavior.
 
 ## Exit decision
 
