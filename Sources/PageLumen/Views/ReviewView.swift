@@ -153,7 +153,11 @@ private struct ReviewHeader: View {
     private var searchSummary: String {
         let query = store.reviewSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         if !query.isEmpty {
-            return "\(store.reviewSearchMatchCount) match\(store.reviewSearchMatchCount == 1 ? "" : "es")"
+            let count = store.reviewSearchMatchCount
+            if let position = store.reviewSearchMatchPosition {
+                return "Match \(position) of \(count)"
+            }
+            return "\(count) match\(count == 1 ? "" : "es")"
         }
         return "\(store.filteredSelectedPageBlocks.count) block\(store.filteredSelectedPageBlocks.count == 1 ? "" : "s") shown"
     }
@@ -263,46 +267,53 @@ private struct StructuredOutputView: View {
     @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 14) {
-                if let page = store.selectedPage {
-                    if store.filteredSelectedPageBlocks.isEmpty {
-                        ContentUnavailableView {
-                            Label("No Blocks Match", systemImage: "line.3.horizontal.decrease.circle")
-                        } description: {
-                            Text("Clear search or switch filters to see more extracted text.")
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 260)
-                    }
-
-                    ForEach(store.filteredSelectedPageBlocks) { block in
-                        EditableBlockRow(block: block)
-                    }
-
-                    if store.reviewFilter == .all || store.reviewFilter == .tablesFigures {
-                        ForEach(page.tables) { table in
-                            EditableGeneratedNote(
-                                title: "Table explanation",
-                                text: table.explanation,
-                                systemImage: "tablecells"
-                            ) { newValue in
-                                store.updateTableExplanation(table, text: newValue)
+        ScrollViewReader { reader in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 14) {
+                    if let page = store.selectedPage {
+                        if store.filteredSelectedPageBlocks.isEmpty {
+                            ContentUnavailableView {
+                                Label("No Blocks Match", systemImage: "line.3.horizontal.decrease.circle")
+                            } description: {
+                                Text("Clear search or switch filters to see more extracted text.")
                             }
+                            .frame(maxWidth: .infinity, minHeight: 260)
                         }
 
-                        ForEach(page.figures) { figure in
-                            EditableGeneratedNote(
-                                title: "Figure explanation",
-                                text: figure.description,
-                                systemImage: "chart.bar"
-                            ) { newValue in
-                                store.updateFigureDescription(figure, text: newValue)
+                        ForEach(store.filteredSelectedPageBlocks) { block in
+                            EditableBlockRow(block: block)
+                                .id(block.id)
+                        }
+
+                        if store.reviewFilter == .all || store.reviewFilter == .tablesFigures {
+                            ForEach(page.tables) { table in
+                                EditableGeneratedNote(
+                                    title: "Table explanation",
+                                    text: table.explanation,
+                                    systemImage: "tablecells"
+                                ) { newValue in
+                                    store.updateTableExplanation(table, text: newValue)
+                                }
+                            }
+
+                            ForEach(page.figures) { figure in
+                                EditableGeneratedNote(
+                                    title: "Figure explanation",
+                                    text: figure.description,
+                                    systemImage: "chart.bar"
+                                ) { newValue in
+                                    store.updateFigureDescription(figure, text: newValue)
+                                }
                             }
                         }
                     }
                 }
+                .padding(22)
             }
-            .padding(22)
+            .onChange(of: store.selectedBlockID) { _, blockID in
+                guard let blockID else { return }
+                reader.scrollTo(blockID, anchor: .center)
+            }
         }
         .background(AccessibleStyle.appBackground)
     }
@@ -382,6 +393,12 @@ private struct EditableBlockRow: View {
         }
         .padding(14)
         .accessiblePanel(borderColor: block.confidence < 0.7 ? AccessibleStyle.warning : AccessibleStyle.border)
+        .overlay {
+            if store.selectedBlockID == block.id {
+                RoundedRectangle(cornerRadius: AccessibleStyle.cornerRadius)
+                    .stroke(AccessibleStyle.focusBorder, lineWidth: 2)
+            }
+        }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(block.type.rawValue.capitalized) block, confidence \(Int(block.confidence * 100)) percent")
         .accessibilityHint("Edit text, change type, drag to reorder, or use the arrow buttons as a keyboard fallback.")

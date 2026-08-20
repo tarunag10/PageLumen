@@ -49,6 +49,7 @@ final class DocumentStore {
     var document: ReaderDocument = DocumentStore.makeInitialDocument()
     var selectedDestination: Destination? = .home
     var selectedPageNumber: Int = 1
+    var selectedBlockID: UUID?
     var isProcessing = false
     var isExportingAudio = false
     var statusMessage = "Ready"
@@ -202,9 +203,18 @@ final class DocumentStore {
         return blocksMatching(query: query).count
     }
 
+    var reviewSearchMatchPosition: Int? {
+        let query = reviewSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty, let selectedBlockID else { return nil }
+        let matches = blocksMatching(query: query)
+        guard let index = matches.firstIndex(where: { $0.id == selectedBlockID }) else { return nil }
+        return index + 1
+    }
+
     func jumpToFirstReviewIssue() {
         if let issue = reviewIssues.first {
             selectedPageNumber = issue.pageNumber
+            selectedBlockID = issue.blockID
             selectedDestination = .review
             reviewFilter = .needsReview
         }
@@ -230,6 +240,7 @@ final class DocumentStore {
 
     func jumpToIssue(_ issue: ReviewIssue) {
         selectedPageNumber = issue.pageNumber
+        selectedBlockID = issue.blockID
         selectedDestination = .review
         reviewFilter = .needsReview
     }
@@ -253,13 +264,20 @@ final class DocumentStore {
             return
         }
 
-        let match = direction > 0
-            ? (matches.first { $0.pageNumber > selectedPageNumber } ?? matches.first)
-            : (matches.reversed().first { $0.pageNumber < selectedPageNumber } ?? matches.last)
-        if let match {
-            selectedPageNumber = match.pageNumber
-            selectedDestination = .review
+        let index: Int
+        if let selectedBlockID, let currentIndex = matches.firstIndex(where: { $0.id == selectedBlockID }) {
+            index = (currentIndex + direction + matches.count) % matches.count
+        } else if direction > 0 {
+            index = matches.firstIndex { $0.pageNumber >= selectedPageNumber } ?? 0
+        } else {
+            index = matches.lastIndex { $0.pageNumber < selectedPageNumber } ?? (matches.count - 1)
         }
+
+        let match = matches[index]
+        selectedBlockID = match.id
+        selectedPageNumber = match.pageNumber
+        selectedDestination = .review
+        statusMessage = "Match \(index + 1) of \(matches.count), page \(match.pageNumber)"
     }
 
     func loadSample() {

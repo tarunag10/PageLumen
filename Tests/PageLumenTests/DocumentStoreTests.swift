@@ -259,9 +259,12 @@ final class DocumentStoreTests: XCTestCase {
         store.selectedPageNumber = matchingPages.max() ?? 1
         store.jumpToPreviousSearchMatch()
         XCTAssertEqual(store.selectedPageNumber, 1)
+        XCTAssertNotNil(store.selectedBlockID)
+        XCTAssertEqual(store.reviewSearchMatchPosition, 1)
 
         store.jumpToPreviousSearchMatch()
         XCTAssertEqual(store.selectedPageNumber, 2)
+        XCTAssertEqual(store.reviewSearchMatchPosition, 2)
         XCTAssertEqual(store.selectedDestination, .review)
     }
 
