@@ -74,6 +74,20 @@ final class AppIntentExportTests: XCTestCase {
         XCTAssertEqual(receivedID, documentID)
     }
 
+    func testApplicationOpenFilesBridgesFinderOpenToDocumentRequest() {
+        let center = NotificationCenter.default
+        let url = URL(fileURLWithPath: "/tmp/from-finder.pdf")
+        var received: URL?
+        let token = center.addObserver(forName: .pageLumenOpenDocumentRequest, object: nil, queue: nil) {
+            received = $0.userInfo?["url"] as? URL
+        }
+        defer { center.removeObserver(token) }
+
+        AppDelegate().application(NSApplication.shared, open: [url])
+
+        XCTAssertEqual(received, url)
+    }
+
     func testTaggedHTMLBridgeWritesToCallerProvidedURLWithoutPrompting() throws {
         let destination = FileManager.default.temporaryDirectory
             .appendingPathComponent("PageLumen-intent-\(UUID().uuidString)")

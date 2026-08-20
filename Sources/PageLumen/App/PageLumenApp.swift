@@ -8,6 +8,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
     }
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            NotificationCenter.default.post(
+                name: .pageLumenOpenDocumentRequest,
+                object: nil,
+                userInfo: ["url": url]
+            )
+        }
+    }
 }
 
 @main
@@ -40,6 +50,10 @@ struct PageLumenApp: App {
                 .onReceive(NotificationCenter.default.publisher(for: .pageLumenOpenLibraryDocumentRequest)) { notification in
                     guard let id = notification.userInfo?["id"] as? UUID else { return }
                     store.openRecentDocument(id: id)
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .pageLumenOpenDocumentRequest)) { notification in
+                    guard let url = notification.userInfo?["url"] as? URL else { return }
+                    store.startImport(urls: [url])
                 }
                 .task {
                     try? Tips.configure([
