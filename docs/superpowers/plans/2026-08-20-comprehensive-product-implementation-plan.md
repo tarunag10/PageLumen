@@ -30,7 +30,7 @@ This plan deliberately separates:
 ### Truths that require correction before a public release
 
 1. Translation is availability-gated through the Apple Translation framework and must not be presented as available when the language model is missing.
-2. `SwiftDataPersisting` calls `fatalError` if its store cannot open. Recents storage cannot be allowed to prevent document reading.
+2. SwiftData initialization can fail on a damaged or unavailable store; recents storage must not prevent document reading. The app now falls back to the recoverable local JSON library and surfaces degraded status.
 3. Screen capture chooses the first eligible window and falls back after all modern-capture failures. It needs user-controlled selection and a clear permission/cancellation path.
 4. The app forces Dark Mode. A reader and accessibility tool must respect system appearance by default.
 5. The PDF export is readable/selectable text but is not a demonstrated PDF/UA implementation. Keep the product label and documentation precise.
@@ -114,7 +114,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [x] Translate blocks while preserving block IDs/bounds and record `translatedFrom`, `translationTargetLanguage`, and `translationEngine` metadata.
 - [x] Never create a translated export if translation was unavailable or if the returned text is unchanged for a source/target pair that should differ. Surface a recoverable error instead.
 - [x] Rename the export action to `Translate and Export Markdown` until additional output formats are intentionally supported.
-- [ ] On macOS 14, hide or disable the action with an explanatory label; do not create an incorrectly labelled source-language export.
+- [x] On macOS 14, hide or disable the action with an explanatory label; do not create an incorrectly labelled source-language export. `canExport` gates the action through the typed Translation availability boundary and the availability message explains the macOS requirement.
 - [x] Add deterministic fake translation-provider tests for successful mapping, availability states, cancellation, partial failure, and unchanged-output detection. Do not make CI depend on downloaded language models.
 
 **Acceptance:** A Spanish fixture produces a verified English fixture through a developer-run physical-Mac test; unsupported systems cannot falsely label an output as translated.
