@@ -71,3 +71,10 @@ For deterministic review/export coverage, launch with both
 document and opens Review without touching the persisted library. The fixture
 test asserts Review Queue/Continue and navigates to export controls; it does
 not prove OCR, save-panel, permission, or accessibility-participant behavior.
+
+On 20 August 2026, a live `xcodebuild ... -only-testing:PageLumenUITests test`
+attempt built the app and UI-test runner, then stalled while Xcode waited for a
+test worker to materialize. It was interrupted after approximately 43 seconds;
+no UI assertions are counted as passed. The result bundle is retained at
+`~/Library/Developer/Xcode/DerivedData/PageLumen-hbeprxkxvdpbnyeekgojupdmzjpn/Logs/Test/Test-PageLumen-2026.08.20_18-16-56-+0530.xcresult`.
+This is a host test-runner limitation, not participant evidence.
