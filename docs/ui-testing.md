@@ -85,3 +85,11 @@ test worker to materialize. It was interrupted after approximately 43 seconds;
 no UI assertions are counted as passed. The result bundle is retained at
 `~/Library/Developer/Xcode/DerivedData/PageLumen-hbeprxkxvdpbnyeekgojupdmzjpn/Logs/Test/Test-PageLumen-2026.08.20_18-16-56-+0530.xcresult`.
 This is a host test-runner limitation, not participant evidence.
+
+The rebuilt bundle was rechecked on 20 August 2026 after the Settings view
+compiler fix: `build-for-testing` completed with `** TEST BUILD SUCCEEDED **`.
+A direct `test-without-building` run of
+`testSettingsLaunchExposesPrivacyAndAppearanceControls` still stopped before
+worker materialization (`Supported platforms for the buildables in the current
+scheme is empty`); no UI assertion is counted as passed. The deterministic
+bundle remains ready for a GUI-session/participant run.
