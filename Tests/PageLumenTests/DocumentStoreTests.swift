@@ -32,7 +32,7 @@ final class DocumentStoreTests: XCTestCase {
     }
 
     func testReadingPreferencesPersistAndNormalizeWithoutChangingSourceData() {
-        var preferences = ReadingPreferences(focusMode: true, lineSpacing: 99, typography: .serif, speechRate: 0.1)
+        let preferences = ReadingPreferences(focusMode: true, lineSpacing: 99, typography: .serif, speechRate: 0.1)
         preferences.persist()
 
         let loaded = ReadingPreferences.load()

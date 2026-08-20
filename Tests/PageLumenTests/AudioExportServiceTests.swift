@@ -12,7 +12,7 @@ final class AudioExportServiceTests: XCTestCase {
     }
 
     func testAudioExportServiceHasExpectedPublicAPI() {
-        let serviceType = AudioExportService.self
+        _ = AudioExportService.self
         let selector = NSSelectorFromString("exportWithText:to:error:")
         // The selector lookup is just a way to assert the Obj-C bridge
         // signature exists. Swift methods aren't introspectable, so we

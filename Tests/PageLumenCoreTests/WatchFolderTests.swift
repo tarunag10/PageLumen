@@ -51,16 +51,16 @@ final class WatchFolderTests: XCTestCase {
         let bookmark = try WatchFolderBookmark.create(for: folder)
         let monitor = WatchFolderMonitor()
         let expectation = expectation(description: "candidate reported")
-        var reported: [WatchFolderCandidate] = []
+        let reported = LockedOptional<[WatchFolderCandidate]>()
 
         try monitor.start(bookmark: bookmark, intervalNanoseconds: 1_000_000) { candidates in
-            reported = candidates
+            reported.set(candidates)
             expectation.fulfill()
         }
         await fulfillment(of: [expectation], timeout: 2)
         monitor.stop()
 
-        XCTAssertEqual(reported.map(\.url.lastPathComponent), ["incoming.pdf"])
+        XCTAssertEqual(reported.value?.map(\.url.lastPathComponent), ["incoming.pdf"])
         XCTAssertTrue(FileManager.default.fileExists(atPath: file.path), "Monitoring must not import or delete files")
     }
 
@@ -70,17 +70,17 @@ final class WatchFolderTests: XCTestCase {
         let bookmark = try WatchFolderBookmark.create(for: folder)
         let monitor = WatchFolderMonitor()
         let expectation = expectation(description: "monitor error reported")
-        var reportedError: WatchFolderError?
+        let reportedError = LockedOptional<WatchFolderError>()
 
         try monitor.start(bookmark: bookmark, intervalNanoseconds: 1_000_000, onCandidates: { _ in }) { error in
-            reportedError = error
+            reportedError.set(error)
             expectation.fulfill()
         }
         try FileManager.default.removeItem(at: folder)
         await fulfillment(of: [expectation], timeout: 2)
         monitor.stop()
 
-        XCTAssertEqual(reportedError, .inaccessible)
+        XCTAssertEqual(reportedError.value, .inaccessible)
     }
 
     func testImportFailureKeepsFilenameAndRedactsSourcePath() {
@@ -102,5 +102,24 @@ final class WatchFolderTests: XCTestCase {
 
         XCTAssertEqual(failure.fileName, "incoming.pdf")
         XCTAssertEqual(failure.message, "Import failed")
+    }
+}
+
+/// Synchronizes callback results without capturing mutable local variables in
+/// the monitor's concurrently executing `@Sendable` closures.
+private final class LockedOptional<Value>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storage: Value?
+
+    var value: Value? {
+        lock.lock()
+        defer { lock.unlock() }
+        return storage
+    }
+
+    func set(_ value: Value) {
+        lock.lock()
+        storage = value
+        lock.unlock()
     }
 }
