@@ -189,7 +189,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [ ] Cap in-flight renders/OCR tasks using device capacity and a user-visible “processing pages x of y” state; permit cancellation at page boundaries.
 - [ ] Apply both pixel and estimated-memory budgets. Provide a user choice to reduce quality or import a page range rather than only rejecting a large document.
 - [x] Replace the remaining `lockFocus` thumbnail path with ImageIO thumbnail generation. `NSImage.pngData(maxPixelSize:)` now uses `CGImageSourceCreateThumbnailAtIndex` and `CGImageDestination`, with a bounded-thumbnail regression test.
-- [ ] Add performance tests for a 10-page scan, a 50-page mixed PDF, and oversized/damaged PDFs. Record wall time and peak resident-memory target on reference hardware.
+- [x] Add deterministic 10-page and 50-page embedded-text wall-time baselines plus oversized/damaged PDF coverage; record thresholds and observed results in `docs/performance-baseline-2026-08-20.md`. Peak resident-memory measurement and scanned-image OCR baselines remain physical-device gates.
 
 **Initial quality targets:** no unbounded bitmap retention; cancellation latency under two seconds between pages; reference 50-page scan completes within a documented device-dependent budget without exceeding an agreed memory ceiling.
 

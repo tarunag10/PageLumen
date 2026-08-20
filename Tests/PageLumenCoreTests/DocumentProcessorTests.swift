@@ -228,6 +228,36 @@ final class DocumentProcessorTests: XCTestCase {
     }
 
     @MainActor
+    func testTenPageImportCompletesWithinWallTimeBaseline() async throws {
+        let url = try makePDF(containingPages: (1...10).map { "Baseline page \($0)" })
+        defer { try? FileManager.default.removeItem(at: url) }
+        let start = Date()
+
+        let document = try await DocumentProcessor().process(url: url)
+
+        let elapsed = Date().timeIntervalSince(start)
+        XCTAssertEqual(document.pageCount, 10)
+        XCTAssertEqual(document.processingStatus, .complete)
+        XCTAssertLessThan(elapsed, 30, "10-page embedded-text baseline exceeded 30 seconds: \(elapsed)s")
+    }
+
+    @MainActor
+    func testFiftyPageImportCompletesWithinWallTimeBaseline() async throws {
+        let url = try makePDF(containingPages: (1...50).map { index in
+            index.isMultiple(of: 2) ? "Mixed baseline text page \(index)" : "Baseline page \(index)"
+        })
+        defer { try? FileManager.default.removeItem(at: url) }
+        let start = Date()
+
+        let document = try await DocumentProcessor().process(url: url)
+
+        let elapsed = Date().timeIntervalSince(start)
+        XCTAssertEqual(document.pageCount, 50)
+        XCTAssertEqual(document.processingStatus, .complete)
+        XCTAssertLessThan(elapsed, 90, "50-page embedded-text baseline exceeded 90 seconds: \(elapsed)s")
+    }
+
+    @MainActor
     func testPDFProcessingPublishesPerPageProgressSnapshots() async throws {
         let url = try makePDF(containingPages: ["First page text", "Second page text"])
         defer { try? FileManager.default.removeItem(at: url) }
