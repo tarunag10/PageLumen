@@ -39,7 +39,9 @@ public final class TranslationService {
                 if !original.isEmpty {
                     let translated = try await translate(original, to: target)
                     copy.pages[pageIndex].blocks[blockIndex].text = translated
+                    copy.pages[pageIndex].blocks[blockIndex].metadata["translatedFrom"] = original
                     copy.pages[pageIndex].blocks[blockIndex].metadata["translationTargetLanguage"] = target.maximalIdentifier
+                    copy.pages[pageIndex].blocks[blockIndex].metadata["translationEngine"] = "Apple Translation"
                 }
             }
         }

@@ -37,6 +37,8 @@ final class TranslationServiceTests: XCTestCase {
         XCTAssertFalse(translated.pages.isEmpty)
         let hasTranslatedBlock = translated.allBlocks.contains { block in
             block.metadata["translationTargetLanguage"] != nil
+                && block.metadata["translationEngine"] == "Apple Translation"
+                && block.metadata["translatedFrom"] != nil
         }
         if #available(macOS 15.0, *) {
             XCTAssertTrue(hasTranslatedBlock, "On macOS 15+, the translation service should stamp the target language metadata on translated blocks.")
