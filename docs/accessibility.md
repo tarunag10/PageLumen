@@ -2,6 +2,11 @@
 
 PageLumen is an accessibility-first product: the app exists to make other documents more accessible, so the app itself has to be a model citizen. This page summarises the accessibility posture of the current build and its known limitations. The audit implementation plan (`docs/superpowers/plans/2026-06-15-audit-implementation-plan.md`, Phase 4) tracks the work in flight.
 
+The release-candidate test matrix is maintained in
+[`accessibility-regression-checklist.md`](accessibility-regression-checklist.md).
+It separates automated evidence from manual VoiceOver, Switch Control, visual,
+motion, and pointer validation.
+
 ## VoiceOver-Friendly Workflows
 
 - The four-step workflow — **Add → Process → Review → Export** — is fully labelled. Every major control has an `accessibilityLabel`, an `accessibilityHint` where the action is non-obvious, and a `traits` value that matches what the control actually does.

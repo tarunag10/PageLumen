@@ -480,7 +480,7 @@ participant and physical-device gates remain open.
 
 - [ ] Conduct structured usability sessions with VoiceOver users, low-vision users, dyslexic readers, students, researchers, educators, and legal professionals. Obtain consent; do not retain user documents beyond the agreed research process.
 - [x] Add a bounded reading-mode slice: focus selected block, line spacing, typography choices, speech speed, and saved reading preferences. Speech word/paragraph highlighting remains a separate host-validation item.
-- [ ] Add an assistive-technology regression checklist: VoiceOver rotor/headings, full keyboard workflow, Switch Control where relevant, large text, contrast/transparency/motion, and pointer/zoom behaviour.
+- [x] Add an assistive-technology regression checklist: `docs/accessibility-regression-checklist.md` separates automated evidence from required manual VoiceOver, full keyboard, Switch Control, large-text, contrast/transparency/motion, and pointer/zoom passes.
 - [x] Add per-export remediation checklist, unresolved-risk summary, and a clear “manual review still required” explanation. `AccessibilityAudit` exposes deterministic checklist/risk/notice values and Step 4 renders them alongside the export gate.
 - [ ] Add quote capture with page/block citations and a “copy accessible excerpt” command.
 - [ ] Add document comparison for source vs OCR and user-selected document revisions; never use AI comparison without provenance/citation output.
