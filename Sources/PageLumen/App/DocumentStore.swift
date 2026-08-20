@@ -88,6 +88,7 @@ final class DocumentStore {
     private let screenshotCaptureService = ScreenshotCaptureService()
     private let audioExportService = AudioExportService()
     private var importTask: Task<Void, Never>?
+    private var audioExportTask: Task<Void, Never>?
 
     private let processor: any DocumentImporting
     private let persisting: any DocumentPersisting
@@ -766,6 +767,10 @@ final class DocumentStore {
     }
 
     private func exportAudio() {
+        guard canExport(.audio), !isExportingAudio else {
+            statusMessage = exportAvailabilityMessage(for: .audio)
+            return
+        }
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.audio]
         panel.nameFieldStringValue = "\(document.title).m4a"
@@ -776,8 +781,12 @@ final class DocumentStore {
         }
         isExportingAudio = true
         statusMessage = "Synthesizing audio summary..."
-        Task { [weak self] in
+        audioExportTask = Task { [weak self] in
             guard let self else { return }
+            defer {
+                self.isExportingAudio = false
+                self.audioExportTask = nil
+            }
             do {
                 let textToSpeak = self.document.summary.isEmpty
                     ? self.fullExtractedText()
@@ -795,11 +804,23 @@ final class DocumentStore {
                     voiceIdentifier: voiceIdentifier
                 )
                 self.statusMessage = "Exported Audio to \(url.lastPathComponent)"
+            } catch is CancellationError {
+                self.statusMessage = "Audio export cancelled"
+            } catch AudioExportError.cancelled {
+                self.statusMessage = "Audio export cancelled"
             } catch {
                 self.statusMessage = "Audio export failed: \(error.localizedDescription)"
             }
-            self.isExportingAudio = false
         }
+    }
+
+    func cancelAudioExport() {
+        guard isExportingAudio else { return }
+        audioExportService.cancel()
+        audioExportTask?.cancel()
+        audioExportTask = nil
+        isExportingAudio = false
+        statusMessage = "Audio export cancelled"
     }
 
     private func exportDOCX() {

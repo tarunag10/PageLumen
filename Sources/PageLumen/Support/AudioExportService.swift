@@ -3,6 +3,9 @@ import Foundation
 
 @MainActor
 public final class AudioExportService {
+    private var activeSynthesizer: AVSpeechSynthesizer?
+    private var activeCollector: AudioBufferCollector?
+
     public init() {}
 
     public func export(
@@ -39,20 +42,31 @@ public final class AudioExportService {
 
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             let collector = AudioBufferCollector(file: file, continuation: continuation)
+            activeSynthesizer = synthesizer
+            activeCollector = collector
             synthesizer.write(utterance, toBufferCallback: { buffer in
                 if let pcm = buffer as? AVAudioPCMBuffer {
-                    do {
-                        try collector.file.write(from: pcm)
-                    } catch {
-                        collector.finish(with: error)
+                    if pcm.frameLength == 0 {
+                        collector.finish()
+                    } else {
+                        collector.write(pcm)
                     }
-                    return
-                }
-                if buffer == nil {
+                } else {
                     collector.finish()
                 }
             })
         }
+        activeSynthesizer = nil
+        activeCollector = nil
+    }
+
+    /// Stops the active synthesis and resolves the export operation as
+    /// cancelled. Calling this when no export is running is a safe no-op.
+    public func cancel() {
+        activeSynthesizer?.stopSpeaking(at: .immediate)
+        activeCollector?.finish(with: AudioExportError.cancelled)
+        activeSynthesizer = nil
+        activeCollector = nil
     }
 
     private func makeAudioFormat() -> AudioExportFormat {
@@ -62,11 +76,14 @@ public final class AudioExportService {
 
 public enum AudioExportError: LocalizedError {
     case emptyText
+    case cancelled
 
     public var errorDescription: String? {
         switch self {
         case .emptyText:
             return "There is no readable text to convert into audio."
+        case .cancelled:
+            return "Audio export was cancelled."
         }
     }
 }
@@ -118,5 +135,22 @@ private final class AudioBufferCollector: @unchecked Sendable {
         } else {
             continuation.resume()
         }
+    }
+
+    func write(_ buffer: AVAudioPCMBuffer) {
+        lock.lock()
+        guard !finished else {
+            lock.unlock()
+            return
+        }
+        do {
+            try file.write(from: buffer)
+        } catch {
+            finished = true
+            lock.unlock()
+            continuation.resume(throwing: error)
+            return
+        }
+        lock.unlock()
     }
 }

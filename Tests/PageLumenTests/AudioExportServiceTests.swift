@@ -41,11 +41,17 @@ final class AudioExportServiceTests: XCTestCase {
             switch error {
             case .emptyText:
                 break
+            case .cancelled:
+                XCTFail("Expected empty text error, got cancellation")
             }
         } catch {
             XCTFail("Expected AudioExportError.emptyText, got \(error)")
         }
 
         XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
+    }
+
+    func testAudioExportCancellationHasUserFacingDescription() {
+        XCTAssertEqual(AudioExportError.cancelled.localizedDescription, "Audio export was cancelled.")
     }
 }

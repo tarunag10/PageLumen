@@ -88,6 +88,13 @@ struct ProcessingView: View {
 
             Spacer()
 
+            if store.isExportingAudio {
+                Label("Audio export is running in Listen & Export", systemImage: "waveform")
+                    .font(.caption)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
+                    .help("Audio export is separate from document processing.")
+            }
+
             VStack(alignment: .trailing, spacing: 6) {
                 ProgressView(value: pageProgress)
                     .frame(width: 200)
@@ -103,7 +110,8 @@ struct ProcessingView: View {
             } label: {
                 Label("Cancel", systemImage: "xmark.circle")
             }
-            .disabled(!store.isProcessing)
+            .disabled(!store.isProcessing || store.isExportingAudio)
+            .help(store.isExportingAudio ? "Audio export is not cancelled from this screen" : "Cancel document import")
         }
         .padding(22)
         .accessibleToolbarSurface()
