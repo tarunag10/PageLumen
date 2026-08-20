@@ -1147,6 +1147,10 @@ final class DocumentStore {
         guard let draft = reviewDraft else { return }
         recordEdit("Insert reviewed draft")
         document.summary = draft.text
+        // Keep the accepted draft's typed model/session and cited source
+        // locations. Deterministic drafts intentionally clear stale AI
+        // provenance rather than claiming that a model generated them.
+        document.summaryProvenance = draft.provenance
         reviewDraft = nil
         statusMessage = "Draft inserted as the document summary"
     }
@@ -1165,6 +1169,19 @@ final class DocumentStore {
         }
         recordEdit("Replace selected description")
         document.pages[pageIndex].blocks[blockIndex].text = draft.text
+        let sourceBlock = document.pages[pageIndex].blocks[blockIndex]
+        let aiLineage = draft.provenance.flatMap {
+            AIBlockLineage(contentKind: .description, provenance: $0)
+        }
+        document.pages[pageIndex].blocks[blockIndex].provenance = BlockProvenance(
+            source: aiLineage == nil ? .userEdit : .appleIntelligence,
+            pageNumber: sourceBlock.pageNumber,
+            bounds: sourceBlock.bounds,
+            confidence: sourceBlock.confidence,
+            parentBlockID: sourceBlock.id,
+            engine: aiLineage == nil ? "PageLumen review editor" : "apple-foundation-models",
+            aiLineage: aiLineage
+        )
         document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
         reviewDraft = nil
         statusMessage = "Reviewed draft replaced the selected description"

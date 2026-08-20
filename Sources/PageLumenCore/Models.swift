@@ -133,6 +133,10 @@ public struct BlockProvenance: Codable, Equatable, Sendable {
     public var createdAt: Date
     public var parentBlockID: UUID?
     public var engine: String?
+    /// Present only after a person explicitly accepts an AI-generated draft
+    /// for this block. The lineage contains source locations and generation
+    /// metadata, never source text or the generated response.
+    public var aiLineage: AIBlockLineage?
 
     public init(
         source: ProvenanceSource,
@@ -141,7 +145,8 @@ public struct BlockProvenance: Codable, Equatable, Sendable {
         confidence: Double? = nil,
         createdAt: Date = Date(),
         parentBlockID: UUID? = nil,
-        engine: String? = nil
+        engine: String? = nil,
+        aiLineage: AIBlockLineage? = nil
     ) {
         self.source = source
         self.pageNumber = pageNumber
@@ -150,6 +155,7 @@ public struct BlockProvenance: Codable, Equatable, Sendable {
         self.createdAt = createdAt
         self.parentBlockID = parentBlockID
         self.engine = engine
+        self.aiLineage = aiLineage
     }
 }
 

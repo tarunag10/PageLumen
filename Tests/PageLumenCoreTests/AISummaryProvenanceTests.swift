@@ -2,6 +2,34 @@ import XCTest
 @testable import PageLumenCore
 
 final class AISummaryProvenanceTests: XCTestCase {
+    func testAcceptedBlockLineageRoundTripsWithoutSourceText() throws {
+        let parentID = UUID(uuidString: "CCCCCCCC-CCCC-CCCC-CCCC-CCCCCCCCCCCC")!
+        let lineage = AIBlockLineage(
+            contentKind: .description,
+            sessionID: UUID(uuidString: "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA")!,
+            requestID: UUID(uuidString: "BBBBBBBB-BBBB-BBBB-BBBB-BBBBBBBBBBBB")!,
+            provider: "apple-foundation-models",
+            modelIdentifier: "SystemLanguageModel.default",
+            generatedAt: Date(timeIntervalSince1970: 1_700_000_000),
+            parentSources: [GroundedSourceReference(pageNumber: 4, blockID: parentID)]
+        )
+        let provenance = BlockProvenance(
+            source: .appleIntelligence,
+            pageNumber: 4,
+            parentBlockID: parentID,
+            engine: "apple-foundation-models",
+            aiLineage: lineage
+        )
+
+        let data = try JSONEncoder().encode(provenance)
+        let json = String(decoding: data, as: UTF8.self)
+        XCTAssertFalse(json.contains("secret source passage"))
+        XCTAssertFalse(json.contains("prompt"))
+        XCTAssertFalse(json.contains("response"))
+        XCTAssertEqual(try JSONDecoder().decode(BlockProvenance.self, from: data), provenance)
+        XCTAssertEqual(lineage.parentSources, [GroundedSourceReference(pageNumber: 4, blockID: parentID)])
+    }
+
     func testProvenanceRoundTripsWithoutPromptOrResponseDiagnostics() throws {
         let blockID = UUID()
         let context = IntelligenceContextMetadata(

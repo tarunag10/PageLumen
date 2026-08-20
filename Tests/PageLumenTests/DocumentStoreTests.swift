@@ -133,6 +133,53 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertTrue(store.statusMessage.contains("discarded"))
     }
 
+    func testAcceptedAIDescriptionDraftStoresBlockLineageAndLeavesSourceTextOutOfIt() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let blockID = UUID(uuidString: "CCCCCCCC-CCCC-CCCC-CCCC-CCCCCCCCCCCC")!
+        let block = TextBlock(id: blockID, pageNumber: 1, type: .paragraph, text: "Original source", bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 0)
+        store.document = ReaderDocument(title: "AI draft", sourceType: .sample, pages: [ReaderPage(pageNumber: 1, size: PageSize(width: 400, height: 600), blocks: [block])])
+        store.selectedBlockID = blockID
+        let summaryProvenance = AISummaryProvenance(
+            sessionID: UUID(uuidString: "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA")!,
+            requestID: UUID(uuidString: "BBBBBBBB-BBBB-BBBB-BBBB-BBBBBBBBBBBB")!,
+            provider: "apple-foundation-models",
+            modelIdentifier: "SystemLanguageModel.default",
+            generatedAt: Date(timeIntervalSince1970: 1_700_000_000),
+            summaryLength: .short,
+            context: IntelligenceContextMetadata(isSelectionScoped: true, requestedBlockCount: 1, sourceBlockCount: 1, includedBlockCount: 1, omittedBlockCount: 0, includedPageNumbers: [1], omittedPageNumbers: [], includedSectionLabels: [], omittedSectionLabels: []),
+            citedPageBlockIDs: [GroundedSourceReference(pageNumber: 1, blockID: blockID)]
+        )
+        store.reviewDraft = GroundedSummary(text: "Generated description", citations: [], provenance: summaryProvenance)
+
+        store.replaceSelectedDescriptionAfterReview()
+
+        let updated = store.document.pages[0].blocks[0]
+        XCTAssertEqual(updated.text, "Generated description")
+        XCTAssertEqual(updated.provenance?.source, .appleIntelligence)
+        XCTAssertEqual(updated.provenance?.parentBlockID, blockID)
+        XCTAssertEqual(updated.provenance?.aiLineage?.contentKind, .description)
+        XCTAssertEqual(updated.provenance?.aiLineage?.parentSources, [GroundedSourceReference(pageNumber: 1, blockID: blockID)])
+        let encoded = String(decoding: try! JSONEncoder().encode(updated.provenance), as: UTF8.self)
+        XCTAssertFalse(encoded.contains("Original source"))
+    }
+
+    func testAcceptedAISummaryDraftPersistsOnlyTypedProvenance() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let provenance = AISummaryProvenance(
+            provider: "apple-foundation-models",
+            modelIdentifier: "SystemLanguageModel.default",
+            summaryLength: .medium,
+            context: IntelligenceContextMetadata(isSelectionScoped: false, requestedBlockCount: 1, sourceBlockCount: 1, includedBlockCount: 1, omittedBlockCount: 0, includedPageNumbers: [1], omittedPageNumbers: [], includedSectionLabels: [], omittedSectionLabels: []),
+            citedPageBlockIDs: [GroundedSourceReference(pageNumber: 1, blockID: UUID())]
+        )
+        store.reviewDraft = GroundedSummary(text: "Generated summary", citations: [], provenance: provenance)
+
+        store.insertReviewDraftAsSummary()
+
+        XCTAssertEqual(store.document.summary, "Generated summary")
+        XCTAssertEqual(store.document.summaryProvenance, provenance)
+    }
+
     func testTableAndFigureEditsRecordUserProvenance() {
         let store = DocumentStore(persisting: InMemoryPersisting())
         let table = TableRegion(pageNumber: 1, bounds: BoundingBox(x: 0, y: 0, width: 100, height: 60), rows: [["A", "B"]], confidence: 0.8)
