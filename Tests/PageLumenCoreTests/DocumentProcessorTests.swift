@@ -36,6 +36,30 @@ final class DocumentProcessorTests: XCTestCase {
         XCTAssertTrue(document.allBlocks.contains { $0.metadata["source"] == "embedded-pdf" })
     }
 
+    @MainActor
+    func testPDFMetadataIsRetainedAlongsideExtractedContent() async throws {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("pdf")
+        let source = try makePDF(containing: "Metadata fixture")
+        defer { try? FileManager.default.removeItem(at: url); try? FileManager.default.removeItem(at: source) }
+        guard let pdf = PDFDocument(url: source) else {
+            XCTFail("Could not open generated PDF")
+            return
+        }
+        pdf.documentAttributes = [
+            PDFDocumentAttribute.titleAttribute: "Metadata title",
+            PDFDocumentAttribute.authorAttribute: "PageLumen test"
+        ]
+        XCTAssertTrue(pdf.write(to: url))
+
+        let document = try await DocumentProcessor().process(url: url)
+
+        XCTAssertEqual(document.metadata["title"], "Metadata title")
+        XCTAssertEqual(document.metadata["author"], "PageLumen test")
+        XCTAssertTrue(document.allBlocks.map(\.text).joined(separator: " ").contains("Metadata fixture"))
+    }
+
     func testUnsupportedFileThrowsReadableError() async {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)

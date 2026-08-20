@@ -152,6 +152,26 @@ final class DocumentPersistingTests: XCTestCase {
         XCTAssertEqual(try persisting.recentDocuments().count, 2)
     }
 
+    func testDocumentsWithoutSemanticFieldsRemainReadable() throws {
+        let document = SampleDataFactory.makeDemoDocument()
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(document)) as? [String: Any])
+        object.removeValue(forKey: "metadata")
+        if var pages = object["pages"] as? [[String: Any]] {
+            pages = pages.map { page in
+                var legacyPage = page
+                legacyPage.removeValue(forKey: "pageLabel")
+                return legacyPage
+            }
+            object["pages"] = pages
+        }
+        let data = try JSONSerialization.data(withJSONObject: object)
+        let decoded = try JSONDecoder().decode(ReaderDocument.self, from: data)
+
+        XCTAssertEqual(decoded.id, document.id)
+        XCTAssertEqual(decoded.metadata, [:])
+        XCTAssertTrue(decoded.pages.allSatisfy { $0.pageLabel == nil })
+    }
+
     func testUnsupportedSchemaVersionIsPreservedForRecovery() throws {
         let url = tempDirectory.appendingPathComponent("recent.json")
         let future: [String: Any] = ["schemaVersion": 99, "documents": [[String: Any]]()]

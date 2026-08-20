@@ -212,6 +212,8 @@ public struct ReaderPage: Identifiable, Codable, Equatable, Sendable {
     public var tables: [TableRegion]
     public var figures: [FigureRegion]
     public var warning: String?
+    /// Human-facing PDF page label (for example, "iv" or "A-1").
+    public var pageLabel: String?
 
     public init(
         id: UUID = UUID(),
@@ -223,7 +225,8 @@ public struct ReaderPage: Identifiable, Codable, Equatable, Sendable {
         blocks: [TextBlock],
         tables: [TableRegion] = [],
         figures: [FigureRegion] = [],
-        warning: String? = nil
+        warning: String? = nil,
+        pageLabel: String? = nil
     ) {
         self.id = id
         self.pageNumber = pageNumber
@@ -235,6 +238,26 @@ public struct ReaderPage: Identifiable, Codable, Equatable, Sendable {
         self.tables = tables
         self.figures = figures
         self.warning = warning
+        self.pageLabel = pageLabel
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, pageNumber, size, thumbnailData, ocrStatus, layoutType, blocks, tables, figures, warning, pageLabel
+    }
+
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(UUID.self, forKey: .id)
+        pageNumber = try values.decode(Int.self, forKey: .pageNumber)
+        size = try values.decode(PageSize.self, forKey: .size)
+        thumbnailData = try values.decodeIfPresent(Data.self, forKey: .thumbnailData)
+        ocrStatus = try values.decode(OCRStatus.self, forKey: .ocrStatus)
+        layoutType = try values.decode(LayoutType.self, forKey: .layoutType)
+        blocks = try values.decode([TextBlock].self, forKey: .blocks)
+        tables = try values.decode([TableRegion].self, forKey: .tables)
+        figures = try values.decode([FigureRegion].self, forKey: .figures)
+        warning = try values.decodeIfPresent(String.self, forKey: .warning)
+        pageLabel = try values.decodeIfPresent(String.self, forKey: .pageLabel)
     }
 }
 
@@ -263,6 +286,8 @@ public struct ReaderDocument: Identifiable, Codable, Equatable, Sendable {
     public var pages: [ReaderPage]
     public var outline: [OutlineItem]
     public var summary: String
+    /// Non-text PDF metadata retained for provenance and downstream exports.
+    public var metadata: [String: String]
 
     public init(
         id: UUID = UUID(),
@@ -274,7 +299,8 @@ public struct ReaderDocument: Identifiable, Codable, Equatable, Sendable {
         processingStatus: ProcessingStatus = .pending,
         pages: [ReaderPage],
         outline: [OutlineItem] = [],
-        summary: String = ""
+        summary: String = "",
+        metadata: [String: String] = [:]
     ) {
         self.id = id
         self.title = title
@@ -286,6 +312,26 @@ public struct ReaderDocument: Identifiable, Codable, Equatable, Sendable {
         self.pages = pages
         self.outline = outline
         self.summary = summary
+        self.metadata = metadata
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, title, sourceType, sourceURL, createdAt, language, processingStatus, pages, outline, summary, metadata
+    }
+
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(UUID.self, forKey: .id)
+        title = try values.decode(String.self, forKey: .title)
+        sourceType = try values.decode(SourceType.self, forKey: .sourceType)
+        sourceURL = try values.decodeIfPresent(URL.self, forKey: .sourceURL)
+        createdAt = try values.decode(Date.self, forKey: .createdAt)
+        language = try values.decodeIfPresent(String.self, forKey: .language)
+        processingStatus = try values.decode(ProcessingStatus.self, forKey: .processingStatus)
+        pages = try values.decode([ReaderPage].self, forKey: .pages)
+        outline = try values.decode([OutlineItem].self, forKey: .outline)
+        summary = try values.decode(String.self, forKey: .summary)
+        metadata = try values.decodeIfPresent([String: String].self, forKey: .metadata) ?? [:]
     }
 
     public var pageCount: Int { pages.count }

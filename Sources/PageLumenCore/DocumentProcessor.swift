@@ -102,9 +102,11 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
                     size: PageSize(width: bounds.width, height: bounds.height),
                     thumbnailData: thumbnailData(for: pdfPage),
                     ocrStatus: .pending,
-                    blocks: []
+                    blocks: [],
+                    pageLabel: pdfPage.label
                 )
-            }
+            },
+            metadata: pdfDocumentMetadata(pdf)
         )
         await onProgress?(document)
 
@@ -133,6 +135,25 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         }
 
         return analyzedDocument(document)
+    }
+
+    private func pdfDocumentMetadata(_ pdf: PDFDocument) -> [String: String] {
+        let attributes = pdf.documentAttributes ?? [:]
+        let mappings: [(String, Any?)] = [
+            ("title", attributes[PDFDocumentAttribute.titleAttribute]),
+            ("author", attributes[PDFDocumentAttribute.authorAttribute]),
+            ("subject", attributes[PDFDocumentAttribute.subjectAttribute]),
+            ("creator", attributes[PDFDocumentAttribute.creatorAttribute]),
+            ("producer", attributes[PDFDocumentAttribute.producerAttribute]),
+            ("keywords", attributes[PDFDocumentAttribute.keywordsAttribute])
+        ]
+        return mappings.reduce(into: [:]) { result, entry in
+            if let value = entry.1 as? String, !value.isEmpty {
+                result[entry.0] = value
+            } else if let values = entry.1 as? [String], !values.isEmpty {
+                result[entry.0] = values.joined(separator: ", ")
+            }
+        }
     }
 
     private struct PageInput: Sendable {
