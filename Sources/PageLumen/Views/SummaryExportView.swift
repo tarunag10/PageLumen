@@ -5,6 +5,7 @@ import TipKit
 struct SummaryExportView: View {
     @Environment(DocumentStore.self) private var store
     @StateObject private var speech = SpeechEngine()
+    @State private var isShowingStirlingConfirmation = false
     // Re-render when the high-contrast toggle changes so AccessibleStyle tokens
     // (border, elevatedBackground) pick up the new value.
     @AppStorage("boostContrast") private var boostContrast = false
@@ -260,6 +261,34 @@ struct SummaryExportView: View {
                     Text("Tagged HTML and Accessibility Report are the review-ready accessibility outputs. Readable PDF is selectable text, not full PDF/UA validation yet.")
                         .font(.callout)
                         .foregroundStyle(AccessibleStyle.secondaryText)
+
+                    if store.canUseStirlingCompression {
+                        Button {
+                            isShowingStirlingConfirmation = true
+                        } label: {
+                            Label("Compress a PDF copy with Stirling-PDF", systemImage: "arrow.down.right.and.arrow.up.left")
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityIdentifier("export.stirlingCompress")
+                        .help(store.stirlingCompressionAvailabilityMessage)
+                        .confirmationDialog(
+                            "Send a generated PDF copy to Stirling-PDF?",
+                            isPresented: $isShowingStirlingConfirmation,
+                            titleVisibility: .visible
+                        ) {
+                            Button("Compress and Save Copy") {
+                                store.compressReadablePDFWithStirling(confirmed: true)
+                            }
+                            Button("Cancel", role: .cancel) {}
+                        } message: {
+                            Text("The configured Stirling-PDF service will receive the generated PDF. PageLumen will save a separate compressed copy and will not replace the original.")
+                        }
+                    } else {
+                        Text(store.stirlingCompressionAvailabilityMessage)
+                            .font(.caption)
+                            .foregroundStyle(AccessibleStyle.secondaryText)
+                            .accessibilityIdentifier("export.stirlingAvailability")
+                    }
                 }
                 .padding(20)
                 .accessiblePanel()

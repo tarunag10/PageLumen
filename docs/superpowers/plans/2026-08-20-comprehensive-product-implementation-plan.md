@@ -453,7 +453,9 @@ repeatable pipelines. See [`docs/stirling-pdf-integration.md`](../../stirling-pd
 - [x] Start with a cancellable compress operation; validate the returned PDF
   before offering replacement, and write output atomically. Stage B is covered
   by `StirlingPDFCompressor`, `StirlingPDFAtomicOutput`, and the focused
-  `StirlingPDFProviderTests` suite (10/10 passed).
+  `StirlingPDFProviderTests` suite (17/17 passed). The export screen now offers
+  a separately saved, explicitly confirmed compressed copy when the provider
+  is enabled; source replacement is never implicit.
 - [x] Add the first bounded merge operation after Stage B: repeated
   `fileInput` multipart inputs, strict count/total-size limits, cancellation,
   typed errors, PDFKit validation, and focused fake-transport tests (13/13

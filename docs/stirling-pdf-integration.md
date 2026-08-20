@@ -78,6 +78,13 @@ version/status/operation metadata; unknown response fields are discarded and
 no source content is accepted by this API. The focused fake-transport suite
 is `StirlingPDFProviderTests`.
 
+The app shell now exposes the bounded compression action on the export screen
+when a valid provider is explicitly enabled in Settings. It generates a
+Readable PDF locally, presents a confirmation naming the upload boundary, and
+saves the returned PDF as a separate copy. The original document is never
+replaced; privacy mode, invalid endpoints, disabled configuration, and missing
+confirmation fail closed before any transport call.
+
 ### Stage B — one safe operation
 
 Implement `compress` using the documented `POST /api/v1/misc/compress-pdf`

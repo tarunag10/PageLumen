@@ -16,6 +16,9 @@ final class DocumentStoreTests: XCTestCase {
         UserDefaults.standard.removeObject(forKey: "includeConfidenceNotes")
         UserDefaults.standard.removeObject(forKey: "includeHeadersAndFooters")
         UserDefaults.standard.removeObject(forKey: "privacyMode")
+        UserDefaults.standard.removeObject(forKey: "stirlingPDFEnabled")
+        UserDefaults.standard.removeObject(forKey: "stirlingPDFEndpoint")
+        UserDefaults.standard.removeObject(forKey: "stirlingPDFAllowRemoteHTTPS")
         UserDefaults.standard.removeObject(forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey)
         UserDefaults.standard.removeObject(forKey: DocumentRepositorySettings.lastClearedAtKey)
         UserDefaults.standard.removeObject(forKey: "intelligenceMode")
@@ -46,6 +49,24 @@ final class DocumentStoreTests: XCTestCase {
 
         XCTAssertEqual(store.document.title, "PageLumen Demo")
         XCTAssertEqual(store.selectedDestination, .review)
+    }
+
+    func testStirlingCompressionRequiresConfigurationPrivacyOffAndConfirmation() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        store.loadSample()
+
+        UserDefaults.standard.set(true, forKey: "stirlingPDFEnabled")
+        UserDefaults.standard.set("http://localhost:8080", forKey: "stirlingPDFEndpoint")
+        UserDefaults.standard.set(false, forKey: "privacyMode")
+        XCTAssertFalse(store.privacyMode)
+        XCTAssertTrue(store.canUseStirlingCompression)
+
+        store.compressReadablePDFWithStirling(confirmed: false)
+        XCTAssertEqual(store.statusMessage, "Stirling-PDF compression requires explicit confirmation.")
+
+        UserDefaults.standard.set(true, forKey: "privacyMode")
+        XCTAssertFalse(store.canUseStirlingCompression)
+        XCTAssertTrue(store.stirlingCompressionAvailabilityMessage.contains("Disable Privacy mode"))
     }
 
     func testReviewSelectionSynchronizesPageBlockAndDeepLinkPayload() {

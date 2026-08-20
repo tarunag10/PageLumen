@@ -1476,6 +1476,66 @@ final class DocumentStore {
         }
     }
 
+    var canUseStirlingCompression: Bool {
+        guard UserDefaults.standard.bool(forKey: "stirlingPDFEnabled"), !privacyMode, !document.pages.isEmpty, !isProcessing else {
+            return false
+        }
+        return stirlingPDFEndpoint?.capabilityState == .loopback || stirlingPDFEndpoint?.capabilityState == .remoteHTTPSAdvancedOptIn
+    }
+
+    var stirlingCompressionAvailabilityMessage: String {
+        if privacyMode { return "Disable Privacy mode before sending a PDF to Stirling-PDF" }
+        guard UserDefaults.standard.bool(forKey: "stirlingPDFEnabled") else { return "Enable Stirling-PDF in Settings first" }
+        guard let endpoint = stirlingPDFEndpoint else { return "Configure a valid Stirling-PDF endpoint in Settings" }
+        switch endpoint.capabilityState {
+        case .loopback: return "Compress a generated Readable PDF through the local Stirling-PDF service"
+        case .remoteHTTPSAdvancedOptIn: return "Compress through the explicitly approved remote HTTPS service"
+        default: return endpoint.capabilityState.userMessage
+        }
+    }
+
+    /// Compresses a generated Readable PDF only after the confirmation dialog
+    /// has made the endpoint, upload boundary, and replacement behavior clear.
+    /// The output is saved separately; the source document is never replaced.
+    func compressReadablePDFWithStirling(confirmed: Bool) {
+        guard confirmed else {
+            statusMessage = "Stirling-PDF compression requires explicit confirmation."
+            return
+        }
+        guard canUseStirlingCompression, let endpoint = stirlingPDFEndpoint else {
+            statusMessage = stirlingCompressionAvailabilityMessage
+            return
+        }
+
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.pdf]
+        panel.nameFieldStringValue = "\(document.title)-compressed.pdf"
+        panel.message = "Save a separately compressed copy. The original document will not be replaced."
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        let sourceData = exportEngine.data(for: document, format: .pdf, options: exportOptions)
+        let authorization = StirlingPDFOperationAuthorization(privacyModeEnabled: privacyMode, operationConfirmed: confirmed)
+        statusMessage = "Compressing a copy through Stirling-PDF…"
+        Task { @MainActor in
+            do {
+                let result = try await StirlingPDFOperationsProvider(endpoint: endpoint, authorization: authorization).execute(
+                    PDFOperationRequest(operation: .compress, documents: [(data: sourceData, filename: "\(document.title).pdf")])
+                )
+                try result.data.write(to: url, options: .atomic)
+                statusMessage = "Saved compressed PDF copy to \(url.lastPathComponent)"
+            } catch {
+                statusMessage = "Stirling-PDF compression failed: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    private var stirlingPDFEndpoint: StirlingPDFEndpoint? {
+        let raw = UserDefaults.standard.string(forKey: "stirlingPDFEndpoint")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard let url = URL(string: raw), !raw.isEmpty else { return nil }
+        let allowRemoteHTTPS = UserDefaults.standard.bool(forKey: "stirlingPDFAllowRemoteHTTPS")
+        return StirlingPDFEndpoint(baseURL: url, allowRemoteHTTPS: allowRemoteHTTPS)
+    }
+
     private func exportTranslated() {
         guard !privacyMode else {
             statusMessage = "Translated export is disabled in Privacy mode."
