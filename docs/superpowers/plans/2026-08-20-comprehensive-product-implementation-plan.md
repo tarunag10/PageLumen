@@ -337,7 +337,7 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 
 ### 4.4 App Intents and on-screen awareness
 
-- [ ] Promote user-recognisable document and finding concepts to `AppEntity` types, with privacy-safe display representations.
+- [x] Promote user-recognisable document and finding concepts to `AppEntity` types, with privacy-safe display representations. Documents expose bounded titles/counts only; findings expose stable opaque IDs, page/severity/kind, and no OCR detail or compatibility IDs. Deterministic tests cover empty libraries, intelligence disabled, and raw OCR disclosure boundaries.
 - [ ] Use intents for bounded actions only; never make all local document text generally discoverable by default.
 - [ ] Evaluate newer entity schemas/view annotations only after confirming they expose no unwanted private context.
 - [ ] Test intents with empty library, revoked permissions, unsupported macOS, and a disabled-intelligence preference. Deterministic empty-library/entity and retention-gate coverage is now present in `AppIntentExportTests`; revoked-permission, unsupported-macOS, and disabled-intelligence participant/system gates remain release work.

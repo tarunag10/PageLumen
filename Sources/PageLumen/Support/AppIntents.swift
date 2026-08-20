@@ -15,9 +15,82 @@ struct PageLumenDocumentEntity: AppEntity, Identifiable {
 
     var displayRepresentation: DisplayRepresentation {
         DisplayRepresentation(
-            title: LocalizedStringResource(stringLiteral: title),
+            title: LocalizedStringResource(stringLiteral: Self.safeTitle(title)),
             subtitle: "\(pageCount) pages · \(unresolvedFindings) unresolved findings"
         )
+    }
+
+    /// App Intents may expose this value in Shortcuts, Siri, or system UI.
+    /// Keep it recognizable, but never let a malformed persisted title turn
+    /// into a multiline or unbounded disclosure surface.
+    private static func safeTitle(_ value: String) -> String {
+        let normalized = value
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "\r", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else { return "Untitled document" }
+        return String(normalized.prefix(120))
+    }
+}
+
+/// A review finding is an addressable user-facing concept, not a transport
+/// for OCR.  In particular, this entity intentionally has no `detail` or
+/// source excerpt field.  Callers can navigate to the owning document and
+/// page, while the sensitive text remains inside the app's explicit review
+/// surface.
+struct PageLumenFindingEntity: AppEntity, Identifiable {
+    static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "PageLumen review finding")
+    static var defaultQuery = PageLumenFindingQuery()
+
+    var id: String
+    var documentID: UUID
+    var documentTitle: String
+    var pageNumber: Int
+    var kind: ReviewIssueKind
+    var severity: ReviewFindingSeverity
+    var isResolved: Bool
+
+    var displayRepresentation: DisplayRepresentation {
+        DisplayRepresentation(
+            title: LocalizedStringResource(stringLiteral: kind.displayName),
+            subtitle: "Page \(max(1, pageNumber)) · \(severity.displayName) · \(documentTitle)"
+        )
+    }
+}
+
+private extension ReviewIssueKind {
+    var displayName: String {
+        switch self {
+        case .pageWarning: return "Page warning"
+        case .lowConfidence: return "Low-confidence extraction"
+        case .unknownBlockType: return "Unknown content type"
+        case .unreviewedTableOrFigure: return "Structure needs review"
+        }
+    }
+}
+
+private extension ReviewFindingSeverity {
+    var displayName: String {
+        switch self {
+        case .blocker: return "Blocker"
+        case .warning: return "Warning"
+        case .info: return "Info"
+        }
+    }
+}
+
+struct PageLumenFindingQuery: EntityQuery {
+    func entities(for identifiers: [String]) async throws -> [PageLumenFindingEntity] {
+        findingEntities().filter { identifiers.contains($0.id) }
+    }
+
+    func suggestedEntities() async throws -> [PageLumenFindingEntity] {
+        findingEntities()
+    }
+
+    private func findingEntities() -> [PageLumenFindingEntity] {
+        guard let repository = PageLumenIntentBridge.repository() else { return [] }
+        return PageLumenIntentBridge.findingEntities(in: repository)
     }
 }
 
@@ -246,6 +319,43 @@ enum PageLumenIntentBridge {
                 unresolvedFindings: metadata.unresolvedFindingCount
             )
         }
+    }
+
+    static func findingEntities(in repository: any DocumentRepository) -> [PageLumenFindingEntity] {
+        guard let metadata = try? repository.recentMetadata() else { return [] }
+        return metadata.flatMap { item -> [PageLumenFindingEntity] in
+            guard let document = try? repository.document(id: item.id) else { return [] }
+            return findingEntities(in: document, documentTitle: item.title)
+        }
+    }
+
+    static func findingEntities(
+        in document: ReaderDocument,
+        documentTitle: String? = nil
+    ) -> [PageLumenFindingEntity] {
+        let title = documentTitle ?? document.title
+        return unresolvedFindings(in: document).enumerated().map { index, finding in
+            // ReviewFinding's compatibility ID can contain user text. Build
+            // an opaque, deterministic ordinal ID instead of exporting it.
+            let safeID = "\(document.id.uuidString):finding:\(index)"
+            return PageLumenFindingEntity(
+                id: safeID,
+                documentID: document.id,
+                documentTitle: safeDocumentTitle(title),
+                pageNumber: finding.pageNumber,
+                kind: finding.kind,
+                severity: finding.severity,
+                isResolved: finding.isResolved
+            )
+        }
+    }
+
+    private static func safeDocumentTitle(_ value: String) -> String {
+        let normalized = value
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "\r", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return normalized.isEmpty ? "Untitled document" : String(normalized.prefix(120))
     }
 
     static func search(query: String, in repository: any DocumentRepository) throws -> [LibrarySearchResult] {

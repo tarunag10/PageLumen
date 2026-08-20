@@ -30,6 +30,49 @@ final class AppIntentExportTests: XCTestCase {
         XCTAssertEqual(entities[0].unresolvedFindings, 2)
     }
 
+    func testEmptyLibraryProducesNoDocumentOrFindingEntities() {
+        let repository = IntentRepositoryStub()
+
+        XCTAssertTrue(PageLumenIntentBridge.entities(from: repository).isEmpty)
+        XCTAssertTrue(PageLumenIntentBridge.findingEntities(in: repository).isEmpty)
+    }
+
+    func testFindingEntitiesRemainAvailableWhenIntelligenceIsDisabled() {
+        let key = "intelligenceMode"
+        let previous = UserDefaults.standard.object(forKey: key)
+        defer {
+            if let previous {
+                UserDefaults.standard.set(previous, forKey: key)
+            } else {
+                UserDefaults.standard.removeObject(forKey: key)
+            }
+        }
+        UserDefaults.standard.set(IntelligenceMode.off.rawValue, forKey: key)
+
+        var document = SampleDataFactory.makeDemoDocument()
+        document.pages[0].blocks[0].confidence = 0.1
+        let entities = PageLumenIntentBridge.findingEntities(in: document)
+
+        XCTAssertFalse(entities.isEmpty)
+        XCTAssertTrue(entities.allSatisfy { !$0.isResolved })
+        XCTAssertTrue(entities.allSatisfy { $0.documentID == document.id })
+    }
+
+    func testFindingEntityNeverExportsRawOCRDetailOrCompatibilityID() {
+        let secret = "PRIVATE OCR CONTENT 9B4F"
+        var document = SampleDataFactory.makeDemoDocument()
+        document.pages[0].blocks[0].text = secret
+        document.pages[0].blocks[0].confidence = 0.1
+
+        let entities = PageLumenIntentBridge.findingEntities(in: document)
+        XCTAssertFalse(entities.isEmpty)
+        for entity in entities {
+            XCTAssertFalse(entity.id.contains(secret))
+            XCTAssertFalse(entity.documentTitle.contains(secret))
+            XCTAssertFalse(entity.displayRepresentationDescription.contains(secret))
+        }
+    }
+
     func testSearchBridgeIsBoundedAndUsesRepositoryRetentionGate() throws {
         let allowed = IntentRepositoryStub(searchResults: [
             LibrarySearchResult(documentID: UUID(), title: "Report", pageNumber: 3, blockID: nil, snippet: "matching text")
@@ -139,6 +182,16 @@ final class AppIntentExportTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: destination.path))
     }
 }
+
+#if canImport(AppIntents)
+private extension PageLumenFindingEntity {
+    /// XCTest cannot inspect localized display fields directly on every
+    /// supported SDK, so this keeps the disclosure assertion SDK-stable.
+    var displayRepresentationDescription: String {
+        String(describing: displayRepresentation)
+    }
+}
+#endif
 
 private final class IntentRepositoryStub: DocumentRepository, @unchecked Sendable {
     let metadata: [DocumentMetadata]
