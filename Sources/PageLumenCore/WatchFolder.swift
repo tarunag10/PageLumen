@@ -107,8 +107,8 @@ public final class WatchFolderMonitor: @unchecked Sendable {
     public func start(
         bookmark: WatchFolderBookmark,
         intervalNanoseconds: UInt64 = 5_000_000_000,
-        onCandidates: @escaping @Sendable ([WatchFolderCandidate]) async -> Void,
-        onError: @escaping @Sendable (WatchFolderError) async -> Void = { _ in }
+        onCandidates: @escaping @MainActor @Sendable ([WatchFolderCandidate]) async -> Void,
+        onError: @escaping @MainActor @Sendable (WatchFolderError) async -> Void = { _ in }
     ) throws {
         stop()
         let folder = try bookmark.resolve()
