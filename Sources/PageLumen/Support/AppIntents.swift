@@ -205,6 +205,9 @@ struct OpenDocumentIntent: AppIntent {
     var fileURL: URL
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
+        guard PageLumenSystemWorkflowContract.supportsDocumentURL(fileURL) else {
+            return .result(dialog: "PageLumen supports PDF and common image files only.")
+        }
         await NSApp.activate(ignoringOtherApps: true)
         PageLumenIntentBridge.postOpenDocumentRequest(url: fileURL)
         return .result(dialog: "Opening \(fileURL.lastPathComponent) in PageLumen.")
