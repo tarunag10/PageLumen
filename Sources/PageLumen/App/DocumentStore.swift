@@ -52,6 +52,7 @@ final class DocumentStore {
     var selectedBlockID: UUID?
     var isProcessing = false
     var isExportingAudio = false
+    var audioExportProgress = AudioExportProgress(fractionCompleted: 0, phase: .preparing)
     var statusMessage = "Ready"
     var exportOptions = ExportOptions.full
     var summaryLength: SummaryLength = .short
@@ -929,11 +930,13 @@ final class DocumentStore {
             return
         }
         isExportingAudio = true
+        audioExportProgress = AudioExportProgress(fractionCompleted: 0, phase: .preparing)
         statusMessage = "Synthesizing audio summary..."
         audioExportTask = Task { [weak self] in
             guard let self else { return }
             defer {
                 self.isExportingAudio = false
+                self.audioExportProgress = AudioExportProgress(fractionCompleted: 0, phase: .preparing)
                 self.audioExportTask = nil
             }
             do {
@@ -950,7 +953,23 @@ final class DocumentStore {
                     text: textToSpeak,
                     to: url,
                     language: language,
-                    voiceIdentifier: voiceIdentifier
+                    voiceIdentifier: voiceIdentifier,
+                    onProgress: { [weak self] progress in
+                        Task { @MainActor [weak self] in
+                            guard let self else { return }
+                            self.audioExportProgress = progress
+                            switch progress.phase {
+                            case .preparing:
+                                self.statusMessage = "Preparing audio export..."
+                            case .synthesizing:
+                                self.statusMessage = "Synthesizing audio summary..."
+                            case .completed:
+                                self.statusMessage = "Finalizing audio export..."
+                            case .cancelled:
+                                self.statusMessage = "Audio export cancelled"
+                            }
+                        }
+                    }
                 )
                 self.statusMessage = "Exported Audio to \(url.lastPathComponent)"
             } catch is CancellationError {

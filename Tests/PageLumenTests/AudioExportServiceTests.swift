@@ -43,6 +43,8 @@ final class AudioExportServiceTests: XCTestCase {
                 break
             case .cancelled:
                 XCTFail("Expected empty text error, got cancellation")
+            case .invalidOutput:
+                XCTFail("Expected empty text error, got invalid output")
             }
         } catch {
             XCTFail("Expected AudioExportError.emptyText, got \(error)")
@@ -53,5 +55,24 @@ final class AudioExportServiceTests: XCTestCase {
 
     func testAudioExportCancellationHasUserFacingDescription() {
         XCTAssertEqual(AudioExportError.cancelled.localizedDescription, "Audio export was cancelled.")
+    }
+
+    func testAudioExportProgressClampsFractionsAndPreservesLifecyclePhase() {
+        XCTAssertEqual(
+            AudioExportProgress(fractionCompleted: -0.5, phase: .preparing),
+            AudioExportProgress(fractionCompleted: 0, phase: .preparing)
+        )
+        XCTAssertEqual(
+            AudioExportProgress(fractionCompleted: 1.5, phase: .completed),
+            AudioExportProgress(fractionCompleted: 1, phase: .completed)
+        )
+        XCTAssertEqual(AudioExportProgress.Phase.synthesizing.rawValue, "synthesizing")
+    }
+
+    func testAudioExportInvalidOutputHasUserFacingDescription() {
+        XCTAssertEqual(
+            AudioExportError.invalidOutput.localizedDescription,
+            "Audio export did not produce a readable audio file."
+        )
     }
 }

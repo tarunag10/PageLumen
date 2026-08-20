@@ -251,7 +251,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [x] Replace hand-rolled ZIP concerns in DOCX generation with ZIPFoundation, validate generated DOCX parts, and preserve headings/tables/alt text where OOXML permits. `DOCXPackageValidator` checks required parts, XML well-formedness, content types, relationships, and the main document contract; `DOCXWriterTests` covers generated, missing-part, and malformed-package cases. Independent desktop-consumer/manual QA remains open.
 - [x] Retain CSV formula neutralisation; add locale/newline/quote and malformed-table tests.
 - [x] Version the JSON schema, make source URL/text-snippet redaction explicit, and provide a schema document.
-- [ ] Make audio export use the selected speech voice/language rather than hard-coded `en-US`; include cancellation/progress and verify generated media metadata.
+- [x] Make audio export use the selected speech voice/language rather than hard-coded `en-US`; include cancellation/progress and verify generated media metadata. `AudioExportService` accepts the selected voice identifier and document language, reports deterministic lifecycle progress (`preparing`/`synthesizing`/`completed`/`cancelled`), removes partial files on failure/cancellation, and validates non-empty AAC output metadata (frame length, sample rate, and channel count). `AudioExportServiceTests` covers the public progress/error contract; actual system speech synthesis remains a manual macOS media/voice gate because AVSpeechSynthesizer output and installed voices are host-dependent.
 
 ### 2.4 Readable PDF and PDF/UA direction
 

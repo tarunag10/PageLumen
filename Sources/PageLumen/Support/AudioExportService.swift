@@ -5,6 +5,7 @@ import Foundation
 public final class AudioExportService {
     private var activeSynthesizer: AVSpeechSynthesizer?
     private var activeCollector: AudioBufferCollector?
+    private var activeProgress: (@Sendable (AudioExportProgress) -> Void)?
 
     public init() {}
 
@@ -12,12 +13,16 @@ public final class AudioExportService {
         text: String,
         to url: URL,
         language: String = "en-US",
-        voiceIdentifier: String? = nil
+        voiceIdentifier: String? = nil,
+        onProgress: (@Sendable (AudioExportProgress) -> Void)? = nil
     ) async throws {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             throw AudioExportError.emptyText
         }
+
+        try Task.checkCancellation()
+        onProgress?(AudioExportProgress(fractionCompleted: 0, phase: .preparing))
 
         let directory = url.deletingPathExtension().deletingLastPathComponent()
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -40,24 +45,42 @@ public final class AudioExportService {
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.92
         utterance.pitchMultiplier = 1.0
 
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            let collector = AudioBufferCollector(file: file, continuation: continuation)
-            activeSynthesizer = synthesizer
-            activeCollector = collector
-            synthesizer.write(utterance, toBufferCallback: { buffer in
-                if let pcm = buffer as? AVAudioPCMBuffer {
-                    if pcm.frameLength == 0 {
-                        collector.finish()
-                    } else {
-                        collector.write(pcm)
-                    }
-                } else {
-                    collector.finish()
-                }
-            })
+        activeProgress = onProgress
+        defer {
+            activeProgress = nil
+            activeSynthesizer = nil
+            activeCollector = nil
         }
-        activeSynthesizer = nil
-        activeCollector = nil
+        do {
+            onProgress?(AudioExportProgress(fractionCompleted: 0, phase: .synthesizing))
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                let collector = AudioBufferCollector(file: file, continuation: continuation)
+                activeSynthesizer = synthesizer
+                activeCollector = collector
+                synthesizer.write(utterance, toBufferCallback: { buffer in
+                    if let pcm = buffer as? AVAudioPCMBuffer {
+                        if pcm.frameLength == 0 {
+                            collector.finish()
+                        } else {
+                            collector.write(pcm)
+                        }
+                    } else {
+                        collector.finish()
+                    }
+                })
+            }
+            guard file.length > 0,
+                  file.fileFormat.sampleRate > 0,
+                  file.fileFormat.channelCount > 0 else {
+                throw AudioExportError.invalidOutput
+            }
+            onProgress?(AudioExportProgress(fractionCompleted: 1, phase: .completed))
+        } catch {
+            if FileManager.default.fileExists(atPath: url.path) {
+                try? FileManager.default.removeItem(at: url)
+            }
+            throw error
+        }
     }
 
     /// Stops the active synthesis and resolves the export operation as
@@ -65,6 +88,8 @@ public final class AudioExportService {
     public func cancel() {
         activeSynthesizer?.stopSpeaking(at: .immediate)
         activeCollector?.finish(with: AudioExportError.cancelled)
+        activeProgress?(AudioExportProgress(fractionCompleted: 0, phase: .cancelled))
+        activeProgress = nil
         activeSynthesizer = nil
         activeCollector = nil
     }
@@ -77,6 +102,7 @@ public final class AudioExportService {
 public enum AudioExportError: LocalizedError {
     case emptyText
     case cancelled
+    case invalidOutput
 
     public var errorDescription: String? {
         switch self {
@@ -84,7 +110,30 @@ public enum AudioExportError: LocalizedError {
             return "There is no readable text to convert into audio."
         case .cancelled:
             return "Audio export was cancelled."
+        case .invalidOutput:
+            return "Audio export did not produce a readable audio file."
         }
+    }
+}
+
+/// Coarse, deterministic lifecycle progress for system speech synthesis.
+/// AVSpeechSynthesizer does not expose a duration or byte-progress callback,
+/// so the service deliberately reports lifecycle milestones rather than
+/// pretending to know a percentage while synthesis is running.
+public struct AudioExportProgress: Equatable, Sendable {
+    public enum Phase: String, Equatable, Sendable {
+        case preparing
+        case synthesizing
+        case completed
+        case cancelled
+    }
+
+    public let fractionCompleted: Double
+    public let phase: Phase
+
+    public init(fractionCompleted: Double, phase: Phase) {
+        self.fractionCompleted = min(max(fractionCompleted, 0), 1)
+        self.phase = phase
     }
 }
 
