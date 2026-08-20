@@ -1,5 +1,9 @@
 import Foundation
 
+public enum DocumentRepositorySettings {
+    public static let keepSearchableLocalCopiesKey = "keepSearchableLocalCopies"
+}
+
 /// A small repository boundary over the existing persistence adapters. It keeps
 /// library/search consumers independent from SwiftData and makes the retention
 /// policy explicit: only documents already approved for local recents are read.
@@ -66,9 +70,11 @@ public struct LibrarySearchResult: Identifiable, Codable, Equatable, Sendable {
 
 public final class LocalDocumentRepository: DocumentRepository, @unchecked Sendable {
     private let persisting: any DocumentPersisting
+    private let keepSearchableLocalCopies: Bool
 
-    public init(persisting: any DocumentPersisting) {
+    public init(persisting: any DocumentPersisting, keepSearchableLocalCopies: Bool = false) {
         self.persisting = persisting
+        self.keepSearchableLocalCopies = keepSearchableLocalCopies
     }
 
     public func recentMetadata() throws -> [DocumentMetadata] {
@@ -85,6 +91,7 @@ public final class LocalDocumentRepository: DocumentRepository, @unchecked Senda
     }
 
     public func search(query: String, limit: Int = 20) throws -> [LibrarySearchResult] {
+        guard keepSearchableLocalCopies else { return [] }
         let terms = Self.tokens(query)
         guard !terms.isEmpty else { return [] }
         let documents = try persisting.recentDocuments()

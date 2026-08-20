@@ -8,7 +8,7 @@ final class LocalLibraryTests: XCTestCase {
         let document = SampleDataFactory.makeDemoDocument()
         try persisting.save(document)
 
-        let results = try LocalDocumentRepository(persisting: persisting).search(query: "import flow", limit: 10)
+        let results = try LocalDocumentRepository(persisting: persisting, keepSearchableLocalCopies: true).search(query: "import flow", limit: 10)
 
         XCTAssertFalse(results.isEmpty)
         XCTAssertEqual(results.first?.documentID, document.id)
@@ -20,7 +20,7 @@ final class LocalLibraryTests: XCTestCase {
     func testSearchRequiresAllTermsAndHonoursLimit() throws {
         let persisting = FilePersisting(fileURL: FileManager.default.temporaryDirectory.appendingPathComponent("pagelumen-library-\(UUID().uuidString).json"))
         try persisting.save(SampleDataFactory.makeDemoDocument())
-        let repository = LocalDocumentRepository(persisting: persisting)
+        let repository = LocalDocumentRepository(persisting: persisting, keepSearchableLocalCopies: true)
 
         XCTAssertTrue(try repository.search(query: "term-that-does-not-exist", limit: 10).isEmpty)
         XCTAssertLessThanOrEqual(try repository.search(query: "document", limit: 1).count, 1)
@@ -51,5 +51,17 @@ final class LocalLibraryTests: XCTestCase {
         XCTAssertEqual(metadata.unresolvedFindingCount, DocumentEditing.reviewFindings(for: document).count)
         XCTAssertNil(try repository.metadata(id: UUID()))
         XCTAssertEqual(try repository.document(id: document.id)?.pages.count, document.pages.count)
+    }
+
+    func testSearchIsOptInWhileRecentsMetadataRemainsAvailable() throws {
+        let document = SampleDataFactory.makeDemoDocument()
+        let persisting = FilePersisting(fileURL: FileManager.default.temporaryDirectory.appendingPathComponent("pagelumen-library-\(UUID().uuidString).json"))
+        try persisting.save(document)
+
+        let repository = LocalDocumentRepository(persisting: persisting)
+
+        XCTAssertTrue(try repository.search(query: "import flow", limit: 10).isEmpty)
+        XCTAssertEqual(try repository.recentMetadata().first?.id, document.id)
+        XCTAssertEqual(try repository.metadata(id: document.id)?.pageCount, document.pageCount)
     }
 }

@@ -38,7 +38,7 @@ struct OnboardingView: View {
                 OnboardingCard(
                     icon: "lock.shield",
                     title: "Privacy first",
-                    message: "Documents stay on this Mac. There is no cloud upload, no telemetry, and no third-party SDK.",
+                    message: "Documents stay on this Mac. Searchable local copies are off by default and can be enabled later in Settings; there is no cloud upload, no telemetry, and no third-party SDK.",
                     tint: AccessibleStyle.success
                 )
                 OnboardingCard(

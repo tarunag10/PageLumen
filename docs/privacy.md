@@ -21,6 +21,16 @@ This page summarises the privacy commitments that PageLumen makes to its users. 
 
 ## Exported JSON and Source URLs
 
+## Local searchable copies
+
+- Retained recent-document metadata remains available for the local library.
+- **Keep searchable local copies** is off by default. When it is off, library
+  search returns no OCR-text matches; turning it on is an explicit opt-in for
+  future local searches.
+- Turning the setting off is reversible and does not delete recent metadata,
+  source files, or existing user data. Use the separate library deletion
+  controls when deletion is intended.
+
 - The JSON export written by `ExportEngine` includes the source `ReaderDocument.sourceURL` by default, because that is often useful when piping output into downstream tooling.
 - The Summary & Export view includes an "Include provenance and review details" toggle. Turn it off when sharing a JSON export without PageLumen's document identifier, source metadata, or review-count envelope. The existing `redactSourceURL` and `redactTextSnippets` options remain available to callers that need finer-grained redaction.
 
