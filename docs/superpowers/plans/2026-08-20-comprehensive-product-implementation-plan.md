@@ -500,9 +500,9 @@ participant and physical-device gates remain open.
 
 ### 7.2 Privacy and security
 
-- [ ] Add `PrivacyInfo.xcprivacy` after auditing required-reason APIs and all new dependencies.
+- [x] Add and audit `PrivacyInfo.xcprivacy`: the manifest declares only UserDefaults reason `CA92.1`; the source/dependency audit found no other current required-reason API categories, tracking, analytics, or model-download SDKs. The audit is documented in `docs/privacy.md` and must be rerun for future platform/dependency additions.
 - [ ] Reconcile App Store privacy nutrition labels with actual network/data behaviour before submission.
-- [ ] Update `docs/privacy.md` for library retention, model downloads, Apple intelligence, App Intents, capture, and export anonymisation.
+- [x] Update `docs/privacy.md` for library retention, model downloads, Apple Intelligence, App Intents, capture, Stirling opt-in operations, required-reason API audit, and export anonymisation.
 - [ ] Provide a real contact channel in `SECURITY.md` and a vulnerability-handling policy.
 - [ ] Fuzz or robustness-test malformed PDFs/images and ensure errors reveal neither document text nor local paths unnecessarily.
 

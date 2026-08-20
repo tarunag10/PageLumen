@@ -19,6 +19,18 @@ This page summarises the privacy commitments that PageLumen makes to its users. 
 - A "Privacy mode" toggle lives in **Settings → Privacy**. It is on by default. When on, translated export is disabled because that capability may use a network-assisted translation provider. The export screen surfaces the resulting status message, so the user can confirm why that format is unavailable before saving. All other documented workflows remain local in the current build.
 - A future cloud-assisted feature, if shipped, will require an explicit, labelled opt-in before any document is transmitted.
 
+## Apple Intelligence and optional PDF tooling
+
+- Apple Intelligence is off by default. The selected mode and per-document opt-out are stored locally; the current adapter receives only bounded extracted source blocks and returns explicit generated, unavailable, or failed outcomes with page/block citations. It does not persist prompts or model responses outside the document's existing local state.
+- The future downloaded-local-model mode is a reservation only; this build does not download model weights or contact a model service.
+- Stirling PDF compression/merge is an explicit, opt-in provider boundary. Capability probing is metadata-only, loopback-first, and never uploads a document during probing. Operations require per-operation confirmation and validate returned PDF bytes locally. Credentials are held in Keychain/in-memory test stores and are never written to document metadata or logs.
+- App Intents expose only bounded local-library metadata, retained search results, unresolved findings, and caller-provided export destinations. They do not make all local OCR text generally discoverable.
+- Screen capture requires the macOS Screen Recording permission and an explicit capture action. PageLumen presents a pre-permission explanation and a System Settings recovery path; capture files are temporary and cleaned up after import or by stale-file startup cleanup.
+
+## Required-reason API audit
+
+The current privacy manifest declares `NSPrivacyAccessedAPICategoryUserDefaults` with reason `CA92.1`, covering local preferences such as export settings, retention consent, and intelligence mode. A source audit found no use of contacts, location, boot-time, file timestamp, disk-space, or device-identifier required-reason APIs. Dependencies are local package code only; none introduces analytics, tracking, model downloads, or network processing. Re-run this audit when adding a dependency or platform API before release.
+
 ## Local searchable copies
 
 - Retained recent-document metadata remains available for the local library.
