@@ -25,6 +25,16 @@ jobs:
       - name: Run tests
         run: swift test -Xswiftc -gnone --parallel
 
+  strict-diagnostics:
+    name: Swift warnings as errors
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run strict diagnostics suite
+        run: swift test -Xswiftc -gnone -Xswiftc -warnings-as-errors
+
   fixture-corpus:
     name: Fixture corpus contract
     runs-on: macos-latest
