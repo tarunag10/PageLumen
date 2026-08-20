@@ -330,11 +330,11 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 
 ### 4.3 Evaluation harness
 
-- [ ] Create a consented evaluation corpus separated from product documents.
-- [ ] Define task-specific measures: citation precision/recall, unsupported-claim rate, user-correction rate, description usefulness, latency, availability failure rate, and energy/memory cost.
-- [ ] Include adversarial documents: incorrect OCR, misleading captions, multiple conflicting values, hidden text, charts without values, multilingual content, and sensitive legal/medical-like samples.
-- [ ] Add a human-review rubric with accessibility advisors. A feature cannot graduate from experimental mode based solely on automatic metrics.
-- [ ] Set launch thresholds before implementation begins; record every model/Xcode/macOS version used for an evaluation run.
+- [x] Create a consented evaluation corpus separated from product documents. `docs/ai-evaluation/corpus-manifest-v1.json` and the typed validator in `EvaluationContract.swift` require an explicit consent boundary and product-document exclusion; status remains pending until a real consented corpus exists.
+- [x] Define task-specific measures: citation precision/recall, unsupported-claim rate, user-correction rate, description usefulness, latency, availability failure rate, and energy/memory cost. `docs/ai-evaluation/metrics-report-v1.json` defines each metric while leaving all observed values unavailable.
+- [x] Include adversarial documents: incorrect OCR, misleading captions, multiple conflicting values, hidden text, charts without values, multilingual content, and sensitive legal/medical-like samples. The v1 manifest requires all seven tags and rejects incomplete manifests deterministically.
+- [x] Add a human-review rubric with accessibility advisors. `docs/ai-evaluation/human-review-rubric-v1.md` defines source-grounded review, accessibility checks, and launch-blocking stop conditions; automatic metrics cannot override a stop condition.
+- [x] Set launch thresholds before implementation begins; record every model/Xcode/macOS version used for an evaluation run. `docs/ai-evaluation/launch-thresholds-v1.md` is a predeclared-threshold template and requires exact run metadata; thresholds and scores remain `TBD`/not run until approved evidence exists.
 
 ### 4.4 App Intents and on-screen awareness
 
