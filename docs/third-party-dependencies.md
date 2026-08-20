@@ -85,6 +85,18 @@ resolution. Packages that download models or send document data are not enabled
 by dependency resolution alone; they require a separate consented feature and
 privacy review.
 
+Run the deterministic readiness check after an intentional online resolution:
+
+```sh
+make offline-dependencies
+```
+
+The check requires every `Package.resolved` checkout to exist locally, then
+runs the Markdown, DOCX, and export-snapshot contracts with SwiftPM's
+`--skip-update` flag and its normal sandbox. It proves the current resolved
+packages can build and run without a dependency update; it does not claim a
+network firewall test or a signed distribution artifact.
+
 Before updating a package:
 
 1. Review the upstream release notes, license, and security advisories.

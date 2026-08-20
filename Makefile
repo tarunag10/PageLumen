@@ -30,6 +30,9 @@ lint:
 quality:
 	./script/quality_gates.sh
 
+offline-dependencies:
+	./script/validate_offline_dependencies.sh
+
 fixtures:
 	./script/validate_fixture_corpus.sh
 
