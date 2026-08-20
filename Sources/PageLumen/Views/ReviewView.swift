@@ -82,6 +82,22 @@ private struct ReviewHeader: View {
                     .toggleStyle(.switch)
 
                 Button {
+                    store.undo()
+                } label: {
+                    Label("Undo", systemImage: "arrow.uturn.backward")
+                }
+                .disabled(!store.canUndo)
+                .help("Undo the last text, structure, or review change")
+
+                Button {
+                    store.redo()
+                } label: {
+                    Label("Redo", systemImage: "arrow.uturn.forward")
+                }
+                .disabled(!store.canRedo)
+                .help("Redo the last undone change")
+
+                Button {
                     showConfidenceChart = true
                 } label: {
                     Label("Confidence", systemImage: "chart.bar.doc.horizontal")

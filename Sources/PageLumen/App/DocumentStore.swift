@@ -67,6 +67,9 @@ final class DocumentStore {
     var librarySearchQuery = ""
     var librarySearchResults: [LibrarySearchResult] = []
 
+    private(set) var canUndo = false
+    private(set) var canRedo = false
+
     var libraryStorageSizeLabel: String {
         do {
             guard let bytes = try persisting.storageSizeInBytes() else {
@@ -155,6 +158,9 @@ final class DocumentStore {
     private var searchIndex: [String: [UUID]] = [:]
     private var searchIndexFingerprint: Int = 0
     private var searchIndexOrder: [TextBlock] = []
+    private var undoStack: [ReaderDocument] = []
+    private var redoStack: [ReaderDocument] = []
+    private static let editHistoryLimit = 50
 
     private var currentOCRProfile: OCRProfile {
         OCRProfile(settingsValue: UserDefaults.standard.string(forKey: "ocrProfile") ?? OCRProfile.general.rawValue)
@@ -693,16 +699,23 @@ final class DocumentStore {
               let blockIndex = document.pages[pageIndex].blocks.firstIndex(where: { $0.id == block.id }) else {
             return
         }
+        guard document.pages[pageIndex].blocks[blockIndex].text != text else { return }
+        recordEdit()
         document.pages[pageIndex].blocks[blockIndex].text = text
         document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
     }
 
     func setBlockReviewed(_ block: TextBlock, isReviewed: Bool) {
+        guard DocumentEditing.isReviewed(block) != isReviewed else { return }
+        recordEdit()
         DocumentEditing.setBlockReviewed(id: block.id, isReviewed: isReviewed, in: &document)
         statusMessage = isReviewed ? "Marked block reviewed" : "Marked block for review"
     }
 
     func setSelectedPageReviewed(_ isReviewed: Bool) {
+        guard let page = document.pages.first(where: { $0.pageNumber == selectedPageNumber }),
+              page.blocks.contains(where: { DocumentEditing.isReviewed($0) != isReviewed }) else { return }
+        recordEdit()
         DocumentEditing.setPageReviewed(pageNumber: selectedPageNumber, isReviewed: isReviewed, in: &document)
         statusMessage = isReviewed ? "Marked page \(selectedPageNumber) reviewed" : "Marked page \(selectedPageNumber) for review"
     }
@@ -717,6 +730,8 @@ final class DocumentStore {
     }
 
     func changeBlockType(_ block: TextBlock, to type: BlockType) {
+        guard block.type != type else { return }
+        recordEdit()
         DocumentEditing.changeBlockType(id: block.id, to: type, in: &document)
         document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
         statusMessage = "Changed block type to \(type.rawValue)"
@@ -727,6 +742,8 @@ final class DocumentStore {
               let tableIndex = document.pages[pageIndex].tables.firstIndex(where: { $0.id == table.id }) else {
             return
         }
+        guard document.pages[pageIndex].tables[tableIndex].explanation != text else { return }
+        recordEdit()
         document.pages[pageIndex].tables[tableIndex].explanation = text
         document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
     }
@@ -736,11 +753,14 @@ final class DocumentStore {
               let figureIndex = document.pages[pageIndex].figures.firstIndex(where: { $0.id == figure.id }) else {
             return
         }
+        guard document.pages[pageIndex].figures[figureIndex].description != text else { return }
+        recordEdit()
         document.pages[pageIndex].figures[figureIndex].description = text
         document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
     }
 
     func moveBlock(_ block: TextBlock, direction: BlockMoveDirection) {
+        recordEdit()
         DocumentEditing.moveBlock(id: block.id, direction: direction, in: &document)
         document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
     }
@@ -761,10 +781,41 @@ final class DocumentStore {
         let clampedDestination = max(0, min(destinationIndex, blockCount - 1))
         guard sourceIndex != clampedDestination else { return }
 
+        recordEdit()
         let block = document.pages[pageIndex].blocks.remove(at: sourceIndex)
         document.pages[pageIndex].blocks.insert(block, at: clampedDestination)
         DocumentEditing.renumberBlocks(on: &document.pages[pageIndex])
         document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
+    }
+
+    func undo() {
+        guard let previous = undoStack.popLast() else { return }
+        redoStack.append(document)
+        document = previous
+        refreshEditHistoryState()
+        statusMessage = "Undid last edit"
+    }
+
+    func redo() {
+        guard let next = redoStack.popLast() else { return }
+        undoStack.append(document)
+        document = next
+        refreshEditHistoryState()
+        statusMessage = "Redid last edit"
+    }
+
+    private func recordEdit() {
+        undoStack.append(document)
+        if undoStack.count > Self.editHistoryLimit {
+            undoStack.removeFirst(undoStack.count - Self.editHistoryLimit)
+        }
+        redoStack.removeAll(keepingCapacity: true)
+        refreshEditHistoryState()
+    }
+
+    private func refreshEditHistoryState() {
+        canUndo = !undoStack.isEmpty
+        canRedo = !redoStack.isEmpty
     }
 
     func exportPreviewText(limit: Int = 4_000) -> String {

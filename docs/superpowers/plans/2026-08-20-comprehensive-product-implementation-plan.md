@@ -220,7 +220,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [ ] Synchronise preview, extracted text, and issue list selection; support page-level deep links.
 - [ ] Support table-grid editing with explicit column-header and row-header assignment.
 - [ ] Add reusable review presets for General, Legal, Academic, Receipts, Slides, and Accessibility Remediation. Presets alter warnings/thresholds, not source data.
-- [ ] Add undo/redo for edits and an edit history view. Do not overwrite raw OCR.
+- [ ] Add undo/redo for edits and an edit history view. Core bounded undo/redo for text, structure, table/figure descriptions, ordering, and review state is now shipped; the visible edit-history view and raw-OCR diff remain open. Do not overwrite raw OCR.
 
 **Exit gate for Phase 1:** Representative-corpus thresholds pass, the review queue is keyboard usable, memory/cancellation tests pass, and manual VoiceOver testing confirms source-to-finding navigation.
 

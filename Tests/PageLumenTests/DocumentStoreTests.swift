@@ -155,6 +155,40 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertTrue(DocumentEditing.isReviewed(store.document.pages[0].blocks[0]))
     }
 
+    func testUndoAndRedoRestoreTextEdits() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let block = store.document.pages[0].blocks[0]
+        let original = block.text
+
+        store.updateBlock(block, text: "Edited text")
+        XCTAssertEqual(store.document.pages[0].blocks[0].text, "Edited text")
+        XCTAssertTrue(store.canUndo)
+        XCTAssertFalse(store.canRedo)
+
+        store.undo()
+        XCTAssertEqual(store.document.pages[0].blocks[0].text, original)
+        XCTAssertFalse(store.canUndo)
+        XCTAssertTrue(store.canRedo)
+
+        store.redo()
+        XCTAssertEqual(store.document.pages[0].blocks[0].text, "Edited text")
+        XCTAssertTrue(store.canUndo)
+        XCTAssertFalse(store.canRedo)
+    }
+
+    func testNewEditClearsRedoHistory() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let block = store.document.pages[0].blocks[0]
+
+        store.updateBlock(block, text: "First edit")
+        store.undo()
+        XCTAssertTrue(store.canRedo)
+
+        store.updateBlock(block, text: "Second edit")
+        XCTAssertFalse(store.canRedo)
+        XCTAssertEqual(store.document.pages[0].blocks[0].text, "Second edit")
+    }
+
     func testSelectedPageReviewedToggleCanMarkAndUnmarkEveryBlock() {
         let store = DocumentStore(persisting: InMemoryPersisting())
 
