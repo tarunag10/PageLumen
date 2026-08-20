@@ -116,7 +116,7 @@ final class DocumentStore {
         regenerateSummary()
         statusMessage = mode == .off
             ? "Apple Intelligence disabled; using deterministic summaries"
-            : "(mode.displayName) selected; regenerating the current summary when available"
+            : "\(mode.displayName) selected; regenerating the current summary when available"
     }
 
     func setIntelligenceOptOutForCurrentDocument(_ optedOut: Bool) {
@@ -429,7 +429,7 @@ final class DocumentStore {
             return
         }
         setBlockReviewed(block, isReviewed: true)
-        statusMessage = "Resolved: (issue.title)"
+        statusMessage = "Resolved: \(issue.title)"
     }
 
     func reopenReviewIssue(_ issue: ReviewIssue) {
@@ -439,7 +439,7 @@ final class DocumentStore {
             return
         }
         setBlockReviewed(block, isReviewed: false)
-        statusMessage = "Reopened: (issue.title)"
+        statusMessage = "Reopened: \(issue.title)"
     }
 
     func jumpToNextSearchMatch() {
@@ -1085,7 +1085,7 @@ final class DocumentStore {
 
     func exportAvailabilityMessage(for format: ExportFormat) -> String {
         guard format == .translated else {
-            return canExport(format) ? "Save (format.rawValue)" : "Import and finish processing a document first"
+            return canExport(format) ? "Save \(format.rawValue)" : "Import and finish processing a document first"
         }
         if privacyMode { return "Disable Privacy mode to use translation export" }
         switch TranslationService().availability(for: Self.targetLanguageFromDefaults()) {

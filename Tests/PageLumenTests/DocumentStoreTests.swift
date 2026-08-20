@@ -224,10 +224,12 @@ final class DocumentStoreTests: XCTestCase {
         store.resolveReviewIssue(issue)
         XCTAssertTrue(store.reviewIssues.isEmpty)
         XCTAssertEqual(store.document.pages[0].blocks[0].text, sourceText)
+        XCTAssertEqual(store.statusMessage, "Resolved: \(issue.title)")
 
         store.reopenReviewIssue(issue)
         XCTAssertEqual(store.reviewIssues.count, 1)
         XCTAssertEqual(store.document.pages[0].blocks[0].text, sourceText)
+        XCTAssertEqual(store.statusMessage, "Reopened: \(issue.title)")
     }
 
     func testUndoAndRedoRestoreTextEdits() {
