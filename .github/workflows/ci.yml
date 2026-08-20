@@ -20,7 +20,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Run tests
         run: swift test -Xswiftc -gnone --parallel
@@ -30,7 +30,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Run strict diagnostics suite
         run: swift test -Xswiftc -gnone -Xswiftc -warnings-as-errors
@@ -40,7 +40,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Validate fixture manifests
         run: ./script/validate_fixture_corpus.sh
@@ -53,7 +53,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Run local quality gates
         run: ./script/quality_gates.sh
@@ -63,7 +63,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Validate release evidence contract
         run: ./script/validate_release_manifest.sh
@@ -73,7 +73,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Validate privacy matrix and manifest alignment
         run: ./script/validate_privacy_matrix.sh
@@ -84,7 +84,7 @@ jobs:
     needs: package-tests
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Build with xcodebuild
         run: >-
