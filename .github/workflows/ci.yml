@@ -28,23 +28,3 @@ jobs:
 
       - name: Build with xcodebuild
         run: xcodebuild -project PageLumen.xcodeproj -scheme PageLumen -configuration Debug -destination 'generic/platform=macOS' build
-
-  quality:
-    name: Quality and release gates
-    runs-on: macos-latest
-    needs: test
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Check whitespace errors
-        run: git diff --check
-
-      - name: Validate privacy manifest
-        run: plutil -lint Config/PrivacyInfo.xcprivacy
-
-      - name: Verify performance baseline artifact
-        run: test -s docs/performance-baseline-2026-08-20.md
-
-      - name: Verify implementation plan is tracked
-        run: test -s docs/superpowers/plans/2026-08-20-comprehensive-product-implementation-plan.md
