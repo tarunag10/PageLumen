@@ -61,7 +61,7 @@ This phase makes design tokens appearance-aware, reduces split-view minimum widt
 ## Verification
 
 - `xcodebuild ... build-for-testing`: passed (`** TEST BUILD SUCCEEDED **`).
-- `swift test -Xswiftc -gnone`: 330 executed, 0 failures, 2 expected skips.
+- `swift test -Xswiftc -gnone`: 332 executed, 0 failures, 2 expected skips.
 
 Physical Light/Dark, VoiceOver, keyboard-only, large text, Increase Contrast, Reduce Transparency, and Reduce Motion checks remain open.
 

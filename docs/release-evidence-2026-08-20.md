@@ -16,7 +16,7 @@ ZIP/DMG packaging run on 2026-08-20.
 - `script/package_release.sh`: succeeded
 - `script/validate_release.sh`: passed bundle, strict deep signature, privacy-manifest, and checksum gates
 - Current-source unsigned Release configuration build: `xcodebuild -project PageLumen.xcodeproj -scheme PageLumen -configuration Release -sdk macosx CODE_SIGNING_ALLOWED=NO build` passed on 2026-08-20. This confirms the checked-out source compiles in Release; it does not replace the signed archive evidence above.
-- Full package regression: `swift test -Xswiftc -gnone` passed 330 tests with 2 documented translation-model skips; focused export, model-comparison, and UI build gates were also rerun after this record's original archive.
+- Full package regression: `swift test -Xswiftc -gnone` passed 332 tests with 2 documented translation-model skips; focused export, model-comparison, and UI build gates were also rerun after this record's original archive.
 - CodeDirectory CDHash: `5bf6c2825145f0764595deff48e03d564f39d79c`
 - Privacy manifest: `Contents/Resources/PrivacyInfo.xcprivacy`, valid, non-tracking, and declares the UserDefaults accessed-API reason
 - Gatekeeper: rejected as `Unnotarized Developer ID` (expected before notarization)
