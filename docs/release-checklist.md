@@ -7,9 +7,9 @@ App Store review or live availability.
 ## Automated gates
 
 - [ ] `swift test` passes on the minimum supported macOS and current macOS.
-- [ ] `xcodebuild -project PageLumen.xcodeproj -scheme PageLumen -configuration Release -destination 'generic/platform=macOS' archive` succeeds.
-- [ ] Exported artifact is validated with `codesign --verify --deep --strict`.
-- [ ] `git diff --check` and dependency/license review pass.
+- [x] `xcodebuild -project PageLumen.xcodeproj -scheme PageLumen -configuration Release -destination 'generic/platform=macOS' archive` succeeds (`dist/PageLumen.xcarchive`, evidence record dated 2026-08-20).
+- [x] Exported artifact is validated with `codesign --verify --deep --strict` (Developer ID, universal arm64/x86_64 archive).
+- [x] `git diff --check` and dependency/license review pass for this phase.
 - [ ] Fixture, malformed-input, and performance smoke tests pass.
 - [x] CI validates package tests, an unsigned Xcode build, local quality gates,
       the bounded fixture manifests, and the release-evidence manifest. CI does
@@ -30,6 +30,6 @@ App Store review or live availability.
 
 - [ ] `docs/privacy.md` and App Store privacy answers match the build.
 - [ ] Third-party notices and resolved versions are reviewed.
-- [ ] Signing identity, entitlements, archive path, checksum, and version/build recorded.
+- [x] Signing identity, entitlements, archive path, checksums, and version/build recorded in `docs/release-evidence-2026-08-20.md`.
 - [ ] Upload, processing, review, and live-store states are recorded separately.
 - [ ] Rollback version and user communication are prepared.

@@ -524,7 +524,7 @@ participant and physical-device gates remain open.
 ### 7.3 Distribution evidence
 
 - [x] Add CI jobs for package tests, Xcode build, lint, fixture corpus, and release-manifest validation. `.github/workflows/ci.yml` now runs separate package-test, unsigned Xcode-build, quality, fixture-corpus, and release-manifest jobs with read-only contents permissions and no signing secrets. `script/validate_fixture_corpus.sh`, `script/validate_release_manifest.sh`, and `docs/release-manifest-v1.json` provide deterministic source-level contracts. Signed archive, notarization, and external distribution evidence remain separate manual/release-owner gates.
-- [ ] Before release, create a signed archive, validate entitlements and sandbox behaviour, export the distribution artifact, notarize if distributing outside the Mac App Store, and separately validate the submitted App Store build if applicable.
+- [x] Before release, create a signed archive, validate entitlements and sandbox behaviour, and export the distribution artifact. Local archive/ZIP/DMG evidence is recorded for 2026-08-20; notarization, upload, review, and live-store states remain explicitly unclaimed and separately gated.
 - [ ] Do not call a local archive, notarized DMG, upload, TestFlight processing, or App Review submission a live-store release; report each state separately.
 - [ ] Run a final physical-Mac smoke test: PDF, image, clipboard, selected capture, window capture, translation, review queue, each export, deletion/retention controls, VoiceOver, light/dark appearance, and offline behaviour.
 
