@@ -6,6 +6,7 @@ struct SummaryExportView: View {
     @Environment(DocumentStore.self) private var store
     @StateObject private var speech = SpeechEngine()
     @State private var isShowingStirlingConfirmation = false
+    @State private var isShowingStirlingMergeConfirmation = false
     // Re-render when the high-contrast toggle changes so AccessibleStyle tokens
     // (border, elevatedBackground) pick up the new value.
     @AppStorage("boostContrast") private var boostContrast = false
@@ -282,6 +283,27 @@ struct SummaryExportView: View {
                             Button("Cancel", role: .cancel) {}
                         } message: {
                             Text("The configured Stirling-PDF service will receive the generated PDF. PageLumen will save a separate compressed copy and will not replace the original.")
+                        }
+
+                        Button {
+                            isShowingStirlingMergeConfirmation = true
+                        } label: {
+                            Label("Merge PDFs with Stirling-PDF", systemImage: "square.stack.3d.up")
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityIdentifier("export.stirlingMerge")
+                        .help("Choose PDFs to append after the current document, then save a separate merged copy")
+                        .confirmationDialog(
+                            "Merge PDFs through Stirling-PDF?",
+                            isPresented: $isShowingStirlingMergeConfirmation,
+                            titleVisibility: .visible
+                        ) {
+                            Button("Choose PDFs and Merge") {
+                                store.mergeReadablePDFWithStirling(confirmed: true)
+                            }
+                            Button("Cancel", role: .cancel) {}
+                        } message: {
+                            Text("The current generated PDF and the PDFs you choose will be sent to the configured Stirling-PDF service. PageLumen will save a separate merged copy and will not replace any source file.")
                         }
                     } else {
                         Text(store.stirlingCompressionAvailabilityMessage)

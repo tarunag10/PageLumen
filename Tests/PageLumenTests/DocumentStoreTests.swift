@@ -64,6 +64,9 @@ final class DocumentStoreTests: XCTestCase {
         store.compressReadablePDFWithStirling(confirmed: false)
         XCTAssertEqual(store.statusMessage, "Stirling-PDF compression requires explicit confirmation.")
 
+        store.mergeReadablePDFWithStirling(confirmed: false)
+        XCTAssertEqual(store.statusMessage, "Stirling-PDF merge requires explicit confirmation.")
+
         UserDefaults.standard.set(true, forKey: "privacyMode")
         XCTAssertFalse(store.canUseStirlingCompression)
         XCTAssertTrue(store.stirlingCompressionAvailabilityMessage.contains("Disable Privacy mode"))

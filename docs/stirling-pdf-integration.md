@@ -85,6 +85,10 @@ saves the returned PDF as a separate copy. The original document is never
 replaced; privacy mode, invalid endpoints, disabled configuration, and missing
 confirmation fail closed before any transport call.
 
+The same screen exposes bounded merge: the generated PDF is combined with
+one or more user-selected PDFs only after confirmation, with strict provider
+input limits and a separate output save. No selected source is overwritten.
+
 ### Stage B — one safe operation
 
 Implement `compress` using the documented `POST /api/v1/misc/compress-pdf`

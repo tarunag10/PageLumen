@@ -459,8 +459,10 @@ repeatable pipelines. See [`docs/stirling-pdf-integration.md`](../../stirling-pd
 - [x] Add the first bounded merge operation after Stage B: repeated
   `fileInput` multipart inputs, strict count/total-size limits, cancellation,
   typed errors, PDFKit validation, and focused fake-transport tests (13/13
-  Stirling provider tests pass). Rearrange and typed pipelines remain separate
-  follow-up work.
+  Stirling provider tests pass). The export screen now exposes a confirmed
+  merge action that combines the generated document with user-selected PDFs
+  and saves a separate validated copy. Rearrange and typed pipelines remain
+  separate follow-up work.
 - [x] Keep remote endpoints disabled by default; the core endpoint validator
   rejects remote HTTP and requires explicit opt-in for remote HTTPS. The core
   capability state supplies privacy-safe advanced warning text; the user-facing

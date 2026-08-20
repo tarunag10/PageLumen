@@ -1529,6 +1529,57 @@ final class DocumentStore {
         }
     }
 
+    /// Merges the current generated PDF with user-selected PDFs only after an
+    /// explicit confirmation. The selected inputs are read once, sent through
+    /// the bounded provider, validated there, and saved as a new file.
+    func mergeReadablePDFWithStirling(confirmed: Bool) {
+        guard confirmed else {
+            statusMessage = "Stirling-PDF merge requires explicit confirmation."
+            return
+        }
+        guard canUseStirlingCompression, let endpoint = stirlingPDFEndpoint else {
+            statusMessage = stirlingCompressionAvailabilityMessage
+            return
+        }
+
+        let openPanel = NSOpenPanel()
+        openPanel.allowedContentTypes = [.pdf]
+        openPanel.allowsMultipleSelection = true
+        openPanel.canChooseDirectories = false
+        openPanel.canChooseFiles = true
+        openPanel.message = "Choose one or more PDFs to append after the current generated document."
+        guard openPanel.runModal() == .OK, !openPanel.urls.isEmpty else { return }
+
+        let currentData = exportEngine.data(for: document, format: .pdf, options: exportOptions)
+        do {
+            let selected = try openPanel.urls.map { url in
+                (data: try Data(contentsOf: url), filename: url.lastPathComponent)
+            }
+            let inputs = [(data: currentData, filename: "\(document.title).pdf")] + selected
+            let panel = NSSavePanel()
+            panel.allowedContentTypes = [.pdf]
+            panel.nameFieldStringValue = "\(document.title)-merged.pdf"
+            panel.message = "Save a separately merged PDF copy. The original document and selected files will not be replaced."
+            guard panel.runModal() == .OK, let outputURL = panel.url else { return }
+
+            let authorization = StirlingPDFOperationAuthorization(privacyModeEnabled: privacyMode, operationConfirmed: confirmed)
+            statusMessage = "Merging (selected.count + 1) PDFs through Stirling-PDF…"
+            Task { @MainActor in
+                do {
+                    let result = try await StirlingPDFOperationsProvider(endpoint: endpoint, authorization: authorization).execute(
+                        PDFOperationRequest(operation: .merge, documents: inputs)
+                    )
+                    try result.data.write(to: outputURL, options: .atomic)
+                    statusMessage = "Saved merged PDF copy to \(outputURL.lastPathComponent)"
+                } catch {
+                    statusMessage = "Stirling-PDF merge failed: \(error.localizedDescription)"
+                }
+            }
+        } catch {
+            statusMessage = "Could not read a selected PDF: \(error.localizedDescription)"
+        }
+    }
+
     private var stirlingPDFEndpoint: StirlingPDFEndpoint? {
         let raw = UserDefaults.standard.string(forKey: "stirlingPDFEndpoint")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         guard let url = URL(string: raw), !raw.isEmpty else { return nil }
