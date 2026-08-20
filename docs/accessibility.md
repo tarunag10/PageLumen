@@ -37,6 +37,25 @@ language, or missing figure description). Warnings remain visible in the audit
 report and do not silently change the export contract. The Accessibility Report
 remains available as the remediation path.
 
+## Export capability matrix
+
+The matrix below describes what the current exporters retain and which review
+gate applies. “Local anchors” are stable identifiers inside the saved artifact;
+they are not deep links that open the PageLumen app.
+
+| Format | Semantics | Source citations | Tables | Figures | Metadata/redaction | Validation gate |
+| --- | --- | --- | --- | --- | --- | --- |
+| Markdown | headings and reading order | page references | Markdown tables | descriptions | export options; source URL can be redacted | export contract |
+| TXT | none beyond reading order | page references when enabled | flattened text | flattened text | export options | export contract |
+| HTML | semantic headings, tables, figures | page/data attributes | HTML table headers | figure captions | export options | accessibility audit; blockers stop export |
+| Tagged HTML | semantic landmarks and stable block anchors | page/block anchors | header cells and block anchors | ARIA label and caption | export options; source snippets can be redacted | accessibility audit; blockers stop export |
+| Readable PDF | selectable text only | page text | flattened text | flattened descriptions | export options | explicitly not PDF/UA; blockers stop export |
+| DOCX | Office Open XML structure (consumer review required) | document content | generated table content | description text | export options | independent consumer review required |
+| CSV | table cells | page/table columns | preserved cells | not applicable | formula neutralisation | CSV contract tests |
+| JSON | machine-readable document model | source URL and block/page fields | structured rows | structured descriptions | source URL/snippet redaction | schema/version gate (in progress) |
+| Accessibility Report | automated findings | page/block references | findings only | findings only | redaction options | report is remediation path |
+| Audio | spoken text | not retained | not retained | not retained | configured voice/language | speech service and media review |
+
 ## Known Limitations
 
 - **Not PDF/UA compliant.** The current PDF export does not claim PDF/UA conformance. We are tracking this in the audit plan; a tagged-PDF pass would require moving the export onto `PDFKit`'s `PDFDocument` / `PDFPage` APIs and adding structure-tree metadata.

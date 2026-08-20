@@ -224,9 +224,9 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 ### 2.1 Establish an export contract
 
-- [ ] Define a format capability matrix in `docs/accessibility.md`: semantics retained, source citations, table support, figure descriptions, metadata, anonymisation, and validation status.
+- [x] Define a format capability matrix in `docs/accessibility.md`: semantics retained, source citations, table support, figure descriptions, metadata, anonymisation, and validation status.
 - [ ] Add `ExportValidationResult` with machine-readable warnings and a human-readable report.
-- [ ] Block or require confirmation when exporting unresolved blocker-level review findings.
+- [x] Block or require confirmation when exporting unresolved blocker-level review findings.
 - [ ] Give each output an embedded provenance/review summary that can be excluded with a clearly labelled privacy setting.
 - [ ] Update Save Panels, file extensions, preview copy, and user documentation to use the same terminology.
 
@@ -234,7 +234,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 - [ ] Make tagged HTML the recommended remediation export.
 - [ ] Verify heading hierarchy, landmarks, document language, table headers/scopes, figure alt text, link preservation, and escaped content.
-- [ ] Add page/block anchors so exported citations can return to the original PageLumen review workspace.
+- [x] Add page/block anchors so exported citations can return to the original PageLumen review workspace.
 - [ ] Add a robust Markdown AST validation/normalisation layer (see `swift-markdown` decision below) before supporting Markdown import or advanced editing.
 - [ ] Snapshot-test HTML/Markdown across all fixture classes.
 
