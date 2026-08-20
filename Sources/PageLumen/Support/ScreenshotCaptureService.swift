@@ -115,15 +115,27 @@ struct FoundationScreenshotCommandRunner: ScreenshotCommandRunning {
 }
 
 struct ScreenshotCaptureService {
+    typealias PermissionCheck = @Sendable () -> Bool
+    typealias WindowCaptureOperation = @Sendable (URL) async throws -> URL
+
     private let temporaryDirectory: URL
     private let commandRunner: any ScreenshotCommandRunning
+    private let preflightPermission: PermissionCheck
+    private let requestPermission: PermissionCheck
+    private let windowCaptureOperation: WindowCaptureOperation?
 
     init(
         temporaryDirectory: URL = FileManager.default.temporaryDirectory,
-        commandRunner: any ScreenshotCommandRunning = FoundationScreenshotCommandRunner()
+        commandRunner: any ScreenshotCommandRunning = FoundationScreenshotCommandRunner(),
+        preflightPermission: @escaping PermissionCheck = CGPreflightScreenCaptureAccess,
+        requestPermission: @escaping PermissionCheck = CGRequestScreenCaptureAccess,
+        windowCaptureOperation: WindowCaptureOperation? = nil
     ) {
         self.temporaryDirectory = temporaryDirectory
         self.commandRunner = commandRunner
+        self.preflightPermission = preflightPermission
+        self.requestPermission = requestPermission
+        self.windowCaptureOperation = windowCaptureOperation
         Self.cleanupStaleTemporaryCaptures(in: temporaryDirectory)
     }
 
@@ -174,7 +186,7 @@ struct ScreenshotCaptureService {
         // accessor surfaces the standard system prompt the first time the
         // user invokes capture. Subsequent invocations are no-ops if access
         // has already been granted.
-        guard CGPreflightScreenCaptureAccess() || CGRequestScreenCaptureAccess() else {
+        guard preflightPermission() || requestPermission() else {
             throw ScreenshotCaptureError.permissionDenied
         }
 
@@ -193,6 +205,9 @@ struct ScreenshotCaptureService {
                 // The picker returns the person's selected filter. There is no
                 // fallback after cancellation or API failure, and no content
                 // is inspected before the selection callback.
+                if let windowCaptureOperation {
+                    return try await windowCaptureOperation(url)
+                }
                 return try await captureWithContentSharingPicker(outputURL: url)
             }
             #endif

@@ -39,6 +39,48 @@ final class ScreenshotCaptureServiceTests: XCTestCase {
         XCTAssertNotNil(service)
     }
 
+    func testWindowCapturePickerCancellationIsInjectableWithoutTCCOrPickerUI() async {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("PageLumen-window-cancel-\(UUID().uuidString)", isDirectory: true)
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let service = ScreenshotCaptureService(
+            temporaryDirectory: directory,
+            preflightPermission: { true },
+            requestPermission: { false },
+            windowCaptureOperation: { _ in throw ScreenshotCaptureError.cancelled }
+        )
+
+        do {
+            _ = try await service.capture(mode: .window)
+            XCTFail("Expected picker cancellation")
+        } catch {
+            XCTAssertEqual(error as? ScreenshotCaptureError, .cancelled)
+        }
+        XCTAssertTrue((try? FileManager.default.contentsOfDirectory(atPath: directory.path).isEmpty) == true)
+    }
+
+    func testWindowCaptureNoSelectionIsInjectableWithoutCreatingAnOutput() async {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("PageLumen-window-empty-\(UUID().uuidString)", isDirectory: true)
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let service = ScreenshotCaptureService(
+            temporaryDirectory: directory,
+            preflightPermission: { true },
+            requestPermission: { false },
+            windowCaptureOperation: { _ in throw ScreenshotCaptureError.noShareableContent }
+        )
+
+        do {
+            _ = try await service.capture(mode: .window)
+            XCTFail("Expected no-shareable-content failure")
+        } catch {
+            XCTAssertEqual(error as? ScreenshotCaptureError, .noShareableContent)
+        }
+        XCTAssertTrue((try? FileManager.default.contentsOfDirectory(atPath: directory.path).isEmpty) == true)
+    }
+
     func testScreenshotCaptureErrorDescriptions() {
         XCTAssertNotNil(ScreenshotCaptureError.commandFailed(1).errorDescription)
         XCTAssertNotNil(ScreenshotCaptureError.missingOutput.errorDescription)
