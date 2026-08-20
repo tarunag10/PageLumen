@@ -216,11 +216,16 @@ private struct ReviewTrustBar: View {
             .popoverTip(ReviewIssueTip(), arrowEdge: .top)
             .disabled(store.reviewIssueCount == 0)
 
-            Button {
-                store.setSelectedPageReviewed(true)
-            } label: {
-                Label("Mark Page Reviewed", systemImage: "checkmark.circle")
+            Toggle(isOn: Binding(
+                get: { store.isSelectedPageReviewed },
+                set: { store.setSelectedPageReviewed($0) }
+            )) {
+                Label("Page Reviewed", systemImage: "checkmark.circle")
             }
+            .toggleStyle(.checkbox)
+            .help(store.isSelectedPageReviewed ? "Mark this page for review again" : "Mark every block on this page as reviewed")
+            .accessibilityHint(store.isSelectedPageReviewed ? "Uncheck to mark this page for review again." : "Check to mark every block on this page as reviewed.")
+            .disabled(store.selectedPage == nil || store.selectedPage?.blocks.isEmpty == true)
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 11)

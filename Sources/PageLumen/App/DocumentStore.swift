@@ -235,6 +235,14 @@ final class DocumentStore {
         reviewIssues.count
     }
 
+    /// Whether every editable block on the selected page has been reviewed.
+    /// Empty pages are not considered reviewed so the toolbar control cannot
+    /// appear complete when there is no reviewable content.
+    var isSelectedPageReviewed: Bool {
+        guard let page = selectedPage, !page.blocks.isEmpty else { return false }
+        return page.blocks.allSatisfy(DocumentEditing.isReviewed)
+    }
+
     var extractionReadinessLabel: String {
         if isProcessing {
             return "Processing locally"

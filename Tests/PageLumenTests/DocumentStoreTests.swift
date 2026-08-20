@@ -155,6 +155,22 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertTrue(DocumentEditing.isReviewed(store.document.pages[0].blocks[0]))
     }
 
+    func testSelectedPageReviewedToggleCanMarkAndUnmarkEveryBlock() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+
+        XCTAssertFalse(store.isSelectedPageReviewed)
+
+        store.setSelectedPageReviewed(true)
+
+        XCTAssertTrue(store.isSelectedPageReviewed)
+        XCTAssertTrue(store.document.pages[0].blocks.allSatisfy(DocumentEditing.isReviewed))
+
+        store.setSelectedPageReviewed(false)
+
+        XCTAssertFalse(store.isSelectedPageReviewed)
+        XCTAssertTrue(store.document.pages[0].blocks.allSatisfy { !DocumentEditing.isReviewed($0) })
+    }
+
     func testReviewIssueKeyboardNavigationWrapsAndSelectsReviewDestination() {
         let store = DocumentStore(persisting: InMemoryPersisting())
         store.document = ReaderDocument(
