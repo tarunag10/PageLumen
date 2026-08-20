@@ -232,7 +232,10 @@ final class DocumentStore {
         let issues = reviewIssues
         guard !issues.isEmpty else { return }
         let currentIndex = issues.firstIndex { issue in
-            issue.pageNumber == selectedPageNumber
+            if let selectedBlockID, issue.blockID == selectedBlockID {
+                return true
+            }
+            return issue.pageNumber == selectedPageNumber
         } ?? (offset > 0 ? -1 : issues.count)
         let nextIndex = (currentIndex + offset + issues.count) % issues.count
         jumpToIssue(issues[nextIndex])
