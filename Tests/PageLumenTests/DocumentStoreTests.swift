@@ -48,6 +48,34 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertEqual(store.selectedDestination, .review)
     }
 
+    func testReviewSelectionSynchronizesPageBlockAndDeepLinkPayload() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let block = store.document.pages[0].blocks[0]
+
+        XCTAssertTrue(store.selectReviewSource(pageNumber: block.pageNumber, blockID: block.id, issueID: "source-issue"))
+        XCTAssertEqual(store.selectedPageNumber, block.pageNumber)
+        XCTAssertEqual(store.selectedBlockID, block.id)
+        XCTAssertEqual(store.selectedDestination, .review)
+        XCTAssertEqual(store.reviewSelectionPayload.documentID, store.document.id)
+        XCTAssertEqual(store.reviewSelectionPayload.blockID, block.id)
+        XCTAssertEqual(store.reviewSelectionPayload.issueID, "source-issue")
+    }
+
+    func testReviewSelectionRejectsMissingPageOrBlockWithoutChangingSelection() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let originalPage = store.selectedPageNumber
+        let originalBlock = store.selectedBlockID
+
+        XCTAssertFalse(store.applyReviewSelection(ReviewSelectionPayload(pageNumber: 999)))
+        XCTAssertEqual(store.selectedPageNumber, originalPage)
+        XCTAssertEqual(store.selectedBlockID, originalBlock)
+
+        let page = store.document.pages[0]
+        XCTAssertFalse(store.applyReviewSelection(ReviewSelectionPayload(pageNumber: page.pageNumber, blockID: UUID())))
+        XCTAssertEqual(store.selectedPageNumber, originalPage)
+        XCTAssertEqual(store.selectedBlockID, originalBlock)
+    }
+
     func testSummaryLengthRegeneratesDisplayedSummary() {
         let store = DocumentStore(persisting: InMemoryPersisting())
         let previousAISetting = UserDefaults.standard.object(forKey: "useOnDeviceAI")

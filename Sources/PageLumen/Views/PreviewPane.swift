@@ -73,9 +73,7 @@ private struct ReadingOrderOverlay: View {
             ForEach(page.blocks) { block in
                 let rect = scaled(block.bounds, in: proxy.size)
                 Button {
-                    store.selectedBlockID = block.id
-                    store.selectedPageNumber = block.pageNumber
-                    store.selectedDestination = .review
+                    _ = store.selectReviewSource(pageNumber: block.pageNumber, blockID: block.id)
                 } label: {
                     ZStack(alignment: .topLeading) {
                         RoundedRectangle(cornerRadius: 5)

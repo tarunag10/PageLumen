@@ -69,6 +69,7 @@ final class DocumentStore {
     var selectedDestination: Destination? = .home
     var selectedPageNumber: Int = 1
     var selectedBlockID: UUID?
+    var selectedReviewIssueID: String?
     var isProcessing = false
     var isExportingAudio = false
     var audioExportProgress = AudioExportProgress(fractionCompleted: 0, phase: .preparing)
@@ -374,6 +375,57 @@ final class DocumentStore {
         DocumentComparison.changes(in: document)
     }
 
+    /// The current Review location, suitable for restoration by a Quick Look,
+    /// share extension, or future URL scheme. Only stable identifiers are
+    /// emitted so source text never leaks through a deep link.
+    var reviewSelectionPayload: ReviewSelectionPayload {
+        ReviewSelectionPayload(
+            documentID: document.id,
+            pageNumber: selectedPage?.pageNumber ?? selectedPageNumber,
+            blockID: selectedBlockID,
+            issueID: selectedReviewIssueID ?? currentReviewIssue?.id
+        )
+    }
+
+    /// Applies a serialized Review location after validating it against the
+    /// currently open document. Invalid page or block identifiers are rejected
+    /// rather than silently selecting a different source block.
+    @discardableResult
+    func applyReviewSelection(_ payload: ReviewSelectionPayload) -> Bool {
+        if let payloadDocumentID = payload.documentID, payloadDocumentID != document.id {
+            statusMessage = "This Review link belongs to a different document"
+            return false
+        }
+        guard let page = document.pages.first(where: { $0.pageNumber == payload.pageNumber }) else {
+            statusMessage = "Review link points to a missing page"
+            return false
+        }
+        if let blockID = payload.blockID, !page.blocks.contains(where: { $0.id == blockID }) {
+            statusMessage = "Review link points to a missing block on page \(page.pageNumber)"
+            return false
+        }
+        selectedPageNumber = page.pageNumber
+        selectedBlockID = payload.blockID
+        selectedReviewIssueID = payload.issueID
+        selectedDestination = .review
+        statusMessage = payload.blockID == nil
+            ? "Opened Review page \(page.pageNumber)"
+            : "Opened Review page \(page.pageNumber) source block"
+        return true
+    }
+
+    /// Selects one source location and keeps the preview, extracted text, and
+    /// Review queue on the same page/block target.
+    @discardableResult
+    func selectReviewSource(pageNumber: Int, blockID: UUID? = nil, issueID: String? = nil) -> Bool {
+        applyReviewSelection(ReviewSelectionPayload(
+            documentID: document.id,
+            pageNumber: pageNumber,
+            blockID: blockID,
+            issueID: issueID
+        ))
+    }
+
     var reviewProgress: ReviewProgress {
         DocumentEditing.reviewProgress(for: document, preset: reviewPreset)
     }
@@ -449,9 +501,7 @@ final class DocumentStore {
 
     func jumpToFirstReviewIssue() {
         if let issue = reviewIssues.first {
-            selectedPageNumber = issue.pageNumber
-            selectedBlockID = issue.blockID
-            selectedDestination = .review
+            _ = selectReviewSource(pageNumber: issue.pageNumber, blockID: issue.blockID, issueID: issue.id)
             reviewFilter = .needsReview
         }
     }
@@ -478,9 +528,7 @@ final class DocumentStore {
     }
 
     func jumpToIssue(_ issue: ReviewIssue) {
-        selectedPageNumber = issue.pageNumber
-        selectedBlockID = issue.blockID
-        selectedDestination = .review
+        _ = selectReviewSource(pageNumber: issue.pageNumber, blockID: issue.blockID, issueID: issue.id)
         reviewFilter = .needsReview
     }
 
@@ -488,6 +536,14 @@ final class DocumentStore {
     /// Prefer the selected block, then fall back to the selected page so
     /// page-level warnings remain actionable from keyboard commands.
     var currentReviewIssue: ReviewIssue? {
+        if let selectedReviewIssueID,
+           let issue = reviewIssues.first(where: {
+               $0.id == selectedReviewIssueID &&
+               $0.pageNumber == selectedPageNumber &&
+               ($0.blockID == nil || $0.blockID == selectedBlockID)
+           }) {
+            return issue
+        }
         if let selectedBlockID,
            let issue = reviewIssues.first(where: { $0.blockID == selectedBlockID }) {
             return issue
@@ -574,6 +630,7 @@ final class DocumentStore {
 
         let match = matches[index]
         selectedBlockID = match.id
+        selectedReviewIssueID = nil
         selectedPageNumber = match.pageNumber
         selectedDestination = .review
         statusMessage = "Match \(index + 1) of \(matches.count), page \(match.pageNumber)"
@@ -584,6 +641,8 @@ final class DocumentStore {
         applyLanguagePreference()
         remember(document)
         selectedPageNumber = 1
+        selectedBlockID = nil
+        selectedReviewIssueID = nil
         selectedDestination = .review
         statusMessage = "Loaded demo document"
     }
@@ -645,9 +704,7 @@ final class DocumentStore {
             return
         }
         selectRecentDocument(selected)
-        selectedPageNumber = result.pageNumber
-        selectedBlockID = result.blockID
-        selectedDestination = .review
+        _ = selectReviewSource(pageNumber: result.pageNumber, blockID: result.blockID)
         statusMessage = "Opened \(result.title), page \(result.pageNumber)"
     }
 
@@ -670,6 +727,7 @@ final class DocumentStore {
             document = Self.makeInitialDocument()
             selectedPageNumber = 1
             selectedBlockID = nil
+            selectedReviewIssueID = nil
             selectedDestination = .home
         }
         statusMessage = "Forgot \(selectedDocument.title); source files were not deleted"
@@ -932,6 +990,7 @@ final class DocumentStore {
             switch result {
             case .generated(let grounded):
                 self.document.summary = grounded.text
+                self.document.summaryProvenance = grounded.provenance
                 self.document.metadata["intelligenceSource"] = "apple-foundation-models"
                 self.document.metadata["intelligenceEngine"] = "FoundationModels"
                 self.document.metadata["intelligenceGeneratedAt"] = ISO8601DateFormatter().string(from: Date())
@@ -946,6 +1005,7 @@ final class DocumentStore {
     }
 
     private func clearIntelligenceProvenance() {
+        document.summaryProvenance = nil
         document.metadata.removeValue(forKey: "intelligenceSource")
         document.metadata.removeValue(forKey: "intelligenceEngine")
         document.metadata.removeValue(forKey: "intelligenceGeneratedAt")

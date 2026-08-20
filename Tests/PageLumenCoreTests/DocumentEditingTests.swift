@@ -2,6 +2,36 @@ import XCTest
 @testable import PageLumenCore
 
 final class DocumentEditingTests: XCTestCase {
+
+    func testReviewSelectionPayloadRoundTripsWithoutSourceText() throws {
+        let documentID = UUID()
+        let blockID = UUID()
+        let payload = ReviewSelectionPayload(
+            documentID: documentID,
+            pageNumber: 4,
+            blockID: blockID,
+            issueID: "lowConfidence-4-\(blockID.uuidString)"
+        )
+
+        let data = try JSONEncoder().encode(payload)
+        let decoded = try JSONDecoder().decode(ReviewSelectionPayload.self, from: data)
+
+        XCTAssertEqual(decoded, payload)
+        XCTAssertFalse(String(decoding: data, as: UTF8.self).contains("text"))
+    }
+
+    func testPageOnlyReviewSelectionPayloadCanOmitDocumentAndBlock() throws {
+        let payload = ReviewSelectionPayload(pageNumber: 2)
+        let decoded = try JSONDecoder().decode(
+            ReviewSelectionPayload.self,
+            from: JSONEncoder().encode(payload)
+        )
+
+        XCTAssertNil(decoded.documentID)
+        XCTAssertNil(decoded.blockID)
+        XCTAssertNil(decoded.issueID)
+        XCTAssertEqual(decoded.pageNumber, 2)
+    }
     func testReviewPresetsAdjustConfidenceThresholdsWithoutChangingSource() {
         let block = TextBlock(pageNumber: 1, type: .paragraph, text: "Borderline", bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20), confidence: 0.8)
         let document = ReaderDocument(title: "Preset", sourceType: .sample, pages: [

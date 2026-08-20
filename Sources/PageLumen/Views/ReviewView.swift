@@ -716,7 +716,7 @@ private struct EditableBlockRow: View {
         }
         .padding(focusHighlightPadding)
         .background(focusHighlightColor, in: RoundedRectangle(cornerRadius: 8))
-        .onTapGesture { store.selectedBlockID = block.id }
+                        .onTapGesture { _ = store.selectReviewSource(pageNumber: block.pageNumber, blockID: block.id) }
         .padding(14)
         .accessiblePanel(borderColor: block.confidence < 0.7 ? AccessibleStyle.warning : AccessibleStyle.border)
         .overlay {
