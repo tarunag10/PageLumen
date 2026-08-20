@@ -156,4 +156,50 @@ final class SwiftDataPersistingTests: XCTestCase {
         XCTAssertEqual(records.first?.title, "Legacy recent")
         XCTAssertNil(records.first?.storageRevision)
     }
+
+    func testMigrationRecoveryBackupPreservesStoreAndSQLiteJournalsAndCanRestore() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("PageLumenRecovery-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let storeURL = directory.appendingPathComponent("recents.store")
+        try Data("old-store".utf8).write(to: storeURL)
+        try Data("old-wal".utf8).write(to: URL(fileURLWithPath: storeURL.path + "-wal"))
+        try Data("old-shm".utf8).write(to: URL(fileURLWithPath: storeURL.path + "-shm"))
+
+        let backupURL = try XCTUnwrap(SwiftDataPersisting.createRecoveryBackup(for: storeURL))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: backupURL.appendingPathComponent("store").path))
+        XCTAssertEqual(try Data(contentsOf: backupURL.appendingPathComponent("store")), Data("old-store".utf8))
+        XCTAssertEqual(try Data(contentsOf: backupURL.appendingPathComponent("store-wal")), Data("old-wal".utf8))
+        XCTAssertEqual(try Data(contentsOf: backupURL.appendingPathComponent("store-shm")), Data("old-shm".utf8))
+
+        // Simulate a partially-written failed migration. Restoration must
+        // replace the base store and both SQLite journals from the backup.
+        try Data("partial-new-store".utf8).write(to: storeURL)
+        try SwiftDataPersisting.restoreRecoveryBackup(backupURL, to: storeURL)
+        XCTAssertEqual(try Data(contentsOf: storeURL), Data("old-store".utf8))
+        XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: storeURL.path + "-wal")), Data("old-wal".utf8))
+        XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: storeURL.path + "-shm")), Data("old-shm".utf8))
+    }
+
+    func testRestoreRecoveryBackupRejectsIncompleteArtifactWithoutDeletingStore() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("PageLumenRecoveryInvalid-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let storeURL = directory.appendingPathComponent("recents.store")
+        try Data("still-current".utf8).write(to: storeURL)
+        let backupURL = directory.appendingPathComponent("bad.backup", isDirectory: true)
+        try FileManager.default.createDirectory(at: backupURL, withIntermediateDirectories: true)
+        try Data("not-a-store".utf8).write(to: backupURL.appendingPathComponent("unexpected"))
+
+        XCTAssertThrowsError(try SwiftDataPersisting.restoreRecoveryBackup(backupURL, to: storeURL)) { error in
+            guard case let SwiftDataPersistingError.migrationFailed(path, reason) = error else {
+                return XCTFail("Unexpected error: \(error)")
+            }
+            XCTAssertEqual(path, backupURL.path)
+            XCTAssertEqual(reason, "Recovery backup is incomplete")
+        }
+        XCTAssertEqual(try Data(contentsOf: storeURL), Data("still-current".utf8))
+    }
 }

@@ -290,7 +290,7 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 - [x] Add a local-library search UI with result snippets, page/block location,
   keyboard-accessible result buttons, explicit searchable-copy gating, and
   deep-link navigation into Review.
-- [ ] Build migration and rollback tests before release. If a migration fails, preserve the old store, create a backup, and offer recovery rather than silently deleting data.
+- [x] Build migration and rollback tests before release. SwiftData now retains a pre-migration SQLite/journal recovery artifact on initialization failure, reports a typed degraded error with its location, and exposes validated restore behavior; deterministic backup, journal, restore, and incomplete-artifact tests pass. A physical release-build migration failure injection remains a manual gate.
 
 ### 3.3 Finder and system workflows
 

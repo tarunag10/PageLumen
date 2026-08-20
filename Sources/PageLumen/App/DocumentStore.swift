@@ -217,6 +217,13 @@ final class DocumentStore {
             do {
                 self.persisting = try SwiftDataPersisting()
                 self.persistenceStatus = .available
+            } catch let error as SwiftDataPersistingError {
+                self.persisting = FilePersisting()
+                switch error {
+                case let .migrationFailed(backupURL, _):
+                    let backupName = backupURL.map { URL(fileURLWithPath: $0).lastPathComponent } ?? "the preserved store"
+                    self.persistenceStatus = .degraded("SwiftData migration failed; recovery backup kept as \(backupName); using JSON recents")
+                }
             } catch {
                 self.persisting = FilePersisting()
                 self.persistenceStatus = .degraded("SwiftData could not open; using JSON recents")
