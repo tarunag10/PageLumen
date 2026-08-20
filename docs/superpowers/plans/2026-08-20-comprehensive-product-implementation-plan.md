@@ -340,7 +340,7 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 
 - [x] Promote user-recognisable document and finding concepts to `AppEntity` types, with privacy-safe display representations. Documents expose bounded titles/counts only; findings expose stable opaque IDs, page/severity/kind, and no OCR detail or compatibility IDs. Deterministic tests cover empty libraries, intelligence disabled, and raw OCR disclosure boundaries.
 - [x] Use intents for bounded actions only; never make all local document text generally discoverable by default. App Intents expose explicit document/file actions, bounded local search, unresolved findings, tagged HTML export, and current-summary retrieval; no library-wide raw-text entity is published.
-- [ ] Evaluate newer entity schemas/view annotations only after confirming they expose no unwanted private context.
+- [x] Evaluate newer entity schemas/view annotations only after confirming they expose no unwanted private context. `docs/app-intents-entity-review.md` records the review; current macOS 14-compatible `AppEntity`/`DisplayRepresentation` remains intentionally bounded and newer annotations are deferred pending a new privacy review.
 - [ ] Test intents with empty library, revoked permissions, unsupported macOS, and a disabled-intelligence preference. Deterministic empty-library/entity and retention-gate coverage is now present in `AppIntentExportTests`; revoked-permission, unsupported-macOS, and disabled-intelligence participant/system gates remain release work.
 
 **Exit gate for Phase 4:** Every AI result has citations or an explicit inability-to-cite warning, AI is opt-in, evaluations meet predeclared thresholds, and disabled/unsupported paths are fully functional.
