@@ -40,9 +40,22 @@ struct PageLumenApp: App {
         ProcessInfo.processInfo.arguments.contains("-ui-testing-fixture")
     }
 
+    /// Gives XCUITests a deterministic route to the native Settings scene
+    /// without depending on the system Settings menu or persisted state.
+    /// This argument is test-only and has no effect during normal launches.
+    private var isUITestingSettingsLaunch: Bool {
+        ProcessInfo.processInfo.arguments.contains("-ui-testing-settings")
+    }
+
     var body: some Scene {
         WindowGroup("PageLumen", id: "main") {
-            ContentView()
+            Group {
+                if isUITestingSettingsLaunch {
+                    SettingsView()
+                } else {
+                    ContentView()
+                }
+            }
                 .environment(store)
                 .frame(minWidth: 1_120, minHeight: 720)
                 .tint(AccessibleStyle.accent)

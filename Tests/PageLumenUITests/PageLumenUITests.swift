@@ -51,4 +51,17 @@ final class PageLumenUITests: XCTestCase {
         XCTAssertTrue(fixtureApp.buttons["export.Markdown"].exists)
         XCTAssertTrue(fixtureApp.buttons["export.Tagged HTML"].exists)
     }
+
+    func testSettingsLaunchExposesPrivacyAndAppearanceControls() throws {
+        let settingsApp = XCUIApplication()
+        settingsApp.launchArguments = ["-ui-testing", "-ui-testing-settings"]
+        settingsApp.launch()
+
+        XCTAssertTrue(settingsApp.windows.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(settingsApp.checkBoxes["settings.privacyMode"].waitForExistence(timeout: 3))
+        XCTAssertTrue(settingsApp.checkBoxes["settings.searchableCopies"].exists)
+        XCTAssertTrue(settingsApp.popUpButtons["settings.appearance"].exists)
+        XCTAssertTrue(settingsApp.checkBoxes["settings.boostContrast"].exists)
+        XCTAssertTrue(settingsApp.buttons["settings.forgetAll"].exists)
+    }
 }
