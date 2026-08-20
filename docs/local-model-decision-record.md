@@ -12,6 +12,15 @@ Foundation Models adapter and its deterministic fallback.
 This is an explicit scope decision, not an evaluation result. No model has
 been downloaded, benchmarked, or represented as supported by this record.
 
+The isolated metadata-only prototype boundary is now represented by
+`LocalModelPrototypeManifest` and `LocalModelPrototypeGate` in
+`PageLumenCore`. It validates repository/model-card URLs, immutable revision,
+license, weight-size, and safe storage metadata, then fails closed unless
+prototype enablement, explicit consent, removal policy, and device gates are
+all supplied. It does not download weights, persist consent, or alter the
+default pipeline. The remaining model-card/license review, real download
+manager, and Foundation Models comparison are intentionally not claimed.
+
 ## Why
 
 - PageLumen is a document reader/review/export tool, not an audio or general

@@ -410,7 +410,10 @@ remains an explicit manual gate and is not claimed here.
 **Potential use:** optional local vision-language or specialist language models for chart/figure descriptions and domain-specific assistance on Apple silicon.
 
 - [x] Do not add these to the default product pipeline. `docs/local-model-decision-record.md` records the explicit non-adoption decision and keeps the shipping path deterministic unless a separately approved prototype passes all model gates.
-- [ ] Build a separate prototype target or internal feature branch first.
+- [x] Build a separate metadata-only prototype boundary first. `LocalModelPrototypeManifest`
+  and `LocalModelPrototypeGate` validate model metadata and fail closed behind
+  explicit prototype, consent, removal-policy, and device gates; no model
+  weights are downloaded and the default pipeline is unchanged.
 - [ ] Require model cards, model-license review, download size estimate, source/repository disclosure, explicit download consent, storage location, progress/cancellation, offline removal, and device capability checks.
 - [ ] Compare against Apple Foundation Models on the same evaluation corpus. Prefer the option with lower unsupported-claim rate and lower operational cost, not merely more fluent prose.
 - [x] Keep Intel Macs and unsupported Apple-silicon configurations on deterministic non-AI fallbacks. The current Foundation Models availability contract returns `notSupported`/`unavailable`, and `ExplanationEngine` retains the deterministic cited fallback; downloaded-model support is not claimed.
