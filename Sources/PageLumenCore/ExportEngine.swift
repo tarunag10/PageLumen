@@ -765,6 +765,7 @@ public struct ExportEngine: Sendable {
         // the review signal and stable locations, but never copy extracted
         // prose into this new envelope.
         provenance["reviewSummary"] = jsonReviewSummary(for: document, options: options)
+        provenance["reviewFindings"] = jsonReviewFindings(for: document, options: options)
 
         return [
             "format": ExportFormat.json.rawValue,
@@ -807,6 +808,41 @@ public struct ExportEngine: Sendable {
             result["groundingWarning"] = warning
         }
         return result
+    }
+
+    private func jsonReviewFindings(for document: ReaderDocument, options: ExportOptions) -> [[String: Any]] {
+        let dateFormatter = ISO8601DateFormatter()
+        return DocumentEditing.reviewFindings(for: document).map { finding in
+            var result: [String: Any] = [
+                "id": finding.id,
+                "kind": finding.kind.rawValue,
+                "severity": finding.severity.rawValue,
+                "pageNumber": finding.pageNumber,
+                "isResolved": finding.isResolved
+            ]
+            if !options.redactTextSnippets {
+                result["title"] = finding.title
+                result["detail"] = finding.detail
+            }
+            if let blockID = finding.blockID {
+                result["blockID"] = blockID.uuidString.lowercased()
+            }
+            if let provenance = finding.provenance {
+                var provenanceJSON: [String: Any] = [
+                    "source": provenance.source.rawValue,
+                    "pageNumber": provenance.pageNumber,
+                    "createdAt": dateFormatter.string(from: provenance.createdAt)
+                ]
+                if let parentBlockID = provenance.parentBlockID {
+                    provenanceJSON["parentBlockID"] = parentBlockID.uuidString.lowercased()
+                }
+                if let bounds = provenance.bounds {
+                    provenanceJSON["bounds"] = ["x": bounds.x, "y": bounds.y, "width": bounds.width, "height": bounds.height]
+                }
+                result["provenance"] = provenanceJSON
+            }
+            return result
+        }
     }
 
     private func sanitizedDocument(_ document: ReaderDocument, options: ExportOptions) -> ReaderDocument {

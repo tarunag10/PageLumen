@@ -214,6 +214,26 @@ final class AdvancedExportTests: XCTestCase {
         XCTAssertEqual(reviewSummary["groundingWarning"] as? String, "Verify this summary against the original source before relying on it.")
     }
 
+    func testJSONExportIncludesTypedReviewFindingProvenanceAndRedactsFindingText() throws {
+        var document = SampleDataFactory.makeDemoDocument()
+        document.pages[0].blocks[0].confidence = 0.2
+        let data = ExportEngine().jsonData(for: document, options: .full)
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let export = try XCTUnwrap(root["export"] as? [String: Any])
+        let provenance = try XCTUnwrap(export["provenance"] as? [String: Any])
+        let findings = try XCTUnwrap(provenance["reviewFindings"] as? [[String: Any]])
+        XCTAssertFalse(findings.isEmpty)
+        XCTAssertNotNil(findings.first?["provenance"] as? [String: Any])
+
+        let redactedData = ExportEngine().jsonData(for: document, options: .anonymous)
+        let redactedRoot = try XCTUnwrap(JSONSerialization.jsonObject(with: redactedData) as? [String: Any])
+        let redactedExport = try XCTUnwrap(redactedRoot["export"] as? [String: Any])
+        let redactedProvenance = try XCTUnwrap(redactedExport["provenance"] as? [String: Any])
+        let redactedFindings = try XCTUnwrap(redactedProvenance["reviewFindings"] as? [[String: Any]])
+        XCTAssertNil(redactedFindings.first?["detail"])
+        XCTAssertNotNil(redactedFindings.first?["provenance"] as? [String: Any])
+    }
+
     func testJSONExportCanExcludeProvenanceWithExplicitOption() throws {
         var options = ExportOptions.full
         options.includeProvenance = false
