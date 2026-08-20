@@ -89,22 +89,22 @@ final class DocumentStore {
     }
 
     var intelligenceMode: IntelligenceMode {
-        if let raw = UserDefaults.standard.string(forKey: "intelligenceMode"),
+        if let raw = intelligencePreferences.string(forKey: "intelligenceMode"),
            let mode = IntelligenceMode(rawValue: raw) {
             return mode
         }
         // Migrate the earlier boolean preference without silently enabling a
         // new mode for people who never opted into Apple Intelligence.
-        return UserDefaults.standard.bool(forKey: "useOnDeviceAI") ? .appleFoundationModels : .off
+        return intelligencePreferences.bool(forKey: "useOnDeviceAI") ? .appleFoundationModels : .off
     }
 
     var isIntelligenceOptedOutForCurrentDocument: Bool {
-        UserDefaults.standard.bool(forKey: intelligenceOptOutKey(for: document.id))
+        intelligencePreferences.bool(forKey: intelligenceOptOutKey(for: document.id))
     }
 
     func setIntelligenceMode(_ mode: IntelligenceMode) {
-        UserDefaults.standard.set(mode.rawValue, forKey: "intelligenceMode")
-        UserDefaults.standard.set(mode == .appleFoundationModels, forKey: "useOnDeviceAI")
+        intelligencePreferences.set(mode.rawValue, forKey: "intelligenceMode")
+        intelligencePreferences.set(mode == .appleFoundationModels, forKey: "useOnDeviceAI")
         regenerateSummary()
         statusMessage = mode == .off
             ? "Apple Intelligence disabled; using deterministic summaries"
@@ -114,9 +114,9 @@ final class DocumentStore {
     func setIntelligenceOptOutForCurrentDocument(_ optedOut: Bool) {
         let key = intelligenceOptOutKey(for: document.id)
         if optedOut {
-            UserDefaults.standard.set(true, forKey: key)
+            intelligencePreferences.set(true, forKey: key)
         } else {
-            UserDefaults.standard.removeObject(forKey: key)
+            intelligencePreferences.removeObject(forKey: key)
         }
         regenerateSummary()
         statusMessage = optedOut
@@ -148,6 +148,7 @@ final class DocumentStore {
 
     private let processor: any DocumentImporting
     private let persisting: any DocumentPersisting
+    private let intelligencePreferences: UserDefaults
 
     private var searchIndex: [String: [UUID]] = [:]
     private var searchIndexFingerprint: Int = 0
@@ -163,9 +164,11 @@ final class DocumentStore {
 
     init(
         processor: any DocumentImporting = DocumentProcessor(),
-        persisting: (any DocumentPersisting)? = nil
+        persisting: (any DocumentPersisting)? = nil,
+        intelligencePreferences: UserDefaults = .standard
     ) {
         self.processor = processor
+        self.intelligencePreferences = intelligencePreferences
         if let persisting {
             self.persisting = persisting
             self.persistenceStatus = .available

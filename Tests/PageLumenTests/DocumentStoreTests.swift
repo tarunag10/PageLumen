@@ -58,9 +58,11 @@ final class DocumentStoreTests: XCTestCase {
     }
 
     func testIntelligenceModeMigratesLegacyConsentAndSupportsDocumentOptOut() {
-        UserDefaults.standard.removeObject(forKey: "intelligenceMode")
-        UserDefaults.standard.set(true, forKey: "useOnDeviceAI")
-        let store = DocumentStore(persisting: InMemoryPersisting())
+        let suiteName = "PageLumen.DocumentStoreTests.\(UUID().uuidString)"
+        let preferences = UserDefaults(suiteName: suiteName)!
+        defer { UserDefaults.standard.removePersistentDomain(forName: suiteName) }
+        preferences.set(true, forKey: "useOnDeviceAI")
+        let store = DocumentStore(persisting: InMemoryPersisting(), intelligencePreferences: preferences)
 
         XCTAssertEqual(store.intelligenceMode, .appleFoundationModels)
         XCTAssertTrue(store.useOnDeviceAI)
