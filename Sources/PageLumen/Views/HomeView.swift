@@ -6,6 +6,8 @@ import SwiftUI
 struct HomeView: View {
     @Environment(DocumentStore.self) private var store
     @State private var isTargeted = false
+    @State private var showCapturePermissionHelp = false
+    @State private var pendingCaptureMode: ScreenshotCaptureMode = .selectedRegion
     // Re-render when the high-contrast toggle changes so AccessibleStyle.border
     // and AccessibleStyle.panelBackground pick up the new value.
     @AppStorage("boostContrast") private var boostContrast = false
@@ -27,6 +29,9 @@ struct HomeView: View {
         }
         .background(AccessibleStyle.ambientGradient.ignoresSafeArea())
         .liquidGlassIfAvailable(boostContrast: boostContrast)
+        .sheet(isPresented: $showCapturePermissionHelp) {
+            capturePermissionHelp
+        }
     }
 
     private var heroSection: some View {
@@ -91,11 +96,11 @@ struct HomeView: View {
 
                 Menu {
                     Button("Capture Selected Region") {
-                        store.captureSelectedRegion()
+                        beginCapture(.selectedRegion)
                     }
 
                     Button("Capture Current Window") {
-                        store.captureWindow()
+                        beginCapture(.window)
                     }
                 } label: {
                     Label("Capture Screen", systemImage: "camera.viewfinder")
@@ -162,6 +167,49 @@ struct HomeView: View {
             }
 
             return true
+        }
+    }
+
+    private var capturePermissionHelp: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Label("Allow screen capture", systemImage: "rectangle.inset.filled.and.person.filled")
+                .font(.title2.weight(.semibold))
+            Text("PageLumen captures only the region or window you choose. macOS asks for Screen Recording permission before the first capture; nothing is uploaded.")
+                .fixedSize(horizontal: false, vertical: true)
+                .foregroundStyle(AccessibleStyle.secondaryText)
+            HStack {
+                Button("Cancel") { showCapturePermissionHelp = false }
+                    .keyboardShortcut(.cancelAction)
+                Spacer()
+                Button("Open Screen Recording Settings") {
+                    store.openScreenRecordingSettings()
+                    showCapturePermissionHelp = false
+                }
+                .buttonStyle(.bordered)
+                Button("Continue") {
+                    showCapturePermissionHelp = false
+                    capture(pendingCaptureMode)
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding(28)
+        .frame(width: 520)
+    }
+
+    private func beginCapture(_ mode: ScreenshotCaptureMode) {
+        if store.hasScreenCapturePermission {
+            capture(mode)
+        } else {
+            pendingCaptureMode = mode
+            showCapturePermissionHelp = true
+        }
+    }
+
+    private func capture(_ mode: ScreenshotCaptureMode) {
+        switch mode {
+        case .selectedRegion: store.captureSelectedRegion()
+        case .window: store.captureWindow()
         }
     }
 

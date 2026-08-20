@@ -73,6 +73,10 @@ struct ScreenshotCaptureService {
         Self.cleanupStaleTemporaryCaptures(in: temporaryDirectory)
     }
 
+    var hasScreenCapturePermission: Bool {
+        CGPreflightScreenCaptureAccess()
+    }
+
     @discardableResult
     static func cleanupStaleTemporaryCaptures(
         in directory: URL = FileManager.default.temporaryDirectory,

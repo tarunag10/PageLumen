@@ -80,6 +80,7 @@
 		E1E032F78252E376FC0DEA64 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEEC4CA5A45CE5965F401DC5 /* OnboardingView.swift */; };
 		E7D21747C6852107B466D8AF /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B791BEC107B8BC347DCE28C /* SettingsView.swift */; };
 		E81380B83CD09BB36F9CD025 /* DocumentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCDA2E6EF46E0BCE1DECEC3A /* DocumentStore.swift */; };
+		E81380B83CD09BB36F9CD026 /* IntelligenceMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCDA2E6EF46E0BCE1DECEC3B /* IntelligenceMode.swift */; };
 		EAE34F1A9F93DAA403215E81 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = A65F5EF5F246399265123B4B /* SnapshotTesting */; };
 		ECC4328F40B23404AE5729AA /* DocumentEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10425478B42934D73AD06316 /* DocumentEditingTests.swift */; };
 		FD46CBE946493DA910F2911D /* ExportEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 886CD365A83A6800A57934BF /* ExportEngineTests.swift */; };
@@ -218,6 +219,7 @@
 		D1BE8CE264BD58F722F55395 /* SpeechEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechEngine.swift; sourceTree = "<group>"; };
 		D7B8E38055F0DB96ACA3C18D /* AudioExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioExportService.swift; sourceTree = "<group>"; };
 		DCDA2E6EF46E0BCE1DECEC3A /* DocumentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentStore.swift; sourceTree = "<group>"; };
+		DCDA2E6EF46E0BCE1DECEC3B /* IntelligenceMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligenceMode.swift; sourceTree = "<group>"; };
 		DE6C1C05D94652978F76FE97 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B1C2D3E4F5061728394A5B6C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Config/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		DEEC4CA5A45CE5965F401DC5 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -284,6 +286,7 @@
 				91891F3D7C1C6D153F3EEF5D /* ExportEngine.swift */,
 				71B22B2730AC3F22993E02AC /* FilePersisting.swift */,
 				05D794E3270A74F25DD799CF /* IntelligentExplainer.swift */,
+				DCDA2E6EF46E0BCE1DECEC3B /* IntelligenceMode.swift */,
 				AEC0C37527FA1BDB9FDF2FB9 /* LayoutAnalyzer.swift */,
 				698302D733C8FC04BEF74C41 /* LocalLibrary.swift */,
 				51ED10D17EEF3D8A5A4C74B0 /* Models.swift */,
@@ -662,6 +665,7 @@
 				D8325C91EAF7CAA15191CFBF /* ExportEngine.swift in Sources */,
 				917506230FA510527742510D /* FilePersisting.swift in Sources */,
 				11F723CD215E178DF2C5A875 /* IntelligentExplainer.swift in Sources */,
+				E81380B83CD09BB36F9CD026 /* IntelligenceMode.swift in Sources */,
 				D9D9C71DB0E61D7E7560D3A4 /* LayoutAnalyzer.swift in Sources */,
 				7B76A9C9436A9036EC7D6F74 /* LocalLibrary.swift in Sources */,
 				925D49B3592958D424690066 /* Models.swift in Sources */,

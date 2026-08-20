@@ -579,6 +579,15 @@ final class DocumentStore {
         }
     }
 
+    var hasScreenCapturePermission: Bool {
+        screenshotCaptureService.hasScreenCapturePermission
+    }
+
+    func openScreenRecordingSettings() {
+        let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!
+        NSWorkspace.shared.open(url)
+    }
+
     func captureWindow() {
         Task {
             await captureScreenshot(mode: .window)
