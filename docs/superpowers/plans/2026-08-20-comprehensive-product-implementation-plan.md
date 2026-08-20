@@ -388,7 +388,7 @@ remains an explicit manual gate and is not claimed here.
 **Repository:** `groue/GRDB.swift` — MIT  
 **Use:** SQLite migrations, FTS5 full-text local search, observation, and optional SQLCipher-compatible path.
 
-- [ ] Run the Phase 3 spike before dependency adoption.
+- [x] Run the Phase 3 spike before dependency adoption. `docs/grdb-spike-2026-08-20.md` records the repository-boundary evidence, consent-gated search behavior, adoption triggers, and explicit decision not to add a second persistence truth yet.
 - [ ] If selected, use GRDB as the sole repository implementation; do not duplicate production truth in SwiftData and GRDB.
 - [ ] Enable FTS only for user-approved local searchable copies. Design deletion/index rebuild behaviour first.
 - [ ] Evaluate encryption-key storage in Keychain and recovery implications before claiming encryption at rest.
