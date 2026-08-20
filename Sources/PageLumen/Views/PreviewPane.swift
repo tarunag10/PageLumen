@@ -3,6 +3,7 @@ import PageLumenCore
 import SwiftUI
 
 struct PreviewPane: View {
+    @Environment(DocumentStore.self) private var store
     let page: ReaderPage?
     let showReadingOrder: Bool
     // Re-render when the high-contrast toggle changes so AccessibleStyle tokens
@@ -27,6 +28,15 @@ struct PreviewPane: View {
                             ReadingOrderOverlay(page: page)
                                 .frame(width: 360, height: 470)
                         }
+
+                        if store.currentReviewIssue?.pageNumber == page.pageNumber,
+                           store.currentReviewIssue?.blockID == nil {
+                            OriginalPageWarningOverlay()
+                                .frame(width: 360, height: 470)
+                                .accessibilityElement(children: .combine)
+                                .accessibilityLabel("Original page region for the selected page warning")
+                                .accessibilityHint("Inspect this original page before correcting the warning in the Review Queue.")
+                        }
                     }
                     .padding(28)
                 }
@@ -35,6 +45,24 @@ struct PreviewPane: View {
             }
         }
         .background(AccessibleStyle.appBackground)
+    }
+}
+
+private struct OriginalPageWarningOverlay: View {
+    var body: some View {
+        RoundedRectangle(cornerRadius: AccessibleStyle.innerCornerRadius)
+            .stroke(AccessibleStyle.warning, style: StrokeStyle(lineWidth: 4, dash: [8, 5]))
+            .padding(3)
+            .overlay(alignment: .topLeading) {
+                Label("Original page", systemImage: "doc.text.magnifyingglass")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(AccessibleStyle.onAccent)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(AccessibleStyle.warning, in: Capsule())
+                    .padding(10)
+            }
+            .allowsHitTesting(false)
     }
 }
 

@@ -139,6 +139,20 @@ final class DocumentEditingTests: XCTestCase {
         XCTAssertEqual(DocumentEditing.reviewProgress(for: document).totalBlocks, 3)
     }
 
+    func testClearPageWarningPreservesBlocksAndReviewDecisions() {
+        var block = TextBlock(pageNumber: 1, type: .unknown, text: "Keep source", bounds: BoundingBox(x: 10, y: 80, width: 300, height: 20), confidence: 0.4)
+        block.metadata["reviewDecision"] = ReviewDecision.rejected.rawValue
+        var document = ReaderDocument(title: "Warning", sourceType: .sample, pages: [
+            ReaderPage(pageNumber: 1, size: PageSize(width: 400, height: 600), blocks: [block], warning: "Inspect original page")
+        ])
+
+        DocumentEditing.clearPageWarning(pageNumber: 1, in: &document)
+
+        XCTAssertNil(document.pages[0].warning)
+        XCTAssertEqual(document.pages[0].blocks[0].text, "Keep source")
+        XCTAssertEqual(DocumentEditing.reviewDecision(document.pages[0].blocks[0]), .rejected)
+    }
+
     func testReviewFindingsNormalizeSeverityAndRemainUnresolved() {
         var document = SampleDataFactory.makeDemoDocument()
         document.pages[0].warning = "The page may be skewed."

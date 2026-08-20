@@ -36,3 +36,13 @@ The bounded detector currently identifies:
 
 These are review signals, not conformance claims. A reviewer must still verify
 the source page before publishing an export.
+
+## Queue completion and source-region review
+
+Selecting a finding synchronizes the Review Queue, extracted editor, and
+original-page preview. Block-backed findings can be marked reviewed or
+rejected; these actions preserve the extracted text and retained original OCR.
+Page-level warnings have no single text block, so the selected original page
+is outlined in the preview and the queue checkmark performs an explicit,
+undoable warning correction. The correction clears only the page warning;
+the normal Undo action restores it without inventing a replacement warning.

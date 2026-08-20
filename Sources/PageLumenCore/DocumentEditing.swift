@@ -320,6 +320,16 @@ public enum DocumentEditing {
         }
     }
 
+    /// Clears a page-level extraction warning after a reviewer has inspected
+    /// the original page. This does not alter blocks, OCR observations, or
+    /// review decisions; the app boundary makes the operation undoable.
+    public static func clearPageWarning(pageNumber: Int, in document: inout ReaderDocument) {
+        guard let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == pageNumber }) else {
+            return
+        }
+        document.pages[pageIndex].warning = nil
+    }
+
     public static func changeBlockType(id: UUID, to type: BlockType, in document: inout ReaderDocument) {
         guard let location = blockLocation(id: id, in: document) else {
             return

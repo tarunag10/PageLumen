@@ -570,13 +570,28 @@ final class DocumentStore {
     /// Resolves a block-backed finding without discarding the original OCR.
     /// Page-level warnings remain visible until their source warning is fixed.
     func resolveReviewIssue(_ issue: ReviewIssue) {
-        guard let blockID = issue.blockID,
-              let block = document.allBlocks.first(where: { $0.id == blockID }) else {
-            statusMessage = "This page warning needs source-level correction"
+        markReviewIssueReviewed(issue)
+    }
+
+    /// Marks a queue item complete. Block findings become an explicit
+    /// accepted decision; page warnings are corrected only after the reviewer
+    /// has opened the original page. Neither path changes extracted source
+    /// text or retained OCR observations.
+    func markReviewIssueReviewed(_ issue: ReviewIssue) {
+        if let blockID = issue.blockID,
+           let block = document.allBlocks.first(where: { $0.id == blockID }) {
+            setBlockReviewed(block, isReviewed: true)
+            statusMessage = "Resolved: \(issue.title)"
             return
         }
-        setBlockReviewed(block, isReviewed: true)
-        statusMessage = "Resolved: \(issue.title)"
+        guard issue.kind == .pageWarning,
+              document.pages.contains(where: { $0.pageNumber == issue.pageNumber && $0.warning != nil }) else {
+            statusMessage = "This review item has no correctable source"
+            return
+        }
+        recordEdit("Correct page warning")
+        DocumentEditing.clearPageWarning(pageNumber: issue.pageNumber, in: &document)
+        statusMessage = "Corrected page warning on page \(issue.pageNumber)"
     }
 
     func reopenReviewIssue(_ issue: ReviewIssue) {

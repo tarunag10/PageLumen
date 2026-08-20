@@ -432,23 +432,25 @@ private struct ReviewQueuePopover: View {
                         .accessibilityLabel("Page \(finding.pageNumber), \(finding.title), \(finding.severity.rawValue)")
                         .accessibilityHint("Open this issue in the review editor")
 
-                        if let issue = store.reviewIssues.first(where: { $0.id == finding.id }), issue.blockID != nil {
+                        if let issue = store.reviewIssues.first(where: { $0.id == finding.id }) {
                             Button {
-                                store.resolveReviewIssue(issue)
+                                store.markReviewIssueReviewed(issue)
                             } label: {
                                 Image(systemName: "checkmark.circle")
                             }
                             .buttonStyle(.borderless)
-                            .help("Mark finding reviewed")
-                            .accessibilityLabel("Resolve \(finding.title)")
-                            Button {
-                                store.rejectReviewIssue(issue)
-                            } label: {
-                                Image(systemName: "xmark.circle")
+                            .help(issue.blockID == nil ? "Correct this page warning after checking the original page" : "Mark finding reviewed")
+                            .accessibilityLabel(issue.blockID == nil ? "Correct page warning on page \(issue.pageNumber)" : "Resolve \(finding.title)")
+                            if issue.blockID != nil {
+                                Button {
+                                    store.rejectReviewIssue(issue)
+                                } label: {
+                                    Image(systemName: "xmark.circle")
+                                }
+                                .buttonStyle(.borderless)
+                                .help("Reject suggestion without changing source text")
+                                .accessibilityLabel("Reject \(finding.title)")
                             }
-                            .buttonStyle(.borderless)
-                            .help("Reject suggestion without changing source text")
-                            .accessibilityLabel("Reject \(finding.title)")
                         }
                     }
                 }

@@ -293,6 +293,29 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertEqual(store.statusMessage, "Reopened: \(issue.title)")
     }
 
+    func testPageWarningCanBeMarkedReviewedWithoutChangingSourceOrDecisions() throws {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        var block = TextBlock(pageNumber: 1, type: .paragraph, text: "Retained OCR", bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20), confidence: 0.95)
+        block.metadata["reviewDecision"] = ReviewDecision.rejected.rawValue
+        store.document = ReaderDocument(title: "Page warning", sourceType: .sample, pages: [
+            ReaderPage(pageNumber: 1, size: PageSize(width: 400, height: 600), blocks: [block], warning: "Check source page")
+        ])
+        let issue = try XCTUnwrap(store.reviewIssues.first(where: { $0.kind == .pageWarning }))
+
+        store.jumpToIssue(issue)
+        XCTAssertNil(store.selectedBlockID)
+        store.markReviewIssueReviewed(issue)
+
+        XCTAssertTrue(store.reviewIssues.isEmpty)
+        XCTAssertNil(store.document.pages[0].warning)
+        XCTAssertEqual(store.document.pages[0].blocks[0].text, "Retained OCR")
+        XCTAssertEqual(DocumentEditing.reviewDecision(store.document.pages[0].blocks[0]), .rejected)
+        XCTAssertTrue(store.canUndo)
+
+        store.undo()
+        XCTAssertEqual(store.document.pages[0].warning, "Check source page")
+    }
+
     func testReviewIssueCanBeRejectedAndReopenedWithoutChangingSourceText() {
         let store = DocumentStore(persisting: InMemoryPersisting())
         let sourceText = "Optional structure"
