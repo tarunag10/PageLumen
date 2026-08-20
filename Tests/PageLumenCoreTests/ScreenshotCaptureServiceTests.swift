@@ -13,6 +13,24 @@ final class ScreenshotCaptureServiceTests: XCTestCase {
         XCTAssertEqual(service.legacyArguments(for: .window, output: output), ["-w", output.path])
     }
 
+    func testLegacyCaptureUsesInjectedCommandRunnerAndMapsFailure() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("PageLumen-capture-runner-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let runner = RecordingScreenshotCommandRunner(status: 7)
+        let service = ScreenshotCaptureService(temporaryDirectory: directory, commandRunner: runner)
+        let output = directory.appendingPathComponent("capture.png")
+        do {
+            _ = try await service.legacyCapture(mode: .selectedRegion, outputURL: output)
+            XCTFail("Expected the injected command failure")
+        } catch {
+            XCTAssertEqual(error as? ScreenshotCaptureError, .commandFailed(7))
+        }
+        XCTAssertEqual(runner.arguments?.first, "-i")
+        XCTAssertEqual(runner.executable?.path, "/usr/sbin/screencapture")
+    }
+
     func testCaptureThrowsWhenOutputDirectoryIsUnwritable() async {
         // Capture requires interactive selection; we can only test that the service exists.
         // The actual capture is hard to test without user interaction.
@@ -118,6 +136,20 @@ final class ScreenshotCaptureServiceTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: stale.path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: fresh.path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: unrelated.path))
+    }
+}
+
+private final class RecordingScreenshotCommandRunner: ScreenshotCommandRunning, @unchecked Sendable {
+    let status: Int32
+    private(set) var executable: URL?
+    private(set) var arguments: [String]?
+
+    init(status: Int32) { self.status = status }
+
+    func run(executable: URL, arguments: [String]) throws -> Int32 {
+        self.executable = executable
+        self.arguments = arguments
+        return status
     }
 }
 

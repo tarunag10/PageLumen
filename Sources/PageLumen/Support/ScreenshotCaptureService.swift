@@ -99,11 +99,31 @@ enum ScreenshotCaptureError: LocalizedError, Equatable {
     }
 }
 
+protocol ScreenshotCommandRunning: Sendable {
+    func run(executable: URL, arguments: [String]) throws -> Int32
+}
+
+struct FoundationScreenshotCommandRunner: ScreenshotCommandRunning {
+    func run(executable: URL, arguments: [String]) throws -> Int32 {
+        let process = Process()
+        process.executableURL = executable
+        process.arguments = arguments
+        try process.run()
+        process.waitUntilExit()
+        return process.terminationStatus
+    }
+}
+
 struct ScreenshotCaptureService {
     private let temporaryDirectory: URL
+    private let commandRunner: any ScreenshotCommandRunning
 
-    init(temporaryDirectory: URL = FileManager.default.temporaryDirectory) {
+    init(
+        temporaryDirectory: URL = FileManager.default.temporaryDirectory,
+        commandRunner: any ScreenshotCommandRunning = FoundationScreenshotCommandRunner()
+    ) {
         self.temporaryDirectory = temporaryDirectory
+        self.commandRunner = commandRunner
         Self.cleanupStaleTemporaryCaptures(in: temporaryDirectory)
     }
 
@@ -379,25 +399,23 @@ struct ScreenshotCaptureService {
     }
     #endif
 
-    private func legacyCapture(mode: ScreenshotCaptureMode, outputURL: URL) async throws -> URL {
+    func legacyCapture(mode: ScreenshotCaptureMode, outputURL: URL) async throws -> URL {
         guard !Task.isCancelled else {
             throw ScreenshotCaptureError.cancelled
         }
 
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = legacyArguments(for: mode, output: outputURL)
-
-        try process.run()
-        process.waitUntilExit()
+        let status = try commandRunner.run(
+            executable: URL(fileURLWithPath: "/usr/sbin/screencapture"),
+            arguments: legacyArguments(for: mode, output: outputURL)
+        )
 
         if Task.isCancelled {
             try? FileManager.default.removeItem(at: outputURL)
             throw ScreenshotCaptureError.cancelled
         }
 
-        guard process.terminationStatus == 0 else {
-            throw ScreenshotCaptureError.legacyTerminationError(status: process.terminationStatus)
+        guard status == 0 else {
+            throw ScreenshotCaptureError.legacyTerminationError(status: status)
         }
 
         guard FileManager.default.fileExists(atPath: outputURL.path) else {

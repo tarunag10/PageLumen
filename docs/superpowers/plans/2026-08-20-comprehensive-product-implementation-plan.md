@@ -150,7 +150,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [x] Retain a narrowly scoped legacy region picker only if a supported native alternative cannot serve macOS 14; document why and make it visible in the UI.
 - [x] Provide a pre-permission explanatory screen, a System Settings deep-link/help path after denial, cancellation, and stale temporary-file cleanup on app launch. Manual permission-denial recovery remains a participant gate.
 - [x] Ensure temporary captures are removed after successful processing unless the person explicitly saves them, and clean stale PageLumen capture files from the temporary directory at service startup. The cleanup is prefix-scoped, age-bounded, and regression-tested without touching unrelated files.
-- [ ] Add tests for error mapping, no selected window, cancellation, temp cleanup, and command argument construction. `ScreenshotCaptureServiceTests` now has 10 passing tests covering ScreenCaptureKit permission/no-shareable-content mappings, cancellation, cleanup, and exact legacy arguments; real picker no-selection and macOS 14/current-release participant validation remain open.
+- [ ] Add tests for error mapping, no selected window, cancellation, temp cleanup, and command argument construction. `ScreenshotCaptureServiceTests` now has 11 passing tests and an injectable `ScreenshotCommandRunning` boundary covering ScreenCaptureKit permission/no-shareable-content mappings, command failure, cancellation, cleanup, and exact legacy arguments; real picker no-selection and macOS 14/current-release participant validation remain open.
 
 **Acceptance:** Capture never selects a random window. Permission denial or dismissal leaves no imported document and gives a clear next action.
 
@@ -507,7 +507,7 @@ participant and physical-device gates remain open.
 
 ### 7.1 Test strategy
 
-- [ ] Keep existing unit tests and add protocol-fake tests for every external/platform boundary.
+- [ ] Keep existing unit tests and add protocol-fake tests for every external/platform boundary. Stirling, translation, persistence, DOCX, PDF operations, and screenshot command boundaries now have injectable fakes; AVSpeech, ScreenCaptureKit picker UI, and system participant paths still require platform-specific coverage.
 - [ ] Add XCUITest coverage for import, review queue, export confirmation, settings, dark/light appearance, and denied permission recovery. The deterministic `-ui-testing-fixture` flow now loads the bounded demo and covers Review Queue/Continue plus export controls; settings, appearance, import/permission recovery, and participant execution remain open.
 - [x] Add fixture-corpus regression tests and performance baselines separate from fast unit tests. `FixtureCorpusTests` exercises the bounded fixture set independently, while `DocumentProcessorTests` enforce the 10/50-page embedded-text wall-time guards recorded in `docs/performance-baseline-2026-08-20.md`; scanned-image OCR and peak-memory measurements remain physical-device gates.
 - [x] Add snapshot tests only where they are stable and actionable. Export snapshot coverage is deterministic and text-based; UI screenshots remain a separate manual/accessibility concern.
