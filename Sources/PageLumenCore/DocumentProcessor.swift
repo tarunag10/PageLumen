@@ -31,7 +31,11 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         static let maxFileBytes: UInt64 = 200 * 1_024 * 1_024
         static let maxPDFPages = 100
         static let maxPagePixels: UInt64 = 50_000_000
+        static let maxPagePixelsAsCGFloat: CGFloat = CGFloat(maxPagePixels)
         static let maxPDFPageArea: CGFloat = 80_000_000
+        /// OCR target is two pixels per PDF point (roughly 144 DPI), reduced
+        /// further for unusually large pages by the pixel budget.
+        static let ocrTargetScale: CGFloat = 2.0
     }
 
     public static let supportedExtensions: [String] = [
@@ -519,10 +523,16 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
 
     private func render(pdfPage: PDFPage) -> NSImage? {
         let bounds = pdfPage.bounds(for: .mediaBox)
+        let requestedScale = ImportBudget.ocrTargetScale
+        let area = max(1, bounds.width * bounds.height)
+        let budgetScale = sqrt(ImportBudget.maxPagePixelsAsCGFloat / area)
+        let scale = max(1, min(requestedScale, budgetScale))
+        let pixelWidth = max(1, Int((bounds.width * scale).rounded(.up)))
+        let pixelHeight = max(1, Int((bounds.height * scale).rounded(.up)))
         guard let context = CGContext(
             data: nil,
-            width: Int(bounds.width),
-            height: Int(bounds.height),
+            width: pixelWidth,
+            height: pixelHeight,
             bitsPerComponent: 8,
             bytesPerRow: 0,
             space: CGColorSpaceCreateDeviceRGB(),
@@ -531,8 +541,9 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
             return nil
         }
         context.beginPDFPage(nil)
-        context.translateBy(x: 0, y: bounds.height)
+        context.translateBy(x: 0, y: bounds.height * scale)
         context.scaleBy(x: 1, y: -1)
+        context.scaleBy(x: scale, y: scale)
         NSColor.white.setFill()
         bounds.fill()
         pdfPage.draw(with: .mediaBox, to: context)
