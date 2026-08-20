@@ -349,13 +349,15 @@ struct SettingsView: View {
     @ViewBuilder
     private var intelligenceAvailabilityView: some View {
         let explainer = IntelligentExplainer()
-        switch explainer.availability {
-        case .available:
-            Label(explainer.availabilityInfo.title, systemImage: "checkmark.circle")
-                .foregroundStyle(AccessibleStyle.success)
-        case .unavailable, .notSupported:
-            Label(explainer.availabilityInfo.message, systemImage: "info.circle")
-                .foregroundStyle(AccessibleStyle.secondaryText)
+        Group {
+            switch explainer.availability {
+            case .available:
+                Label(explainer.availabilityInfo.title, systemImage: "checkmark.circle")
+                    .foregroundStyle(AccessibleStyle.success)
+            case .unavailable, .notSupported:
+                Label(explainer.availabilityInfo.message, systemImage: "info.circle")
+                    .foregroundStyle(AccessibleStyle.secondaryText)
+            }
         }
         .accessibilityIdentifier("settings.intelligenceAvailability")
 
