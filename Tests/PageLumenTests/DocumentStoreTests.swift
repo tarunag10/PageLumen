@@ -281,6 +281,42 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertEqual(DocumentEditing.reviewDecision(store.document.pages[0].blocks[0]), .unreviewed)
     }
 
+    func testCurrentReviewIssueKeyboardActionsAcceptAndRejectSelectedFinding() throws {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let sourceText = "Needs review"
+        store.document = ReaderDocument(
+            title: "Keyboard review actions",
+            sourceType: .sample,
+            pages: [ReaderPage(
+                pageNumber: 1,
+                size: PageSize(width: 400, height: 600),
+                blocks: [TextBlock(
+                    pageNumber: 1,
+                    type: .unknown,
+                    text: sourceText,
+                    bounds: BoundingBox(x: 20, y: 30, width: 180, height: 24),
+                    confidence: 0.4
+                )]
+            )]
+        )
+        let issue = try XCTUnwrap(store.reviewIssues.first)
+
+        store.jumpToIssue(issue)
+        XCTAssertEqual(store.currentReviewIssue?.id, issue.id)
+        store.acceptCurrentReviewIssue()
+
+        XCTAssertTrue(store.reviewIssues.isEmpty)
+        XCTAssertEqual(store.document.pages[0].blocks[0].text, sourceText)
+
+        store.reopenReviewIssue(issue)
+        store.jumpToIssue(issue)
+        store.rejectCurrentReviewIssue()
+
+        XCTAssertTrue(store.reviewIssues.isEmpty)
+        XCTAssertEqual(DocumentEditing.reviewDecision(store.document.pages[0].blocks[0]), .rejected)
+        XCTAssertEqual(store.document.pages[0].blocks[0].text, sourceText)
+    }
+
     func testUndoAndRedoRestoreTextEdits() {
         let store = DocumentStore(persisting: InMemoryPersisting())
         let block = store.document.pages[0].blocks[0]

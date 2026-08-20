@@ -89,6 +89,18 @@ struct PageLumenApp: App {
                 }
                 .keyboardShortcut("[", modifiers: [.command, .shift])
 
+                Button("Accept Current Review Finding") {
+                    store.acceptCurrentReviewIssue()
+                }
+                .keyboardShortcut("a", modifiers: [.command, .shift])
+                .disabled(store.currentReviewIssue == nil)
+
+                Button("Reject Current Review Finding") {
+                    store.rejectCurrentReviewIssue()
+                }
+                .keyboardShortcut("x", modifiers: [.command, .shift])
+                .disabled(store.currentReviewIssue == nil)
+
                 Button("Mark Page Reviewed") {
                     store.setSelectedPageReviewed(true)
                 }

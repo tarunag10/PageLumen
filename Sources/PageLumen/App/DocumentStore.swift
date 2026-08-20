@@ -448,6 +448,33 @@ final class DocumentStore {
         reviewFilter = .needsReview
     }
 
+    /// The unresolved issue currently targeted by the review workspace.
+    /// Prefer the selected block, then fall back to the selected page so
+    /// page-level warnings remain actionable from keyboard commands.
+    var currentReviewIssue: ReviewIssue? {
+        if let selectedBlockID,
+           let issue = reviewIssues.first(where: { $0.blockID == selectedBlockID }) {
+            return issue
+        }
+        return reviewIssues.first(where: { $0.pageNumber == selectedPageNumber })
+    }
+
+    func acceptCurrentReviewIssue() {
+        guard let issue = currentReviewIssue else {
+            statusMessage = "Select a review issue first"
+            return
+        }
+        resolveReviewIssue(issue)
+    }
+
+    func rejectCurrentReviewIssue() {
+        guard let issue = currentReviewIssue else {
+            statusMessage = "Select a review issue first"
+            return
+        }
+        rejectReviewIssue(issue)
+    }
+
     /// Resolves a block-backed finding without discarding the original OCR.
     /// Page-level warnings remain visible until their source warning is fixed.
     func resolveReviewIssue(_ issue: ReviewIssue) {
