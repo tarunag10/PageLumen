@@ -242,6 +242,23 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Review Preset") {
+                Picker("Preset", selection: Binding(
+                    get: { store.reviewPreset },
+                    set: { store.setReviewPreset($0) }
+                )) {
+                    ForEach(ReviewPreset.allCases) { preset in
+                        Text(preset.rawValue).tag(preset)
+                    }
+                }
+                Text(store.reviewPreset.explanation)
+                    .font(.callout)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
+                Text("Presets change review thresholds and warnings only; they never alter extracted source text.")
+                    .font(.caption)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
+            }
+
             Section("PRD Coverage") {
                 Text("Implemented locally: PDF/image import, paste image, batch import, screenshot capture, OCR, reading order, outline, editing, header/footer filtering, summaries, speech playback, Markdown/TXT/HTML/PDF/CSV/JSON exports, and privacy/profile settings.")
                     .font(.callout)

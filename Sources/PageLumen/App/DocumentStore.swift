@@ -63,6 +63,16 @@ final class DocumentStore {
     var processingFileName = ""
     var reviewSearchQuery = ""
     var reviewFilter: ReviewFilter = .all
+    var reviewPreset: ReviewPreset {
+        get {
+            guard let raw = UserDefaults.standard.string(forKey: "reviewPreset"),
+                  let preset = ReviewPreset(rawValue: raw) else { return .general }
+            return preset
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: "reviewPreset")
+        }
+    }
     var exportPreviewFormat: ExportFormat = .markdown
     var reviewDraft: GroundedSummary?
     var librarySearchQuery = ""
@@ -308,15 +318,20 @@ final class DocumentStore {
     }
 
     var reviewIssues: [ReviewIssue] {
-        DocumentEditing.reviewIssues(for: document)
+        DocumentEditing.reviewIssues(for: document, preset: reviewPreset)
     }
 
     var reviewFindings: [ReviewFinding] {
-        DocumentEditing.reviewFindings(for: document)
+        DocumentEditing.reviewFindings(for: document, preset: reviewPreset)
     }
 
     var reviewProgress: ReviewProgress {
-        DocumentEditing.reviewProgress(for: document)
+        DocumentEditing.reviewProgress(for: document, preset: reviewPreset)
+    }
+
+    func setReviewPreset(_ preset: ReviewPreset) {
+        reviewPreset = preset
+        statusMessage = "Review preset set to \(preset.rawValue)"
     }
 
     var reviewIssueCount: Int {

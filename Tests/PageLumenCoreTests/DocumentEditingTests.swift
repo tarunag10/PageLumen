@@ -2,6 +2,17 @@ import XCTest
 @testable import PageLumenCore
 
 final class DocumentEditingTests: XCTestCase {
+    func testReviewPresetsAdjustConfidenceThresholdsWithoutChangingSource() {
+        let block = TextBlock(pageNumber: 1, type: .paragraph, text: "Borderline", bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20), confidence: 0.8)
+        let document = ReaderDocument(title: "Preset", sourceType: .sample, pages: [
+            ReaderPage(pageNumber: 1, size: PageSize(width: 400, height: 600), blocks: [block])
+        ])
+
+        XCTAssertTrue(DocumentEditing.reviewIssues(for: document, preset: .general).isEmpty)
+        XCTAssertEqual(DocumentEditing.reviewIssues(for: document, preset: .legal).first?.kind, .lowConfidence)
+        XCTAssertEqual(document.pages[0].blocks[0].text, "Borderline")
+    }
+
     func testMoveBlockChangesReadingOrderWithinPage() {
         let first = TextBlock(pageNumber: 1, type: .paragraph, text: "First", bounds: BoundingBox(x: 20, y: 20, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 0)
         let second = TextBlock(pageNumber: 1, type: .paragraph, text: "Second", bounds: BoundingBox(x: 20, y: 60, width: 100, height: 20), confidence: 0.9, readingOrderIndex: 1)

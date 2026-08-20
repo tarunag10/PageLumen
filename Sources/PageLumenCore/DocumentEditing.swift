@@ -1,5 +1,38 @@
 import Foundation
 
+public enum ReviewPreset: String, CaseIterable, Codable, Identifiable, Sendable {
+    case general = "General"
+    case legal = "Legal"
+    case academic = "Academic"
+    case receipts = "Receipts"
+    case slides = "Slides"
+    case accessibility = "Accessibility Remediation"
+
+    public var id: String { rawValue }
+
+    public var lowConfidenceThreshold: Double {
+        switch self {
+        case .general: return 0.70
+        case .legal: return 0.85
+        case .academic: return 0.75
+        case .receipts: return 0.80
+        case .slides: return 0.65
+        case .accessibility: return 0.90
+        }
+    }
+
+    public var explanation: String {
+        switch self {
+        case .general: return "Balanced confidence and structure checks."
+        case .legal: return "Flags lower-confidence text aggressively for source verification."
+        case .academic: return "Prioritises citations, headings, and moderate OCR uncertainty."
+        case .receipts: return "Flags uncertain key-value and numeric extraction."
+        case .slides: return "Allows sparse slide text while retaining structure warnings."
+        case .accessibility: return "Uses the strictest confidence threshold for remediation work."
+        }
+    }
+}
+
 public enum BlockMoveDirection: Sendable {
     case up
     case down
@@ -205,7 +238,7 @@ public enum DocumentEditing {
         }
     }
 
-    public static func reviewIssues(for document: ReaderDocument) -> [ReviewIssue] {
+    public static func reviewIssues(for document: ReaderDocument, preset: ReviewPreset = .general) -> [ReviewIssue] {
         document.pages.flatMap { page in
             var issues: [ReviewIssue] = []
             if let warning = page.warning {
@@ -219,7 +252,7 @@ public enum DocumentEditing {
 
                 if block.type == .unknown {
                     issues.append(ReviewIssue(kind: .unknownBlockType, pageNumber: page.pageNumber, blockID: block.id, title: "Unknown block type", detail: previewText(block.text)))
-                } else if block.confidence < 0.7 {
+                } else if block.confidence < preset.lowConfidenceThreshold {
                     issues.append(ReviewIssue(kind: .lowConfidence, pageNumber: page.pageNumber, blockID: block.id, title: "Low OCR confidence", detail: "\(Int(block.confidence * 100))% confidence: \(previewText(block.text))"))
                 } else if block.type == .table || block.type == .figure {
                     issues.append(ReviewIssue(kind: .unreviewedTableOrFigure, pageNumber: page.pageNumber, blockID: block.id, title: "Review generated structure", detail: previewText(block.text)))
@@ -229,8 +262,8 @@ public enum DocumentEditing {
         }
     }
 
-    public static func reviewFindings(for document: ReaderDocument) -> [ReviewFinding] {
-        reviewIssues(for: document).map { issue in
+    public static func reviewFindings(for document: ReaderDocument, preset: ReviewPreset = .general) -> [ReviewFinding] {
+        reviewIssues(for: document, preset: preset).map { issue in
             let severity: ReviewFindingSeverity
             switch issue.kind {
             case .pageWarning, .unknownBlockType:
@@ -265,12 +298,12 @@ public enum DocumentEditing {
         }
     }
 
-    public static func reviewProgress(for document: ReaderDocument) -> ReviewProgress {
+    public static func reviewProgress(for document: ReaderDocument, preset: ReviewPreset = .general) -> ReviewProgress {
         let blocks = document.allBlocks
         return ReviewProgress(
             reviewedBlocks: blocks.filter(isReviewed).count,
             totalBlocks: blocks.count,
-            issueCount: reviewIssues(for: document).count
+            issueCount: reviewIssues(for: document, preset: preset).count
         )
     }
 

@@ -20,6 +20,7 @@ final class DocumentStoreTests: XCTestCase {
         UserDefaults.standard.removeObject(forKey: DocumentRepositorySettings.lastClearedAtKey)
         UserDefaults.standard.removeObject(forKey: "intelligenceMode")
         UserDefaults.standard.removeObject(forKey: "useOnDeviceAI")
+        UserDefaults.standard.removeObject(forKey: "reviewPreset")
         try await super.tearDown()
     }
 
