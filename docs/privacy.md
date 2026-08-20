@@ -19,8 +19,6 @@ This page summarises the privacy commitments that PageLumen makes to its users. 
 - A "Privacy mode" toggle lives in **Settings → Privacy**. It is on by default. When on, translated export is disabled because that capability may use a network-assisted translation provider. The export screen surfaces the resulting status message, so the user can confirm why that format is unavailable before saving. All other documented workflows remain local in the current build.
 - A future cloud-assisted feature, if shipped, will require an explicit, labelled opt-in before any document is transmitted.
 
-## Exported JSON and Source URLs
-
 ## Local searchable copies
 
 - Retained recent-document metadata remains available for the local library.
@@ -30,6 +28,8 @@ This page summarises the privacy commitments that PageLumen makes to its users. 
 - Turning the setting off is reversible and does not delete recent metadata,
   source files, or existing user data. Use the separate library deletion
   controls when deletion is intended.
+
+## Exported JSON and Source URLs
 
 - The JSON export written by `ExportEngine` includes the source `ReaderDocument.sourceURL` by default, because that is often useful when piping output into downstream tooling.
 - The Summary & Export view includes an "Include provenance and review details" toggle. Turn it off when sharing a JSON export without PageLumen's document identifier, source metadata, or review-count envelope. The existing `redactSourceURL` and `redactTextSnippets` options remain available to callers that need finer-grained redaction.
