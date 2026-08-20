@@ -324,7 +324,7 @@ public struct ExportOptions: Equatable, Sendable {
         includeHeadersAndFooters: true,
         redactSourceURL: true,
         redactTextSnippets: true,
-        includeProvenance: false
+        includeProvenance: true
     )
 
     public init(
