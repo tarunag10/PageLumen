@@ -19,6 +19,7 @@ OCR, and a page warning. Do not retain participant documents after the session.
 | --- | --- | --- |
 | Import PDF/image | User can select, process, and recover from a denied permission without losing the document. | |
 | Review navigation | VoiceOver reaches page, heading, block, finding, and quote controls in reading order. Cmd-Shift-[ and ] move between findings and wrap correctly. | |
+| Compact Review workspace | At the minimum supported window size, the Review heading, page selector, readable Continue action, issue navigator, search field, and primary block actions remain discoverable without clipped labels. | |
 | Correct OCR | User can edit a block, mark it reviewed, and copy an accessible excerpt containing page/block citation. | |
 | Export | User can choose an export, understand validation findings, and recover from an unavailable format. | |
 | Optional Stirling operations | With the provider disabled by default, a tester can explicitly configure a local endpoint, understand the upload warning, confirm compression/merge, cancel an in-flight operation, and verify that the original files remain unchanged. | |
