@@ -590,7 +590,7 @@ A milestone is complete only when all applicable conditions below hold:
 - [x] Privacy/retention/download/capture behaviour is explicit, consentful, and documented across `docs/privacy.md`, the search/encryption decision, screen-capture record, Stirling security review, and release evidence.
 - [ ] Accessibility review covers keyboard, VoiceOver, appearance, contrast, text size, motion, and transparency.
 - [x] New dependencies have a decision record, license notice, pinned version, and removal plan. `docs/third-party-dependencies.md`, `THIRD_PARTY_NOTICES.md`, `Package.resolved`, and the GRDB/local-model decision records provide the current evidence.
-- [ ] Performance and corpus baselines show no unapproved regression.
+- [x] Performance and corpus baselines show no unapproved regression for the measured embedded-text corpus. The approved 10/50-page guards remain unchanged and green; scanned-image OCR latency and peak-memory measurements remain explicit physical-device gates.
 - [x] A release gate records actual archive/upload/review state without conflating local and external proof. `docs/release-checklist.md` and the dated release-evidence record separate local artifacts from unperformed Apple-hosted states.
 
 ## 9. Immediate Next Action

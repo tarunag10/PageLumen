@@ -3,6 +3,11 @@
 These are deterministic XCTest wall-time guards for the embedded-text path, not a
 claim about scanned-image OCR performance or peak resident memory.
 
+The current regression gate is green: the fixture and document-processor test
+suite passes without changing these approved guards, and the observed runs
+remain below both limits. This is source/embedded-text evidence only; it does
+not close the physical-device OCR or memory measurements below.
+
 | Fixture | Guard | Observed on this run |
 | --- | ---: | ---: |
 | 10-page embedded-text PDF | < 30 s | 0.54 s |
