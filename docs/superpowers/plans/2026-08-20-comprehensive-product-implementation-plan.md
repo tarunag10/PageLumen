@@ -294,7 +294,7 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 
 - [ ] Implement Finder Quick Action / Share support for selected PDFs and images. App Intents and the AppKit open-file delegate now bridge Finder/open-file and Shortcut requests into the normal security-scoped import path; Finder extension/share-sheet packaging and participant validation remain open.
 - [ ] Add Quick Look thumbnails/previews only after verifying sandbox and performance behaviour.
-- [ ] Add watch-folder support only with explicit folder selection, a visible enable/disable toggle, security-scoped bookmark handling, and per-file confirmation/error reporting.
+- [ ] Add watch-folder support only with explicit folder selection, a visible enable/disable toggle, security-scoped bookmark handling, and per-file confirmation/error reporting. The bounded scanner and security-scoped bookmark create/resolve boundary are now implemented and tested; automatic monitoring, Settings toggle, confirmation queue, and per-file error UI remain open.
 - [x] Add a small set of App Intents: open a selected document, import, search local library, read unresolved findings, and export tagged HTML. The implementation is bounded to retained local documents, caller-provided export URLs, and notification-based open actions; `AppIntentExportTests` covers metadata-only entities, the searchable-copy retention boundary, unresolved-finding filtering, open-action payloads, and typed Tagged HTML validation failures.
 
 **Exit gate for Phase 3:** Search uses local-only data, retention is understandable and reversible, and App Intent/Quick Action flows have no permission or data-loss surprises.
