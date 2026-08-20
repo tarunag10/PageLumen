@@ -28,6 +28,31 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertEqual(store.selectedDestination, .review)
     }
 
+    func testSummaryLengthRegeneratesDisplayedSummary() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let previousAISetting = UserDefaults.standard.object(forKey: "useOnDeviceAI")
+        defer {
+            if let previousAISetting {
+                UserDefaults.standard.set(previousAISetting, forKey: "useOnDeviceAI")
+            } else {
+                UserDefaults.standard.removeObject(forKey: "useOnDeviceAI")
+            }
+        }
+        UserDefaults.standard.set(false, forKey: "useOnDeviceAI")
+
+        store.summaryLength = .short
+        store.regenerateSummary()
+        let short = store.document.summary
+
+        store.summaryLength = .detailed
+        store.regenerateSummary()
+        let detailed = store.document.summary
+
+        XCTAssertFalse(short.isEmpty)
+        XCTAssertFalse(detailed.isEmpty)
+        XCTAssertNotEqual(short, detailed)
+    }
+
     func testInjectedPersistenceReportsAvailableLibrary() {
         let store = DocumentStore(persisting: InMemoryPersisting())
 

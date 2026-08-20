@@ -43,6 +43,10 @@ struct SummaryExportView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+                    .onChange(of: store.summaryLength) { _, _ in
+                        speech.stop()
+                        store.regenerateSummary()
+                    }
 
                     Button {
                         speech.isSpeaking ? speech.stop() : speech.speak(store.document.summary)
