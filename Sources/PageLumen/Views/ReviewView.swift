@@ -139,7 +139,7 @@ private struct ReviewHeader: View {
                 } label: {
                     Label("Compare Edits", systemImage: "arrow.left.arrow.right")
                 }
-                .disabled(store.documentChanges.isEmpty)
+                .disabled(store.documentChanges.isEmpty && store.comparisonRevisionCount == 0)
                 .help("Compare current text with retained original OCR")
                 .popover(isPresented: $showDocumentChanges, arrowEdge: .top) {
                     DocumentChangesPopover()
@@ -498,6 +498,21 @@ private struct EditHistoryPopover: View {
 
 private struct DocumentChangesPopover: View {
     @Environment(DocumentStore.self) private var store
+    @State private var baseline: ComparisonBaseline = .original
+
+    private enum ComparisonBaseline: Hashable {
+        case original
+        case revision(Int)
+    }
+
+    private var changes: [DocumentChange] {
+        switch baseline {
+        case .original:
+            return store.documentChanges
+        case .revision(let index):
+            return store.comparisonChanges(comparedToRevision: index)
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -508,10 +523,23 @@ private struct DocumentChangesPopover: View {
                 .font(.caption)
                 .foregroundStyle(AccessibleStyle.secondaryText)
 
-            if store.documentChanges.isEmpty {
+            Picker("Compare current text with", selection: $baseline) {
+                Text("Original OCR").tag(ComparisonBaseline.original)
+                ForEach(0..<store.comparisonRevisionCount, id: \.self) { index in
+                    Text("Undo revision \(index + 1)").tag(ComparisonBaseline.revision(index))
+                }
+            }
+            .pickerStyle(.menu)
+            .onChange(of: store.comparisonRevisionCount) { _, count in
+                if case .revision(let index) = baseline, index >= count {
+                    baseline = .original
+                }
+            }
+
+            if changes.isEmpty {
                 ContentUnavailableView("No text changes", systemImage: "checkmark.circle", description: Text("Edited blocks will appear here after a text correction."))
             } else {
-                List(store.documentChanges) { change in
+                List(changes) { change in
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Label(change.kind.label, systemImage: change.kind.systemImage)
