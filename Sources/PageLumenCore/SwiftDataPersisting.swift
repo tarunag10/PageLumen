@@ -4,6 +4,7 @@ import SwiftData
 @available(macOS 14.0, *)
 public final class SwiftDataPersisting: DocumentPersisting, @unchecked Sendable {
     private let modelContainer: ModelContainer
+    private let storageDirectory: URL?
 
     public init() throws {
         let appSupportDir = FileManager.default
@@ -12,6 +13,7 @@ public final class SwiftDataPersisting: DocumentPersisting, @unchecked Sendable 
         let appDir = appSupportDir.appendingPathComponent("PageLumen", isDirectory: true)
         try? FileManager.default.createDirectory(at: appDir, withIntermediateDirectories: true)
         let storeURL = appDir.appendingPathComponent("recents.store")
+        self.storageDirectory = appDir
         let config = ModelConfiguration(url: storeURL)
         self.modelContainer = try ModelContainer(
             for: PersistedDocument.self,
@@ -24,6 +26,7 @@ public final class SwiftDataPersisting: DocumentPersisting, @unchecked Sendable 
             for: PersistedDocument.self,
             configurations: configuration
         )
+        self.storageDirectory = nil
     }
 
     public func save(_ document: ReaderDocument) throws {
@@ -94,5 +97,26 @@ public final class SwiftDataPersisting: DocumentPersisting, @unchecked Sendable 
         let context = ModelContext(modelContainer)
         try context.delete(model: PersistedDocument.self)
         try context.save()
+    }
+
+    public func storageSizeInBytes() throws -> Int64? {
+        guard let storageDirectory else { return nil }
+        guard FileManager.default.fileExists(atPath: storageDirectory.path) else { return 0 }
+        return try FileManager.default.sizeOfItem(at: storageDirectory)
+    }
+}
+
+private extension FileManager {
+    func sizeOfItem(at url: URL) throws -> Int64 {
+        var isDirectory: ObjCBool = false
+        guard fileExists(atPath: url.path, isDirectory: &isDirectory) else { return 0 }
+        if !isDirectory.boolValue {
+            let attributes = try attributesOfItem(atPath: url.path)
+            return (attributes[.size] as? NSNumber)?.int64Value ?? 0
+        }
+        let contents = try contentsOfDirectory(at: url, includingPropertiesForKeys: nil)
+        return try contents.reduce(Int64(0)) { total, child in
+            total + (try sizeOfItem(at: child))
+        }
     }
 }

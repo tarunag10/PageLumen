@@ -87,6 +87,20 @@ final class DocumentPersistingTests: XCTestCase {
 
         XCTAssertTrue(try persisting.recentDocuments().isEmpty)
         XCTAssertNil(try persisting.load(id: UUID()))
+        XCTAssertEqual(try persisting.storageSizeInBytes(), 0)
+    }
+
+    func testStorageSizeReportsOnlyTheLocalLibraryFile() throws {
+        let url = tempDirectory.appendingPathComponent("recent.json")
+        let persisting = FilePersisting(fileURL: url)
+        XCTAssertEqual(try persisting.storageSizeInBytes(), 0)
+
+        try persisting.save(SampleDataFactory.makeDemoDocument())
+
+        let size = try XCTUnwrap(persisting.storageSizeInBytes())
+        XCTAssertGreaterThan(size, 0)
+        let fileSize = try XCTUnwrap(FileManager.default.attributesOfItem(atPath: url.path)[.size] as? NSNumber)
+        XCTAssertEqual(size, fileSize.int64Value)
     }
 
     private func makeAlternateDocument(title: String) -> ReaderDocument {

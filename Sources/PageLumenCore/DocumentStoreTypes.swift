@@ -13,4 +13,13 @@ public protocol DocumentPersisting: Sendable {
     func recentDocuments() throws -> [ReaderDocument]
     func delete(id: UUID) throws
     func forgetAll() throws
+
+    /// Returns the on-disk footprint of this persistence store when it can be
+    /// measured. A nil value means the implementation cannot expose a stable
+    /// filesystem footprint.
+    func storageSizeInBytes() throws -> Int64?
+}
+
+public extension DocumentPersisting {
+    func storageSizeInBytes() throws -> Int64? { nil }
 }

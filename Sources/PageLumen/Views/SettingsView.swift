@@ -69,6 +69,8 @@ struct SettingsView: View {
                 Text("Recent documents are stored only in this Mac's memory. Use Forget all to clear them when sharing the device.")
                     .font(.callout)
                     .foregroundStyle(AccessibleStyle.secondaryText)
+                LabeledContent("Library storage", value: store.libraryStorageSizeLabel)
+                    .accessibilityHint("Size of PageLumen's local recent-document store. Source files are not included.")
                 Label(store.persistenceStatus.label, systemImage: store.persistenceStatus.systemImage)
                     .font(.callout)
                     .foregroundStyle(store.persistenceStatus == .available ? AccessibleStyle.success : AccessibleStyle.warning)

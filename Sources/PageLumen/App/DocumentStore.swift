@@ -64,6 +64,17 @@ final class DocumentStore {
     var reviewFilter: ReviewFilter = .all
     var exportPreviewFormat: ExportFormat = .markdown
 
+    var libraryStorageSizeLabel: String {
+        do {
+            guard let bytes = try persisting.storageSizeInBytes() else {
+                return "Storage size unavailable"
+            }
+            return ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+        } catch {
+            return "Storage size unavailable"
+        }
+    }
+
     var useOnDeviceAI: Bool {
         UserDefaults.standard.bool(forKey: "useOnDeviceAI")
     }

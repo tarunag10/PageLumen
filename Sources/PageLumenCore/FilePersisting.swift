@@ -29,6 +29,12 @@ public final class FilePersisting: DocumentPersisting, @unchecked Sendable {
 
     public var storageURL: URL { fileURL }
 
+    public func storageSizeInBytes() throws -> Int64? {
+        guard FileManager.default.fileExists(atPath: fileURL.path) else { return 0 }
+        let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
+        return (attributes[.size] as? NSNumber)?.int64Value ?? 0
+    }
+
     public func save(_ document: ReaderDocument) throws {
         var documents = try loadAll()
         documents.removeAll { existing in
