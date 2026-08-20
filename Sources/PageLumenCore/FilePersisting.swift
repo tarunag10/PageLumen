@@ -14,9 +14,13 @@ public final class FilePersisting: DocumentPersisting, @unchecked Sendable {
     private let fileURL: URL
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
+    private let writeData: (Data, URL) throws -> Void
 
-    public init(fileURL: URL) {
+    public init(fileURL: URL, writeData: @escaping (Data, URL) throws -> Void = { data, url in
+        try data.write(to: url, options: .atomic)
+    }) {
         self.fileURL = fileURL
+        self.writeData = writeData
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         self.encoder = encoder
@@ -112,7 +116,7 @@ public final class FilePersisting: DocumentPersisting, @unchecked Sendable {
         let directory = fileURL.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let data = try encoder.encode(PersistedLibrary(schemaVersion: Self.schemaVersion, documents: documents))
-        try data.write(to: fileURL, options: .atomic)
+        try writeData(data, fileURL)
     }
 }
 

@@ -115,6 +115,22 @@ final class DocumentPersistingTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: blocker), Data("not a directory".utf8))
     }
 
+    func testSaveSurfacesNoSpaceWithoutReplacingExistingStore() throws {
+        let url = tempDirectory.appendingPathComponent("recent.json")
+        let baseline = FilePersisting(fileURL: url)
+        try baseline.save(SampleDataFactory.makeDemoDocument())
+        let original = try Data(contentsOf: url)
+        let noSpaceWriter: (Data, URL) throws -> Void = { _, _ in
+            throw CocoaError(.fileWriteOutOfSpace)
+        }
+        let persisting = FilePersisting(fileURL: url, writeData: noSpaceWriter)
+
+        XCTAssertThrowsError(try persisting.save(makeAlternateDocument(title: "No space"))) { error in
+            XCTAssertEqual((error as NSError).code, CocoaError.Code.fileWriteOutOfSpace.rawValue)
+        }
+        XCTAssertEqual(try Data(contentsOf: url), original)
+    }
+
     func testCorruptStoreIsBackedUpAndSurfacesTypedError() throws {
         let url = tempDirectory.appendingPathComponent("recent.json")
         try Data("not valid JSON".utf8).write(to: url)
