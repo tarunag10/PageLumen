@@ -21,6 +21,20 @@ Primary Home actions expose stable identifiers:
 | Capture Screen | `home.captureScreen` |
 | Try Demo | `home.tryDemo` |
 
+Review, export, and settings controls also expose stable identifiers for
+participant-driven XCUITest flows:
+
+| Surface | Identifiers |
+| --- | --- |
+| Review | `review.undo`, `review.redo`, `review.queue`, `review.continue`, `review.search`, `review.nextMatch`, `review.previousMatch` |
+| Export | `export.backToReview`, `export.<format>` |
+| Settings | `settings.privacyMode`, `settings.searchableCopies`, `settings.forgetAll`, `settings.appearance`, `settings.boostContrast` |
+
+The additional identifiers are intentionally not asserted from the initial
+Home-only headless contract because their views are reached after import or
+settings navigation. A participant run must exercise each enabled control and
+record the resulting state transition.
+
 Workflow step buttons retain their accessible labels (`Step 1, Add` through
 `Step 4, Export`) so navigation checks do not depend on SwiftUI view hierarchy
 or localized visual text.

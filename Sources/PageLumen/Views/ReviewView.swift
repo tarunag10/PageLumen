@@ -94,6 +94,7 @@ private struct ReviewHeader: View {
                     Label("Undo", systemImage: "arrow.uturn.backward")
                 }
                 .disabled(!store.canUndo)
+                .accessibilityIdentifier("review.undo")
                 .help("Undo the last text, structure, or review change")
 
                 Button {
@@ -102,6 +103,7 @@ private struct ReviewHeader: View {
                     Label("Redo", systemImage: "arrow.uturn.forward")
                 }
                 .disabled(!store.canRedo)
+                .accessibilityIdentifier("review.redo")
                 .help("Redo the last undone change")
 
                 Button {
@@ -119,6 +121,7 @@ private struct ReviewHeader: View {
                 } label: {
                     Label("Review Queue", systemImage: "list.bullet.clipboard")
                 }
+                .accessibilityIdentifier("review.queue")
                 .popover(isPresented: $showReviewQueue, arrowEdge: .top) {
                     ReviewQueuePopover()
                         .frame(width: 360, height: 420)
@@ -162,6 +165,7 @@ private struct ReviewHeader: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(!store.canNavigate(to: .summaryExport))
+                .accessibilityIdentifier("review.continue")
                 .help(store.isProcessing ? "Finish processing before exporting" : "Open summary and export options")
             }
 
@@ -169,6 +173,7 @@ private struct ReviewHeader: View {
                 TextField("Search extracted text", text: $store.reviewSearchQuery)
                     .textFieldStyle(.roundedBorder)
                     .frame(minWidth: 220)
+                    .accessibilityIdentifier("review.search")
                     .onSubmit {
                         store.jumpToNextSearchMatch()
                     }
@@ -178,6 +183,7 @@ private struct ReviewHeader: View {
                 } label: {
                     Label("Next Match", systemImage: "arrow.down.doc")
                 }
+                .accessibilityIdentifier("review.nextMatch")
                 .disabled(store.reviewSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
                 Button {
@@ -185,6 +191,7 @@ private struct ReviewHeader: View {
                 } label: {
                     Label("Previous Match", systemImage: "arrow.up.doc")
                 }
+                .accessibilityIdentifier("review.previousMatch")
                 .disabled(store.reviewSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
                 Picker("Filter", selection: $store.reviewFilter) {

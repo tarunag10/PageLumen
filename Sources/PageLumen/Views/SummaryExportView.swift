@@ -82,6 +82,7 @@ struct SummaryExportView: View {
                     } label: {
                         Label("Back to Review", systemImage: "arrow.left")
                     }
+                    .accessibilityIdentifier("export.backToReview")
                 }
 
                 if !store.statusMessage.isEmpty, store.statusMessage != "Ready" {
@@ -246,6 +247,7 @@ struct SummaryExportView: View {
                             }
                             .buttonStyle(.bordered)
                             .disabled(!store.canExport(format))
+                            .accessibilityIdentifier("export.\(format.rawValue)")
                             .help(store.exportAvailabilityMessage(for: format))
                         }
                     }

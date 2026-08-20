@@ -30,6 +30,7 @@ struct SettingsView: View {
 
             Section("Privacy") {
                 Toggle("Privacy mode", isOn: $privacyMode)
+                    .accessibilityIdentifier("settings.privacyMode")
                     .onChange(of: privacyMode) { _, enabled in
                         store.statusMessage = enabled ? "Privacy mode enabled; translated export is disabled" : "Privacy mode disabled"
                     }
@@ -40,6 +41,7 @@ struct SettingsView: View {
 
             Section("Library") {
                 Toggle("Keep searchable local copies", isOn: $keepSearchableLocalCopies)
+                    .accessibilityIdentifier("settings.searchableCopies")
                     .onChange(of: keepSearchableLocalCopies) { _, enabled in
                         store.setKeepSearchableLocalCopies(enabled)
                     }
@@ -52,6 +54,7 @@ struct SettingsView: View {
                 } label: {
                     Label("Forget all recent documents", systemImage: "trash")
                 }
+                .accessibilityIdentifier("settings.forgetAll")
                 .disabled(store.recentDocuments.isEmpty)
                 .confirmationDialog(
                     "Forget all recent documents? This cannot be undone.",
@@ -84,8 +87,10 @@ struct SettingsView: View {
                     Text("Light").tag("light")
                     Text("Dark").tag("dark")
                 }
+                .accessibilityIdentifier("settings.appearance")
                 .accessibilityHint("Choose System to follow macOS appearance and accessibility settings")
                 Toggle("Boost contrast", isOn: $boostContrast)
+                    .accessibilityIdentifier("settings.boostContrast")
                     .onChange(of: boostContrast) { _, newValue in
                         AccessibleStyle.boostContrast = newValue
                     }
