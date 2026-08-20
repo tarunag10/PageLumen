@@ -15,6 +15,7 @@ ZIP/DMG packaging run on 2026-08-20.
 - Runtime: hardened runtime enabled; sandbox and user-selected file entitlements present
 - `script/package_release.sh`: succeeded
 - `script/validate_release.sh`: passed bundle, strict deep signature, privacy-manifest, and checksum gates
+- Full package regression: `swift test -Xswiftc -gnone` passed 328 tests with 2 documented translation-model skips; `make quality` passed.
 - CodeDirectory CDHash: `5bf6c2825145f0764595deff48e03d564f39d79c`
 - Privacy manifest: `Contents/Resources/PrivacyInfo.xcprivacy`, valid, non-tracking, and declares the UserDefaults accessed-API reason
 - Gatekeeper: rejected as `Unnotarized Developer ID` (expected before notarization)
