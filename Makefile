@@ -1,4 +1,4 @@
-.PHONY: help test build release lint quality fixtures release-manifest privacy-matrix coverage clean
+.PHONY: help test build release lint quality fixtures release-manifest privacy-matrix coverage release-preflight clean
 
 APP_NAME := PageLumen
 SCHEME := PageLumen
@@ -13,6 +13,7 @@ help:
 	@echo "  make fixtures  - validate the versioned fixture and AI evaluation manifests"
 	@echo "  make release-manifest - validate the unsigned CI/release evidence contract"
 	@echo "  make coverage  - run tests with LLVM coverage and write a risk report"
+	@echo "  make release-preflight - check local archive/signing prerequisites"
 	@echo "  make clean     - remove .build, dist, DerivedData"
 
 test:
@@ -45,6 +46,9 @@ privacy-matrix:
 
 coverage:
 	./script/coverage_report.sh
+
+release-preflight:
+	./script/release_preflight.sh
 
 clean:
 	rm -rf .build dist DerivedData
