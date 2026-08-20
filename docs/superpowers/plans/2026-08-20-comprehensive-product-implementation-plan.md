@@ -243,10 +243,10 @@ Each milestone should ship in independently revertible pull requests. A feature 
 ### 2.2 Tagged HTML and Markdown
 
 - [x] Make tagged HTML the recommended remediation export.
-- [ ] Verify heading hierarchy, landmarks, document language, table headers/scopes, figure alt text, link preservation, and escaped content.
+- [x] Verify heading hierarchy, landmarks, document language, table headers/scopes, figure alt text, link preservation, and escaped content. `HTMLExportContract` performs deterministic generated-output checks; safe HTTP(S)/mailto and internal page links are preserved while unsafe schemes are omitted.
 - [x] Add page/block anchors so exported citations can return to the original PageLumen review workspace.
 - [x] Add a robust Markdown AST validation/normalisation layer (see `swift-markdown` decision below) before supporting Markdown import or advanced editing. `MarkdownExportContract` is a production boundary backed by `swift-markdown`; it validates the title/heading hierarchy, table headers and column consistency, block-parseability, newline normalization, and optional deterministic page markers. The writer escapes table pipes and normalizes embedded line breaks. Focused `MarkdownContractTests` cover the demo AST, hostile table content, stable page markers, and malformed structure; Markdown import/editor remains out of scope.
-- [ ] Snapshot-test HTML/Markdown across all fixture classes.
+- [x] Snapshot-test HTML/Markdown across a stable representative fixture subset (demo, legal, multilingual, receipt/table, and links/figure classes). Golden text snapshots are deterministic and record/update guidance is documented; machine-specific rendered UI snapshots remain separate work.
 
 ### 2.3 DOCX, CSV, JSON, and audio
 

@@ -378,6 +378,23 @@ public struct ExportEngine: Sendable {
 
         var findings = capability.validationNotes
         var structuredFindings = capabilityFindings(for: format, capability: capability)
+        var generatedHTMLContractValid = true
+        if format == .html || format == .taggedHTML {
+            let contract = HTMLExportContract.validate(
+                format == .taggedHTML ? taggedHTML(for: document, options: options) : html(for: document, options: options),
+                tagged: format == .taggedHTML
+            )
+            findings.append(contentsOf: contract.issues.map { "[Needs fix] \($0)" })
+            structuredFindings.append(contentsOf: contract.issues.map {
+                ExportValidationFinding(
+                    code: $0,
+                    severity: .blocker,
+                    message: "Generated HTML does not satisfy the export contract (\($0)).",
+                    recommendation: "Fix the exporter and rerun the HTML contract and snapshot tests before publishing."
+                )
+            })
+            generatedHTMLContractValid = contract.isValid
+        }
         if format == .taggedHTML || format == .html || format == .pdf || format == .docx {
             let audit = AccessibilityAuditor().audit(document: document, options: options)
             findings.append(contentsOf: audit.findings.map { finding in
@@ -410,7 +427,7 @@ public struct ExportEngine: Sendable {
                     recommendation: "Resolve this review finding before exporting this format."
                 )
             })
-            let status: ExportValidationStatus = audit.isReadyForTaggedExport && unresolvedBlockers.isEmpty ? capability.status : .unavailable
+            let status: ExportValidationStatus = generatedHTMLContractValid && audit.isReadyForTaggedExport && unresolvedBlockers.isEmpty ? capability.status : .unavailable
             return ExportValidationResult(format: format, status: status, capability: capability, findings: findings, structuredFindings: structuredFindings)
         }
         return ExportValidationResult(format: format, status: capability.status, capability: capability, findings: findings, structuredFindings: structuredFindings)
@@ -496,7 +513,8 @@ public struct ExportEngine: Sendable {
     }
 
     public func html(for document: ReaderDocument, options: ExportOptions) -> String {
-        var body = ["<!doctype html>", "<html lang=\"\(document.language ?? "en")\">", "<head>", "<meta charset=\"utf-8\">", "<title>\(escape(document.title))</title>", "</head>", "<body>", "<main>", "<h1>\(escape(document.title))</h1>"]
+        let language = document.language?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? document.language! : "en"
+        var body = ["<!doctype html>", "<html lang=\"\(escape(language))\">", "<head>", "<meta charset=\"utf-8\">", "<title>\(escape(document.title))</title>", "</head>", "<body>", "<main>", "<h1>\(escape(document.title))</h1>"]
 
         for page in document.pages {
             if options.includePageReferences {
@@ -522,6 +540,8 @@ public struct ExportEngine: Sendable {
                     body.append("<p>\(escape(block.text))</p>")
                 }
             }
+
+            appendHTMLLinks(for: page, to: &body)
 
             if options.includePageReferences {
                 body.append("</section>")
@@ -585,6 +605,8 @@ public struct ExportEngine: Sendable {
                     body.append("<p role=\"note\"><small>Confidence: \(Int(block.confidence * 100))%. Review recommended.</small></p>")
                 }
             }
+
+            appendHTMLLinks(for: page, to: &body, tagged: true)
 
             body.append("</section>")
         }
@@ -930,6 +952,29 @@ public struct ExportEngine: Sendable {
         }
         html.append("</tbody></table>")
         return html.joined(separator: "\n")
+    }
+
+    private func appendHTMLLinks(for page: ReaderPage, to body: inout [String], tagged: Bool = false) {
+        let links = page.links.sorted { $0.id.uuidString < $1.id.uuidString }
+        guard !links.isEmpty else { return }
+        body.append("<nav aria-label=\"Page \(page.pageNumber) links\">")
+        body.append("<ul>")
+        for link in links {
+            let label = link.label?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? link.label! : "Link on page \(page.pageNumber)"
+            let href: String
+            if let url = link.url, let scheme = url.scheme?.lowercased(), ["http", "https", "mailto"].contains(scheme) {
+                href = url.absoluteString
+            } else if let targetPageNumber = link.targetPageNumber {
+                href = "#page-\(targetPageNumber)-heading"
+            } else {
+                // Unsupported external schemes are deliberately omitted rather
+                // than copied into a potentially executable HTML attribute.
+                continue
+            }
+            body.append("<li><a href=\"\(escape(href))\">\(escape(label))</a></li>")
+        }
+        body.append("</ul>")
+        body.append("</nav>")
     }
 
     private func escape(_ text: String) -> String {

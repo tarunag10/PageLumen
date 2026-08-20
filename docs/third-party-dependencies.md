@@ -8,9 +8,12 @@ inventory and license summaries live in [`THIRD_PARTY_NOTICES.md`](../THIRD_PART
 
 `swift-snapshot-testing` is test-target-only. It protects deterministic text
 exports and is not a substitute for VoiceOver, keyboard, contrast, or other
-accessibility testing. Current golden tests cover the demo Markdown and tagged
-HTML exports in
-`Tests/PageLumenCoreTests/__Snapshots__/ExportSnapshotTests/`.
+accessibility testing. Current golden tests cover the demo plus stable legal,
+multilingual, receipt/table, and links/figure Markdown or tagged HTML exports
+in `Tests/PageLumenCoreTests/__Snapshots__/ExportSnapshotTests/`. Generated
+HTML and Tagged HTML also pass the dependency-free `HTMLExportContract` checks
+for language, landmarks, heading hierarchy, table headers, figure
+descriptions, safe links, and escaped content.
 
 ## swift-markdown
 
@@ -46,6 +49,9 @@ swift test --filter ExportSnapshotTests
 The second command is required to prove that the committed references pass.
 Snapshot changes require reviewer approval and a description of the user-visible
 export change. Do not record snapshots from a machine-specific UI renderer.
+The focused suite covers six deterministic outputs. A missing reference is
+expected to fail the recording run; rerun the same focused command without
+`SNAPSHOT_TESTING_RECORD` and require the committed references to pass.
 
 ## Adoption and removal rules
 
