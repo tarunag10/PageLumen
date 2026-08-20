@@ -66,6 +66,38 @@ enum ScreenshotCaptureError: LocalizedError, Equatable {
 }
 
 struct ScreenshotCaptureService {
+    private let temporaryDirectory: URL
+
+    init(temporaryDirectory: URL = FileManager.default.temporaryDirectory) {
+        self.temporaryDirectory = temporaryDirectory
+        Self.cleanupStaleTemporaryCaptures(in: temporaryDirectory)
+    }
+
+    @discardableResult
+    static func cleanupStaleTemporaryCaptures(
+        in directory: URL = FileManager.default.temporaryDirectory,
+        olderThan age: TimeInterval = 24 * 60 * 60,
+        now: Date = Date()
+    ) -> Int {
+        let cutoff = now.addingTimeInterval(-max(0, age))
+        let prefixes = [ScreenshotCaptureMode.selectedRegion.filePrefix, ScreenshotCaptureMode.window.filePrefix]
+        guard let urls = try? FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: [.contentModificationDateKey, .isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        ) else { return 0 }
+
+        var removed = 0
+        for url in urls where url.pathExtension.lowercased() == "png" && prefixes.contains(where: { url.lastPathComponent.hasPrefix($0 + "-") }) {
+            guard let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .isRegularFileKey]),
+                  values.isRegularFile == true,
+                  let modified = values.contentModificationDate,
+                  modified < cutoff else { continue }
+            if (try? FileManager.default.removeItem(at: url)) != nil { removed += 1 }
+        }
+        return removed
+    }
+
     func capture(mode: ScreenshotCaptureMode) async throws -> URL {
         // Prompt the system for screen-capture access on first use. The
         // `screencapture` binary requires this TCC permission; calling the
@@ -76,7 +108,7 @@ struct ScreenshotCaptureService {
             throw ScreenshotCaptureError.permissionDenied
         }
 
-        let url = FileManager.default.temporaryDirectory
+        let url = temporaryDirectory
             .appendingPathComponent("\(mode.filePrefix)-\(UUID().uuidString)")
             .appendingPathExtension("png")
 

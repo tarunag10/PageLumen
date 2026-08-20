@@ -141,7 +141,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [x] Treat picker dismissal, denied permission, and API failure as distinct errors. Do not silently fall back to a shell capture after denial or dismissal.
 - [x] Retain a narrowly scoped legacy region picker only if a supported native alternative cannot serve macOS 14; document why and make it visible in the UI.
 - [ ] Provide a pre-permission explanatory screen, a System Settings deep-link/help path after denial, cancellation, and stale temporary-file cleanup on app launch.
-- [ ] Ensure temporary captures are removed after successful processing unless the person explicitly saves them.
+- [x] Ensure temporary captures are removed after successful processing unless the person explicitly saves them, and clean stale PageLumen capture files from the temporary directory at service startup. The cleanup is prefix-scoped, age-bounded, and regression-tested without touching unrelated files.
 - [ ] Add tests for error mapping, no selected window, cancellation, temp cleanup, and command argument construction. Manually test macOS 14 and the current macOS release.
 
 **Acceptance:** Capture never selects a random window. Permission denial or dismissal leaves no imported document and gives a clear next action.
