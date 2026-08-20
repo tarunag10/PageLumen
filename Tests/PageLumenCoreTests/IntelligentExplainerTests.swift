@@ -30,6 +30,34 @@ final class IntelligentExplainerTests: XCTestCase {
         XCTAssertFalse(summary.isEmpty)
     }
 
+    func testSummaryResultNeverHidesUnsupportedOrFailedOutcome() async {
+        let document = SampleDataFactory.makeDemoDocument()
+        let result = await IntelligentExplainer().summaryResult(for: document, length: .short)
+
+        switch result {
+        case .generated(let text):
+            XCTAssertFalse(text.isEmpty)
+        case .unavailable(let availability):
+            switch availability {
+            case .available:
+                XCTFail("An available model should not be returned as unavailable")
+            case .unavailable, .notSupported:
+                break
+            }
+        case .failed(let reason):
+            XCTAssertFalse(reason.isEmpty)
+        }
+    }
+
+    func testLegacySummaryAPIRemainsTextCompatibleWithTypedResult() async {
+        let document = SampleDataFactory.makeDemoDocument()
+        let explainer = IntelligentExplainer()
+        let result = await explainer.summaryResult(for: document, length: .short)
+        let legacy = await explainer.summary(for: document, length: .short)
+
+        XCTAssertEqual(legacy, result.text ?? "")
+    }
+
     func testSummaryRespectsLengthParameter() async {
         let document = SampleDataFactory.makeDemoDocument()
         let options = SummaryOptions(useIntelligence: false, maxSentences: 0)

@@ -9,6 +9,20 @@ public enum IntelligentExplainerAvailability: Equatable, Sendable {
     case notSupported
 }
 
+/// The outcome of an opt-in Foundation Models request. The legacy string APIs
+/// below remain available for callers that only need text; new callers can use
+/// this value to explain why a result was not generated.
+public enum IntelligentExplainerResult: Equatable, Sendable {
+    case generated(String)
+    case unavailable(IntelligentExplainerAvailability)
+    case failed(reason: String)
+
+    public var text: String? {
+        if case .generated(let text) = self { return text }
+        return nil
+    }
+}
+
 public struct IntelligentExplainer: Sendable {
     public init() {}
 
@@ -21,17 +35,47 @@ public struct IntelligentExplainer: Sendable {
     }
 
     public func summary(for document: ReaderDocument, length: SummaryLength) async -> String {
-        guard #available(macOS 26.0, *) else { return "" }
+        let result = await summaryResult(for: document, length: length)
+        return result.text ?? ""
+    }
+
+    public func summaryResult(for document: ReaderDocument, length: SummaryLength) async -> IntelligentExplainerResult {
+        guard #available(macOS 26.0, *) else {
+            return .unavailable(.notSupported)
+        }
+        guard case .available = availability else {
+            return .unavailable(availability)
+        }
         return await summarizeOnMacOS26(document: document, length: length)
     }
 
     public func explain(table: TableRegion) async -> String {
-        guard #available(macOS 26.0, *) else { return "" }
+        let result = await explainTableResult(table: table)
+        return result.text ?? ""
+    }
+
+    public func explainTableResult(table: TableRegion) async -> IntelligentExplainerResult {
+        guard #available(macOS 26.0, *) else {
+            return .unavailable(.notSupported)
+        }
+        guard case .available = availability else {
+            return .unavailable(availability)
+        }
         return await explainTableOnMacOS26(table: table)
     }
 
     public func explain(figure: FigureRegion) async -> String {
-        guard #available(macOS 26.0, *) else { return "" }
+        let result = await explainFigureResult(figure: figure)
+        return result.text ?? ""
+    }
+
+    public func explainFigureResult(figure: FigureRegion) async -> IntelligentExplainerResult {
+        guard #available(macOS 26.0, *) else {
+            return .unavailable(.notSupported)
+        }
+        guard case .available = availability else {
+            return .unavailable(availability)
+        }
         return await explainFigureOnMacOS26(figure: figure)
     }
 
@@ -51,56 +95,59 @@ public struct IntelligentExplainer: Sendable {
     }
 
     @available(macOS 26.0, *)
-    private func summarizeOnMacOS26(document: ReaderDocument, length: SummaryLength) async -> String {
+    private func summarizeOnMacOS26(document: ReaderDocument, length: SummaryLength) async -> IntelligentExplainerResult {
         #if canImport(FoundationModels)
         let model = SystemLanguageModel.default
-        guard case .available = model.availability else { return "" }
+        guard case .available = model.availability else { return .unavailable(Self.checkAvailabilityOnMacOS26()) }
         do {
             let session = LanguageModelSession()
             let prompt = Self.summaryPrompt(document: document, length: length)
             let response = try await session.respond(to: prompt)
-            return response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+            let text = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+            return text.isEmpty ? .failed(reason: "The on-device model returned an empty response.") : .generated(text)
         } catch {
-            return ""
+            return .failed(reason: error.localizedDescription)
         }
         #else
-        return ""
+        return .unavailable(.unavailable(reason: "FoundationModels framework not available in this build"))
         #endif
     }
 
     @available(macOS 26.0, *)
-    private func explainTableOnMacOS26(table: TableRegion) async -> String {
+    private func explainTableOnMacOS26(table: TableRegion) async -> IntelligentExplainerResult {
         #if canImport(FoundationModels)
         let model = SystemLanguageModel.default
-        guard case .available = model.availability else { return "" }
+        guard case .available = model.availability else { return .unavailable(Self.checkAvailabilityOnMacOS26()) }
         do {
             let session = LanguageModelSession()
             let prompt = Self.tablePrompt(table: table)
             let response = try await session.respond(to: prompt)
-            return response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+            let text = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+            return text.isEmpty ? .failed(reason: "The on-device model returned an empty response.") : .generated(text)
         } catch {
-            return ""
+            return .failed(reason: error.localizedDescription)
         }
         #else
-        return ""
+        return .unavailable(.unavailable(reason: "FoundationModels framework not available in this build"))
         #endif
     }
 
     @available(macOS 26.0, *)
-    private func explainFigureOnMacOS26(figure: FigureRegion) async -> String {
+    private func explainFigureOnMacOS26(figure: FigureRegion) async -> IntelligentExplainerResult {
         #if canImport(FoundationModels)
         let model = SystemLanguageModel.default
-        guard case .available = model.availability else { return "" }
+        guard case .available = model.availability else { return .unavailable(Self.checkAvailabilityOnMacOS26()) }
         do {
             let session = LanguageModelSession()
             let prompt = Self.figurePrompt(figure: figure)
             let response = try await session.respond(to: prompt)
-            return response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+            let text = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+            return text.isEmpty ? .failed(reason: "The on-device model returned an empty response.") : .generated(text)
         } catch {
-            return ""
+            return .failed(reason: error.localizedDescription)
         }
         #else
-        return ""
+        return .unavailable(.unavailable(reason: "FoundationModels framework not available in this build"))
         #endif
     }
 
