@@ -123,9 +123,9 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 **Files:** `Sources/PageLumenCore/SwiftDataPersisting.swift`, `FilePersisting.swift`, `DocumentStore.swift`, persistence tests
 
-- [ ] Change the convenience initializer to `throws`; remove `fatalError`.
-- [ ] Introduce `PersistenceStatus` (`available`, `degraded(reason)`, `unavailable(reason)`) surfaced in Settings, not as a launch blocker.
-- [ ] If SwiftData cannot initialize, use `FilePersisting` in a safe app-support subdirectory. If that also fails, run without recents and retain the active in-memory document.
+- [x] Change the convenience initializer to `throws`; remove `fatalError`.
+- [x] Introduce `PersistenceStatus` (`available`, `degraded(reason)`) surfaced in Settings, not as a launch blocker. An explicit `unavailable` case remains unnecessary while the in-memory fallback is always retained.
+- [x] If SwiftData cannot initialize, use `FilePersisting` in a safe app-support subdirectory and retain the active in-memory document while surfacing degraded status. Read-only/no-space fallback tests remain open.
 - [ ] Version the SwiftData schema before adding new fields; write a migration/recovery strategy before the first schema-changing release.
 - [ ] Add corruption, read-only-directory, no-space, migration, and fallback tests using temporary directories/configurations.
 - [x] Add JSON-store corruption recovery: preserve the damaged file under a
