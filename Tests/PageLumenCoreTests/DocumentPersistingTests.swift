@@ -66,6 +66,21 @@ final class DocumentPersistingTests: XCTestCase {
         XCTAssertNil(loaded)
     }
 
+    func testForgetAllNeverDeletesOriginalSourceFile() throws {
+        let url = tempDirectory.appendingPathComponent("recent.json")
+        let sourceURL = tempDirectory.appendingPathComponent("original.pdf")
+        try Data("source bytes".utf8).write(to: sourceURL)
+        let persisting = FilePersisting(fileURL: url)
+        var document = SampleDataFactory.makeDemoDocument()
+        document.sourceURL = sourceURL
+
+        try persisting.save(document)
+        try persisting.forgetAll()
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: sourceURL.path))
+        XCTAssertEqual(try Data(contentsOf: sourceURL), Data("source bytes".utf8))
+    }
+
     func testDeleteRemovesOnlyTheRequestedDocument() throws {
         let url = tempDirectory.appendingPathComponent("recent.json")
         let persisting = FilePersisting(fileURL: url)

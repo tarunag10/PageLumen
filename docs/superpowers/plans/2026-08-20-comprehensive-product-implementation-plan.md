@@ -283,7 +283,7 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 
 - [x] Create a `DocumentRepository` protocol that returns document metadata and source-derived data separately.
 - [x] Store document text in a local index only when the person enables “Keep searchable local copies.” Default retention must be an explicit product decision documented in onboarding.
-- [ ] Support delete-one, delete-all, remove-index-only, and reveal storage size. Do not delete source files.
+- [ ] Support delete-one, delete-all, remove-index-only, and reveal storage size. Delete-one/delete-all and storage-size reporting are shipped and tested; remove-index-only semantics remain open. A regression test proves Forget all never deletes source files.
 - [x] Reveal the local library store's measured on-disk size in Settings; source files are excluded.
 - [x] Add a local-library search UI with result snippets, page/block location,
   keyboard-accessible result buttons, explicit searchable-copy gating, and
