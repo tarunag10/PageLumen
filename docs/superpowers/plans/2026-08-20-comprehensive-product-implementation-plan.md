@@ -406,8 +406,10 @@ repeatable pipelines. See [`docs/stirling-pdf-integration.md`](../../stirling-pd
   or mandatory dependency is introduced. Focused fake-transport tests pass.
 - [ ] Do not embed Stirling's Java/Spring/React/Tauri application or require a
   server for the default PageLumen install.
-- [ ] Add a `PDFOperationsProvider` protocol with the native PDFKit/Vision
-  provider as the default and a separately enabled Stirling provider.
+- [x] Add a `PDFOperationsProvider` protocol with a network-free native PDFKit
+  validation provider as the default and a separately enabled Stirling
+  compress/merge adapter. Focused `PDFOperationsProviderTests` pass (4/4);
+  Vision-backed extraction remains in the existing native processing path.
 - [ ] Require an explicit local base URL, Keychain-held API key, capability
   probe, privacy-mode check, and per-operation confirmation before upload.
 - [x] Start with a cancellable compress operation; validate the returned PDF

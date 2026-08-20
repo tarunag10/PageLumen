@@ -94,6 +94,17 @@ destination. The focused fake-transport coverage includes request shape and
 secret non-leakage, success, authentication/HTTP failures, cancellation,
 malformed output, endpoint rejection, and atomic output validation.
 
+The shared provider seam is implemented in
+`Sources/PageLumenCore/PDFOperationsProvider.swift`. `NativePDFOperationsProvider`
+is the default, network-free provider and supports local PDFKit validation;
+unsupported native transformations fail with a typed error. The opt-in
+`StirlingPDFOperationsProvider` adapts the typed `compress` and `merge`
+operations to the already validated Stirling boundaries. Constructing the
+adapter does not probe or contact the server; an operation must be explicitly
+executed with document bytes. `PDFOperationsProviderTests` covers native
+validation, unsupported operations, adapter request mapping, and this
+no-contact construction guarantee (4/4 passed).
+
 ### Stage C — multi-input and pipelines
 
 The first Stage C boundary is `StirlingPDFMerger` in
