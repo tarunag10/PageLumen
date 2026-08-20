@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "corpusRevision": "v1",
+  "run": null,
+  "metricDefinitions": [
+    {"id":"citation-precision","task":"grounded-summary","unit":"ratio","direction":"higher-is-better","threshold":null,"thresholdSource":"pending advisor-approved launch threshold"},
+    {"id":"citation-recall","task":"grounded-summary","unit":"ratio","direction":"higher-is-better","threshold":null,"thresholdSource":"pending advisor-approved launch threshold"},
+    {"id":"unsupported-claim-rate","task":"grounded-summary","unit":"ratio","direction":"lower-is-better","threshold":null,"thresholdSource":"pending advisor-approved launch threshold"},
+    {"id":"user-correction-rate","task":"all-grounded-tasks","unit":"ratio","direction":"lower-is-better","threshold":null,"thresholdSource":"pending participant study"},
+    {"id":"description-usefulness","task":"figure-description","unit":"ordinal-1-to-5","direction":"higher-is-better","threshold":null,"thresholdSource":"pending accessibility-advisor review"},
+    {"id":"latency","task":"all-grounded-tasks","unit":"milliseconds","direction":"lower-is-better","threshold":null,"thresholdSource":"pending physical-device run"},
+    {"id":"availability-failure-rate","task":"availability","unit":"ratio","direction":"lower-is-better","threshold":null,"thresholdSource":"pending supported-device matrix"},
+    {"id":"energy-memory-cost","task":"resource-cost","unit":"device-run-record","direction":"lower-is-better","threshold":null,"thresholdSource":"pending physical-device run"}
+  ],
+  "metrics": [
+    {"metricID":"citation-precision","status":"unavailable","value":null,"unavailableReason":"No consented evaluation run has been approved."},
+    {"metricID":"citation-recall","status":"unavailable","value":null,"unavailableReason":"No consented reference annotation set has been approved."},
+    {"metricID":"unsupported-claim-rate","status":"unavailable","value":null,"unavailableReason":"No reviewed evaluation run has been completed."},
+    {"metricID":"user-correction-rate","status":"unavailable","value":null,"unavailableReason":"No participant study has been consented or run."},
+    {"metricID":"description-usefulness","status":"unavailable","value":null,"unavailableReason":"Accessibility-advisor review is pending."},
+    {"metricID":"latency","status":"unavailable","value":null,"unavailableReason":"No repeatable physical-device run has been completed."},
+    {"metricID":"availability-failure-rate","status":"unavailable","value":null,"unavailableReason":"Supported-device availability matrix is pending."},
+    {"metricID":"energy-memory-cost","status":"unavailable","value":null,"unavailableReason":"Energy and peak-memory instrumentation run is pending."}
+  ]
+}

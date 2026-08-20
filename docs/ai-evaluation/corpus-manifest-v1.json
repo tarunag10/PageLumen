@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "corpusID": "pagelumen-ai-evaluation",
+  "revision": "v1",
+  "consent": {
+    "consentVersion": "consent-v1",
+    "status": "pending",
+    "purpose": "Offline quality evaluation of optional grounded assistance",
+    "collectionScope": "Synthetic fixtures and separately consented evaluation documents only",
+    "retentionPolicy": "Delete source documents and participant records after the approved evaluation window",
+    "withdrawalProcess": "Remove the participant record and exclude the withdrawn sample from future runs",
+    "productDocumentsExcluded": true
+  },
+  "samples": [
+    {"id":"adv-incorrect-ocr","className":"incorrect OCR","sensitivity":"synthetic","language":"en","adversarialTags":["incorrect-ocr"],"groundTruthStatus":"not-collected","sourceReference":"evaluation-fixture-incorrect-ocr"},
+    {"id":"adv-misleading-caption","className":"misleading caption","sensitivity":"synthetic","language":"en","adversarialTags":["misleading-caption"],"groundTruthStatus":"not-collected","sourceReference":"evaluation-fixture-misleading-caption"},
+    {"id":"adv-conflicting-values","className":"multiple conflicting values","sensitivity":"synthetic","language":"en","adversarialTags":["conflicting-values"],"groundTruthStatus":"not-collected","sourceReference":"evaluation-fixture-conflicting-values"},
+    {"id":"adv-hidden-text","className":"hidden text","sensitivity":"synthetic","language":"en","adversarialTags":["hidden-text"],"groundTruthStatus":"not-collected","sourceReference":"evaluation-fixture-hidden-text"},
+    {"id":"adv-chart-without-values","className":"chart without values","sensitivity":"synthetic","language":"en","adversarialTags":["chart-without-values"],"groundTruthStatus":"not-collected","sourceReference":"evaluation-fixture-chart-without-values"},
+    {"id":"adv-multilingual","className":"multilingual content","sensitivity":"synthetic","language":"en-hi","adversarialTags":["multilingual"],"groundTruthStatus":"not-collected","sourceReference":"evaluation-fixture-multilingual"},
+    {"id":"adv-sensitive-legal-medical","className":"sensitive legal or medical-like sample","sensitivity":"restricted","language":"en","adversarialTags":["sensitive-legal-medical-like"],"groundTruthStatus":"not-collected","sourceReference":"evaluation-fixture-sensitive"}
+  ]
+}
