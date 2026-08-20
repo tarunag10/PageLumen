@@ -375,6 +375,17 @@ final class DocumentStore {
         DocumentComparison.changes(in: document)
     }
 
+    /// Undo checkpoints are immutable value snapshots and can be selected as
+    /// an explicit comparison baseline without mutating the live document.
+    /// The newest checkpoint is index zero, matching the visible edit history.
+    var comparisonRevisionCount: Int { undoStack.count }
+
+    func comparisonChanges(comparedToRevision index: Int) -> [DocumentChange] {
+        guard index >= 0, index < undoStack.count else { return [] }
+        let baseline = undoStack[undoStack.count - 1 - index]
+        return DocumentComparison.changes(from: baseline, to: document)
+    }
+
     /// The current Review location, suitable for restoration by a Quick Look,
     /// share extension, or future URL scheme. Only stable identifiers are
     /// emitted so source text never leaks through a deep link.

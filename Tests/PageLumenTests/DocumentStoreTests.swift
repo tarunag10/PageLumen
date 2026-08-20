@@ -133,6 +133,20 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertTrue(store.statusMessage.contains("discarded"))
     }
 
+    func testComparisonCanUseAnUndoRevisionWithoutMutatingLiveDocument() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let original = store.document.pages[0].blocks[0]
+        store.updateBlock(original, text: "Edited for revision comparison")
+
+        XCTAssertEqual(store.comparisonRevisionCount, 1)
+        let changes = store.comparisonChanges(comparedToRevision: 0)
+        XCTAssertEqual(changes.count, 1)
+        XCTAssertEqual(changes[0].originalText, original.text)
+        XCTAssertEqual(changes[0].currentText, "Edited for revision comparison")
+        XCTAssertEqual(store.document.pages[0].blocks[0].text, "Edited for revision comparison")
+        XCTAssertTrue(store.comparisonChanges(comparedToRevision: 99).isEmpty)
+    }
+
     func testAcceptedAIDescriptionDraftStoresBlockLineageAndLeavesSourceTextOutOfIt() {
         let store = DocumentStore(persisting: InMemoryPersisting())
         let blockID = UUID(uuidString: "CCCCCCCC-CCCC-CCCC-CCCC-CCCCCCCCCCCC")!
