@@ -63,6 +63,28 @@ final class ExportEngineTests: XCTestCase {
         XCTAssertFalse(validation.canExport)
     }
 
+    func testAccessibilitySensitiveExportBlocksUnresolvedReviewFindings() {
+        var document = SampleDataFactory.makeDemoDocument()
+        document.pages[0].blocks[0].type = .unknown
+
+        let validation = ExportEngine().validate(document: document, format: .taggedHTML, options: .full)
+
+        XCTAssertEqual(validation.status, .unavailable)
+        XCTAssertFalse(validation.canExport)
+        XCTAssertTrue(validation.findings.contains { $0.contains("Unknown block type") })
+    }
+
+    func testReadyAccessibilitySensitiveExportRemainsAvailable() {
+        let validation = ExportEngine().validate(
+            document: SampleDataFactory.makeDemoDocument(),
+            format: .taggedHTML,
+            options: .full
+        )
+
+        XCTAssertTrue(validation.canExport)
+        XCTAssertNotEqual(validation.status, .unavailable)
+    }
+
     func testPDFExportPaginatesLongReadableText() {
         let blocks = (1...90).map { index in
             TextBlock(

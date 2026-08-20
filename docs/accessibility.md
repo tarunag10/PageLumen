@@ -30,6 +30,13 @@ The reading-order overlay is fully accessible:
 - The **Tagged HTML** export writes a structurally valid HTML document with `<h1>`…`<h6>`, lists, table headers, figure captions, and ARIA landmarks. It is the recommended format for users who want to take the document into another tool.
 - The **Readable PDF** export goes through PDFKit and is designed to be more accessible than a flat text PDF. It is **not** PDF/UA compliant. See the limitations below.
 
+Accessibility-sensitive exports are now review-gated. Tagged HTML, HTML, Readable
+PDF, and DOCX exports are blocked when automated checks find an unresolved
+accessibility blocker (for example, an unknown block type, missing document
+language, or missing figure description). Warnings remain visible in the audit
+report and do not silently change the export contract. The Accessibility Report
+remains available as the remediation path.
+
 ## Known Limitations
 
 - **Not PDF/UA compliant.** The current PDF export does not claim PDF/UA conformance. We are tracking this in the audit plan; a tagged-PDF pass would require moving the export onto `PDFKit`'s `PDFDocument` / `PDFPage` APIs and adding structure-tree metadata.

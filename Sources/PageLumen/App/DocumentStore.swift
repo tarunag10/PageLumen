@@ -682,7 +682,13 @@ final class DocumentStore {
     }
 
     func canExport(_ format: ExportFormat) -> Bool {
-        guard format == .translated else { return !document.pages.isEmpty && !isProcessing }
+        guard format == .translated else {
+            guard !document.pages.isEmpty && !isProcessing else { return false }
+            if [.html, .taggedHTML, .pdf].contains(format) {
+                return exportEngine.validate(document: document, format: format, options: exportOptions).canExport
+            }
+            return true
+        }
         guard !privacyMode, !document.pages.isEmpty, !isProcessing else { return false }
         if #available(macOS 26.0, *) { return true }
         return false
@@ -734,6 +740,13 @@ final class DocumentStore {
     }
 
     private func exportData(format: ExportFormat) {
+        let validation = exportEngine.validate(document: document, format: format, options: exportOptions)
+        guard validation.canExport else {
+            let firstFinding = validation.findings.first(where: { $0.hasPrefix("[Needs fix]") })
+            statusMessage = firstFinding.map { "Export blocked: \($0.replacingOccurrences(of: "[Needs fix] ", with: ""))" }
+                ?? "Export is unavailable until the document review requirements are complete."
+            return
+        }
         let panel = NSSavePanel()
         panel.allowedContentTypes = []
         panel.nameFieldStringValue = "\(document.title).\(format.fileExtension)"

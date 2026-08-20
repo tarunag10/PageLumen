@@ -280,13 +280,20 @@ public struct ExportEngine: Sendable {
         }
 
         var findings = capability.validationNotes
-        if format == .taggedHTML || format == .html || format == .pdf {
+        if format == .taggedHTML || format == .html || format == .pdf || format == .docx {
             let audit = AccessibilityAuditor().audit(document: document, options: options)
             findings.append(contentsOf: audit.findings.map { finding in
                 let page = finding.pageNumber.map { "Page \($0): " } ?? ""
                 return "[\(finding.severity.rawValue)] \(page)\(finding.message)"
             })
-            let status: ExportValidationStatus = audit.isReadyForTaggedExport ? capability.status : .reviewRequired
+            // A blocker is a hard stop for accessibility-sensitive formats. The
+            // caller must resolve the finding before an artifact can be written;
+            // warnings remain review-required but exportable.
+            let unresolvedBlockers = DocumentEditing.reviewFindings(for: document).filter { !$0.isResolved && $0.severity == .blocker }
+            findings.append(contentsOf: unresolvedBlockers.map { finding in
+                "[Needs fix] Page \(finding.pageNumber): \(finding.title) — \(finding.detail)"
+            })
+            let status: ExportValidationStatus = audit.isReadyForTaggedExport && unresolvedBlockers.isEmpty ? capability.status : .unavailable
             return ExportValidationResult(format: format, status: status, capability: capability, findings: findings)
         }
         return ExportValidationResult(format: format, status: capability.status, capability: capability, findings: findings)
