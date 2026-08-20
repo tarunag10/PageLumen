@@ -6,6 +6,12 @@ not replace a hands-on macOS accessibility pass.
 
 ## Automated evidence
 
+- [x] The executable release matrix in
+  `AccessibilityVerificationPlan.releaseItems` covers VoiceOver, Full
+  Keyboard Access, Light/Dark appearance, Increase Contrast, Larger Text,
+  Reduce Motion, and Reduce Transparency. Its tests verify that no dimension
+  is accidentally omitted and that every item has an observable workflow and
+  outcome.
 - [x] Review controls expose labels, hints, and traits in SwiftUI.
 - [x] `Cmd-Shift-[` / `Cmd-Shift-]` navigate review findings with wrap-around.
 - [x] `Cmd-Shift-A` accepts the current block-backed finding.
@@ -20,6 +26,11 @@ not replace a hands-on macOS accessibility pass.
 ## Manual macOS pass
 
 Record the macOS version, app build, tester, date, and outcome for each item.
+
+The matrix is deliberately participant-gated: its tests verify coverage of the
+release procedure, not the behaviour of AppKit/SwiftUI accessibility services.
+Do not mark an item passed from a unit test, an unsigned build, or source
+inspection alone.
 
 - [ ] VoiceOver rotor reaches headings, pages, review findings, editable text,
   tables, figures, and export controls in a logical order.

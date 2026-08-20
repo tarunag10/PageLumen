@@ -7,6 +7,12 @@ The release-candidate test matrix is maintained in
 It separates automated evidence from manual VoiceOver, Switch Control, visual,
 motion, and pointer validation.
 
+The executable `AccessibilityVerificationPlan` keeps the release matrix
+complete for VoiceOver, Full Keyboard Access, Light/Dark appearance, Increase
+Contrast, Larger Text, Reduce Motion, and Reduce Transparency. The associated
+tests only prove that each manual procedure has an observable expected outcome;
+they do not claim that a participant or physical-Mac pass has occurred.
+
 ## VoiceOver-Friendly Workflows
 
 - The four-step workflow — **Add → Process → Review → Export** — is fully labelled. Every major control has an `accessibilityLabel`, an `accessibilityHint` where the action is non-obvious, and a `traits` value that matches what the control actually does.
