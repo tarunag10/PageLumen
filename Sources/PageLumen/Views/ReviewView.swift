@@ -15,14 +15,14 @@ struct ReviewView: View {
 
             HSplitView {
                 PreviewPane(page: store.selectedPage, showReadingOrder: showReadingOrder)
-                    .frame(minWidth: 420)
+                    .frame(minWidth: 300, idealWidth: 420)
 
                 VStack(spacing: 0) {
                     ReviewHeader(showReadingOrder: $showReadingOrder, readingPreferences: $readingPreferences)
                     Divider()
                     StructuredOutputView(readingPreferences: $readingPreferences)
                 }
-                .frame(minWidth: 460)
+                .frame(minWidth: 360, idealWidth: 520)
             }
         }
         .background(AccessibleStyle.appBackground)
@@ -64,6 +64,7 @@ private struct ReviewHeader: View {
     var body: some View {
         @Bindable var store = store
         VStack(alignment: .leading, spacing: 12) {
+            ScrollView(.horizontal, showsIndicators: false) {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Step 3: Review text")
@@ -168,11 +169,12 @@ private struct ReviewHeader: View {
                 .accessibilityIdentifier("review.continue")
                 .help(store.isProcessing ? "Finish processing before exporting" : "Open summary and export options")
             }
+            }
 
             HStack(spacing: 10) {
                 TextField("Search extracted text", text: $store.reviewSearchQuery)
                     .textFieldStyle(.roundedBorder)
-                    .frame(minWidth: 220)
+                    .frame(minWidth: 160, maxWidth: .infinity)
                     .accessibilityIdentifier("review.search")
                     .onSubmit {
                         store.jumpToNextSearchMatch()
@@ -200,7 +202,7 @@ private struct ReviewHeader: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 420)
+                .frame(minWidth: 220, maxWidth: 360)
 
                 Spacer()
 
@@ -730,6 +732,9 @@ private struct EditableBlockRow: View {
                 .font(readingPreferences.typography.font(for: block.type))
                 .lineSpacing(CGFloat(readingPreferences.lineSpacing))
                 .foregroundStyle(AccessibleStyle.primaryText)
+                .scrollContentBackground(.hidden)
+                .background(AccessibleStyle.panelBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 .frame(minHeight: block.type == .paragraph ? 74 : 44)
                 .accessibilityValue(block.text)
                 .onAppear { draft = block.text }
@@ -870,6 +875,9 @@ private struct EditableGeneratedNote: View {
             TextEditor(text: $draft)
                 .font(.body)
                 .foregroundStyle(AccessibleStyle.primaryText)
+                .scrollContentBackground(.hidden)
+                .background(AccessibleStyle.panelBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 .frame(minHeight: 72)
                 .onAppear { draft = text }
                 .onChange(of: text) { _, newValue in

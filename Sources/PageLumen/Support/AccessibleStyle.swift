@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// PageLumen design system.
@@ -21,6 +22,19 @@ enum AccessibleStyle {
     // the shared value the rest of the UI consults at render time.
     static var boostContrast: Bool = UserDefaults.standard.bool(forKey: "boostContrast")
 
+    /// Keeps the custom design system synchronized with macOS appearance.
+    /// The previous palette was dark-only, so a Light-system appearance could
+    /// render native controls with black labels on the custom dark surfaces.
+    /// AppKit's dynamic color provider lets every token track the active
+    /// appearance without forcing a global color scheme.
+    private static func adaptive(light: NSColor, dark: NSColor) -> Color {
+        Color(nsColor: NSColor(name: nil) { appearance in
+            let bestMatch = appearance.bestMatch(from: [.aqua, .darkAqua])
+            let isDark = bestMatch == .darkAqua
+            return isDark ? dark : light
+        })
+    }
+
     // MARK: - Brand Accent
 
     /// Vibrant indigo accent — the signature PageLumen brand color.
@@ -36,48 +50,61 @@ enum AccessibleStyle {
 
     /// Deepest background — the canvas behind every screen.
     static var appBackground: Color {
-        boostContrast ? Color(red: 0.05, green: 0.05, blue: 0.07) : Color(red: 0.075, green: 0.078, blue: 0.092)
+        adaptive(
+            light: NSColor(calibratedWhite: boostContrast ? 0.94 : 0.965, alpha: 1),
+            dark: boostContrast ? NSColor(red: 0.05, green: 0.05, blue: 0.07, alpha: 1) : NSColor(red: 0.075, green: 0.078, blue: 0.092, alpha: 1)
+        )
     }
 
     /// Primary panel/card surface — raised one layer above the canvas.
     static var panelBackground: Color {
-        boostContrast ? Color(red: 0.11, green: 0.11, blue: 0.13) : Color(red: 0.122, green: 0.125, blue: 0.146)
+        adaptive(
+            light: boostContrast ? NSColor(calibratedWhite: 0.99, alpha: 1) : NSColor(calibratedWhite: 1, alpha: 1),
+            dark: boostContrast ? NSColor(red: 0.11, green: 0.11, blue: 0.13, alpha: 1) : NSColor(red: 0.122, green: 0.125, blue: 0.146, alpha: 1)
+        )
     }
 
     /// Elevated surface — used by toolbars, popovers, and stacked cards.
     static var elevatedBackground: Color {
-        boostContrast ? Color(red: 0.15, green: 0.15, blue: 0.17) : Color(red: 0.157, green: 0.161, blue: 0.184)
+        adaptive(
+            light: boostContrast ? NSColor(calibratedWhite: 0.86, alpha: 1) : NSColor(calibratedWhite: 0.92, alpha: 1),
+            dark: boostContrast ? NSColor(red: 0.15, green: 0.15, blue: 0.17, alpha: 1) : NSColor(red: 0.157, green: 0.161, blue: 0.184, alpha: 1)
+        )
     }
 
     /// A brighter floating surface for sheets and menus.
     static var floatingBackground: Color {
-        boostContrast ? Color(red: 0.18, green: 0.18, blue: 0.21) : Color(red: 0.188, green: 0.192, blue: 0.216)
+        adaptive(
+            light: NSColor(calibratedWhite: boostContrast ? 0.82 : 0.96, alpha: 1),
+            dark: boostContrast ? NSColor(red: 0.18, green: 0.18, blue: 0.21, alpha: 1) : NSColor(red: 0.188, green: 0.192, blue: 0.216, alpha: 1)
+        )
     }
 
     // MARK: - Text
 
     /// Primary text color — high contrast white for body content.
     static var primaryText: Color {
-        Color(red: 0.95, green: 0.955, blue: 0.97)
+        adaptive(light: NSColor(red: 0.09, green: 0.11, blue: 0.16, alpha: 1), dark: NSColor(red: 0.95, green: 0.955, blue: 0.97, alpha: 1))
     }
 
     /// Secondary text — for captions, subtitles, and metadata.
     static var secondaryText: Color {
-        Color(red: 0.62, green: 0.635, blue: 0.69)
+        adaptive(light: NSColor(red: 0.28, green: 0.32, blue: 0.4, alpha: 1), dark: NSColor(red: 0.62, green: 0.635, blue: 0.69, alpha: 1))
     }
 
     /// Tertiary text — for the faintest hints and placeholders.
     static var tertiaryText: Color {
-        Color(red: 0.45, green: 0.46, blue: 0.52)
+        adaptive(light: NSColor(red: 0.39, green: 0.43, blue: 0.51, alpha: 1), dark: NSColor(red: 0.45, green: 0.46, blue: 0.52, alpha: 1))
     }
 
     // MARK: - Lines & Borders
 
     /// Hairline border around panels and dividers.
     static var border: Color {
-        boostContrast
-            ? Color(red: 0.55, green: 0.56, blue: 0.62)
-            : Color(red: 0.22, green: 0.225, blue: 0.255).opacity(0.9)
+        adaptive(
+            light: boostContrast ? NSColor(red: 0.25, green: 0.29, blue: 0.38, alpha: 1) : NSColor(red: 0.72, green: 0.75, blue: 0.82, alpha: 1),
+            dark: boostContrast ? NSColor(red: 0.55, green: 0.56, blue: 0.62, alpha: 1) : NSColor(red: 0.22, green: 0.225, blue: 0.255, alpha: 0.9)
+        )
     }
 
     /// A brighter border used for hover/focus rings.
@@ -122,10 +149,8 @@ enum AccessibleStyle {
     /// Subtle vertical gradient for elevated panels — adds depth without noise.
     static var panelGradient: LinearGradient {
         LinearGradient(
-            colors: [
-                Color(red: 0.145, green: 0.148, blue: 0.172),
-                Color(red: 0.118, green: 0.121, blue: 0.142)
-            ],
+            colors: [adaptive(light: NSColor(calibratedWhite: 1, alpha: 1), dark: NSColor(red: 0.145, green: 0.148, blue: 0.172, alpha: 1)),
+                     adaptive(light: NSColor(calibratedWhite: 0.97, alpha: 1), dark: NSColor(red: 0.118, green: 0.121, blue: 0.142, alpha: 1))],
             startPoint: .top,
             endPoint: .bottom
         )
@@ -149,7 +174,7 @@ enum AccessibleStyle {
         LinearGradient(
             colors: [
                 accent.opacity(0.16),
-                Color(red: 0.565, green: 0.412, blue: 0.922).opacity(0.10),
+                adaptive(light: NSColor(red: 0.565, green: 0.412, blue: 0.922, alpha: 1), dark: NSColor(red: 0.565, green: 0.412, blue: 0.922, alpha: 1)).opacity(0.10),
                 Color.clear
             ],
             startPoint: .topLeading,

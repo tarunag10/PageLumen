@@ -46,3 +46,21 @@ These gates are tracked separately from local unit/build evidence in `docs/manua
 4. Record rendered snapshot diffs for the supported appearance and text-size matrix; snapshots are supplementary and do not replace assistive-technology testing.
 
 This audit is code-backed. The participant and physical-device gates remain intentionally unverified until a manual test session is performed.
+
+## Screenshot-driven remediation — 20 August 2026
+
+The supplied review screenshots exposed defects that were not visible in the deterministic UI contracts:
+
+- The custom dark palette was rendered alongside native light-system controls, producing black labels on dark surfaces.
+- Review controls were placed in one fixed-width row and clipped at ordinary window widths.
+- The review split view required more width than the content area, forcing overflow.
+- Native `TextEditor` scroll backgrounds remained white while the custom editor text was light, making edits unreadable.
+
+This phase makes design tokens appearance-aware, reduces split-view minimum widths, allows the review command row to scroll instead of clip, makes search/filter controls flexible, and hides the native editor background in favor of the PageLumen surface token. The changes preserve the system appearance choice and keep the existing high-contrast toggle intact.
+
+## Verification
+
+- `xcodebuild ... build-for-testing`: passed (`** TEST BUILD SUCCEEDED **`).
+- `swift test -Xswiftc -gnone`: 330 executed, 0 failures, 2 expected skips.
+
+Physical Light/Dark, VoiceOver, keyboard-only, large text, Increase Contrast, Reduce Transparency, and Reduce Motion checks remain open.
