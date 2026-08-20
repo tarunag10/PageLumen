@@ -478,7 +478,7 @@ privacy complexity to a native macOS reader.
 - [x] Add `THIRD_PARTY_NOTICES.md`, a dependency inventory, and an SPM lock/review policy. The current inventory is maintained in the repository root; `Package.swift` pins the Markdown dependency exactly and records lower bounds for the two other packages, with resolved versions reviewed before release.
 - [x] Add Dependabot or an equivalent update-review workflow after confirming it does not alter release branches automatically. `.github/dependabot.yml` opens bounded weekly Swift and monthly Actions review PRs targeting `main`; it has no release-branch automation.
 - [x] Add a license/security review checklist to `CONTRIBUTING.md`.
-- [ ] Verify new packages work in sandboxed, offline runtime conditions after initial resolution.
+- [x] Verify new packages work in sandboxed, offline runtime conditions after initial resolution. `make offline-dependencies` checks every resolved checkout and runs Markdown, DOCX, and export-snapshot contracts with SwiftPM `--skip-update` and the normal sandbox; firewall-level network isolation remains outside this source-level gate.
 
 **Exit gate for Phase 5:** Every adopted package has a documented user outcome, license, owner, pinned version, tests, and removal plan. No model-downloading package is enabled without explicit user action.
 
@@ -518,7 +518,7 @@ participant and physical-device gates remain open.
 - [x] Add and audit `PrivacyInfo.xcprivacy`: the manifest declares only UserDefaults reason `CA92.1`; the source/dependency audit found no other current required-reason API categories, tracking, analytics, or model-download SDKs. The audit is documented in `docs/privacy.md` and must be rerun for future platform/dependency additions.
 - [x] Reconcile App Store privacy nutrition labels with actual network/data behaviour before submission. `docs/privacy-matrix-v1.json` records the current no-developer-collection/no-tracking posture, local versus conditional transfers, evidence paths, and recheck triggers; `script/validate_privacy_matrix.sh` deterministically validates the matrix against `PrivacyInfo.xcprivacy`. App Store Connect answers and legal/App Review remain release-owner gates.
 - [x] Update `docs/privacy.md` for library retention, model downloads, Apple Intelligence, App Intents, capture, Stirling opt-in operations, required-reason API audit, and export anonymisation.
-- [ ] Provide a real contact channel in `SECURITY.md` and a vulnerability-handling policy.
+- [x] Provide a real contact channel in `SECURITY.md` and a vulnerability-handling policy. `SECURITY.md` now links to GitHub private vulnerability reporting, defines acknowledgement/remediation/disclosure expectations, and scopes PageLumen-specific reports without requesting sensitive document contents.
 - [x] Add deterministic malformed PDF/image robustness tests. Import failures expose only a safe last-path-component PDF label (or a generic image message), never the local path or payload; property-based fuzzing remains a future hardening option.
 
 ### 7.3 Distribution evidence
