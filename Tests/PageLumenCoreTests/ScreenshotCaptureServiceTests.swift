@@ -5,8 +5,6 @@ import XCTest
 final class ScreenshotCaptureServiceTests: XCTestCase {
     func testArgumentBuilderForRegion() {
         let service = ScreenshotCaptureService()
-        // The arguments method is private; we test through the public surface instead.
-        // This test asserts the service is constructible.
         _ = service
     }
 

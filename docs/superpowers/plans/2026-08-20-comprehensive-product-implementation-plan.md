@@ -150,7 +150,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [x] Retain a narrowly scoped legacy region picker only if a supported native alternative cannot serve macOS 14; document why and make it visible in the UI.
 - [x] Provide a pre-permission explanatory screen, a System Settings deep-link/help path after denial, cancellation, and stale temporary-file cleanup on app launch. Manual permission-denial recovery remains a participant gate.
 - [x] Ensure temporary captures are removed after successful processing unless the person explicitly saves them, and clean stale PageLumen capture files from the temporary directory at service startup. The cleanup is prefix-scoped, age-bounded, and regression-tested without touching unrelated files.
-- [ ] Add tests for error mapping, no selected window, cancellation, temp cleanup, and command argument construction. Manually test macOS 14 and the current macOS release.
+- [ ] Add tests for error mapping, no selected window, cancellation, temp cleanup, and command argument construction. Error mapping, cancellation, cleanup, and deterministic legacy command arguments are now regression-tested; no-selected-window and macOS 14/current-release participant validation remain open.
 
 **Acceptance:** Capture never selects a random window. Permission denial or dismissal leaves no imported document and gives a clear next action.
 
@@ -185,7 +185,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 **Files:** `DocumentProcessor.swift`, fixtures, performance tests
 
 - [x] Replace all-page pre-rendering with a bounded producer/consumer pipeline. PDF processing now renders and recognizes one page at a time in deterministic order.
-- [ ] Render only scanned/no-embedded-text pages, downsample to a documented OCR target DPI, and release each bitmap immediately after recognition. The PDF OCR path now targets roughly 144 DPI and standalone images are bounded to 16M pixels/4096px per side before Vision; a source-DPI-aware image target remains open.
+- [x] Render only scanned/no-embedded-text pages, downsample to a documented OCR target DPI, and release each bitmap immediately after recognition. The PDF OCR path targets roughly 144 DPI; standalone images now honor valid embedded DPI metadata (downsampling high-resolution scans toward the same 144-DPI recognition target) before the existing 16M-pixel/4096px safety bounds, while missing metadata preserves the bounded fallback.
 - [x] Cap in-flight renders/OCR tasks using device capacity and a user-visible “processing pages x of y” state; permit cancellation at page boundaries. The current implementation intentionally caps concurrency at one page to preserve memory and cancellation determinism.
 - [ ] Apply both pixel and estimated-memory budgets. Provide a user choice to reduce quality or import a page range rather than only rejecting a large document.
 - [x] Replace the remaining `lockFocus` thumbnail path with ImageIO thumbnail generation. `NSImage.pngData(maxPixelSize:)` now uses `CGImageSourceCreateThumbnailAtIndex` and `CGImageDestination`, with a bounded-thumbnail regression test.

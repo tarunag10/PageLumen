@@ -233,7 +233,7 @@ struct ScreenshotCaptureService {
 
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = arguments(for: mode, output: outputURL)
+        process.arguments = legacyArguments(for: mode, output: outputURL)
 
         try process.run()
         process.waitUntilExit()
@@ -254,7 +254,9 @@ struct ScreenshotCaptureService {
         return outputURL
     }
 
-    private func arguments(for mode: ScreenshotCaptureMode, output: URL) -> [String] {
+    /// Kept deterministic and internal so the non-interactive command contract
+    /// can be regression-tested without launching the system picker.
+    func legacyArguments(for mode: ScreenshotCaptureMode, output: URL) -> [String] {
         switch mode {
         case .selectedRegion:
             return ["-i", output.path]
