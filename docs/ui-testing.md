@@ -68,6 +68,13 @@ a server. The contract verifies that the controls are present and that no
 save panel opens; provider execution and real-server behavior remain separate
 tests.
 
+The `-ui-testing-export` argument (combined with `-ui-testing-fixture`) routes
+the normal Markdown and DOCX writers to a temporary `PageLumenUITestExports`
+directory. It still validates the document, generates real output bytes, and
+reports the normal status message, but avoids a native save panel so a
+deterministic UI test can verify file writing. Normal launches always use
+`NSSavePanel`.
+
 Workflow step buttons retain their accessible labels (`Step 1, Add` through
 `Step 4, Export`) so navigation checks do not depend on SwiftUI view hierarchy
 or localized visual text.

@@ -107,6 +107,7 @@ struct SummaryExportView: View {
                                 .stroke(statusTint.opacity(0.45))
                         }
                         .accessibilityElement(children: .combine)
+                        .accessibilityIdentifier("export.status")
                 }
 
                 if store.isStirlingOperationInFlight {

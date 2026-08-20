@@ -72,6 +72,9 @@ final class DocumentStore {
     var selectedReviewIssueID: String?
     var isProcessing = false
     var isExportingAudio = false
+    /// Set when an export writes a file. Normal save-panel exports and the
+    /// deterministic UI-test route share this observable result.
+    private(set) var lastExportedFileURL: URL?
     private(set) var isStirlingOperationInFlight = false
     var audioExportProgress = AudioExportProgress(fractionCompleted: 0, phase: .preparing)
     var statusMessage = "Ready"
@@ -1448,6 +1451,24 @@ final class DocumentStore {
         }
     }
 
+    private var isUITestingExportMode: Bool {
+        ProcessInfo.processInfo.arguments.contains("-ui-testing-export")
+    }
+
+    private func writeDeterministicExport(_ data: Data, format: ExportFormat) {
+        do {
+            let directory = FileManager.default.temporaryDirectory
+                .appendingPathComponent("PageLumenUITestExports", isDirectory: true)
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let url = directory.appendingPathComponent("\(document.title)-\(format.fileExtension)")
+            try data.write(to: url, options: .atomic)
+            lastExportedFileURL = url
+            statusMessage = "Exported \(format.rawValue) to \(url.lastPathComponent)"
+        } catch {
+            statusMessage = "Export failed: \(error.localizedDescription)"
+        }
+    }
+
     func canExport(_ format: ExportFormat) -> Bool {
         guard format == .translated else {
             guard !document.pages.isEmpty && !isProcessing else { return false }
@@ -1532,6 +1553,7 @@ final class DocumentStore {
                     PDFOperationRequest(operation: .compress, documents: [(data: sourceData, filename: "\(document.title).pdf")])
                 )
                 try result.data.write(to: url, options: .atomic)
+                lastExportedFileURL = url
                 statusMessage = "Saved compressed PDF copy to \(url.lastPathComponent)"
             } catch {
                 statusMessage = Task.isCancelled ? "Stirling-PDF compression cancelled." : "Stirling-PDF compression failed: \(error.localizedDescription)"
@@ -1585,6 +1607,7 @@ final class DocumentStore {
                         PDFOperationRequest(operation: .merge, documents: inputs)
                     )
                     try result.data.write(to: outputURL, options: .atomic)
+                    lastExportedFileURL = outputURL
                     statusMessage = "Saved merged PDF copy to \(outputURL.lastPathComponent)"
                 } catch {
                     statusMessage = Task.isCancelled ? "Stirling-PDF merge cancelled." : "Stirling-PDF merge failed: \(error.localizedDescription)"
@@ -1643,6 +1666,7 @@ final class DocumentStore {
                 let markdown = ExportEngine().markdown(for: translatedDoc, options: options)
                 let data = Data(markdown.utf8)
                 try data.write(to: url, options: .atomic)
+                lastExportedFileURL = url
                 statusMessage = "Exported translated Markdown to \(url.lastPathComponent)"
             } catch {
                 statusMessage = "Translation export failed: \(error.localizedDescription)"
@@ -1663,6 +1687,10 @@ final class DocumentStore {
                 ?? "Export is unavailable until the document review requirements are complete."
             return
         }
+        if isUITestingExportMode {
+            writeDeterministicExport(exportEngine.data(for: document, format: format, options: exportOptions), format: format)
+            return
+        }
         let panel = NSSavePanel()
         panel.allowedContentTypes = []
         panel.nameFieldStringValue = "\(document.title).\(format.fileExtension)"
@@ -1672,6 +1700,7 @@ final class DocumentStore {
             do {
                 let data = exportEngine.data(for: document, format: format, options: exportOptions)
                 try data.write(to: url, options: .atomic)
+                lastExportedFileURL = url
                 statusMessage = "Exported \(format.rawValue) to \(url.lastPathComponent)"
             } catch {
                 statusMessage = "Export failed: \(error.localizedDescription)"
@@ -1734,6 +1763,7 @@ final class DocumentStore {
                         }
                     }
                 )
+                self.lastExportedFileURL = url
                 self.statusMessage = "Exported Audio to \(url.lastPathComponent)"
             } catch is CancellationError {
                 self.statusMessage = "Audio export cancelled"
@@ -1755,6 +1785,10 @@ final class DocumentStore {
     }
 
     private func exportDOCX() {
+        if isUITestingExportMode {
+            writeDeterministicExport(DOCXWriter().data(for: document, options: exportOptions), format: .docx)
+            return
+        }
         let panel = NSSavePanel()
         panel.allowedContentTypes = [UTType(filenameExtension: "docx") ?? .data]
         panel.nameFieldStringValue = "\(document.title).docx"
@@ -1764,6 +1798,7 @@ final class DocumentStore {
             do {
                 let data = DOCXWriter().data(for: document, options: exportOptions)
                 try data.write(to: url, options: .atomic)
+                lastExportedFileURL = url
                 statusMessage = "Exported DOCX to \(url.lastPathComponent)"
             } catch {
                 statusMessage = "DOCX export failed: \(error.localizedDescription)"

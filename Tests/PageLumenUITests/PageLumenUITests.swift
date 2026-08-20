@@ -91,6 +91,23 @@ final class PageLumenUITests: XCTestCase {
         XCTAssertFalse(fixtureApp.sheets.firstMatch.exists, "Control-surface coverage must not open a save panel")
     }
 
+    func testDeterministicExportWritesARealFileAndReportsStatus() throws {
+        let exportApp = XCUIApplication()
+        exportApp.launchArguments = ["-ui-testing", "-ui-testing-fixture", "-ui-testing-export"]
+        exportApp.launch()
+
+        XCTAssertTrue(exportApp.buttons["review.continue"].waitForExistence(timeout: 5))
+        exportApp.buttons["review.continue"].click()
+        let markdown = exportApp.buttons["export.Markdown"]
+        XCTAssertTrue(markdown.waitForExistence(timeout: 3))
+        markdown.click()
+
+        let status = exportApp.staticTexts["export.status"]
+        XCTAssertTrue(status.waitForExistence(timeout: 3))
+        XCTAssertTrue(status.label.contains("Exported Markdown"))
+        XCTAssertFalse(exportApp.sheets.firstMatch.exists, "Deterministic export must not open a save panel")
+    }
+
     func testFixtureStirlingModeExposesConfirmedOperationControls() throws {
         let fixtureApp = XCUIApplication()
         fixtureApp.launchArguments = ["-ui-testing", "-ui-testing-fixture", "-ui-testing-stirling"]
