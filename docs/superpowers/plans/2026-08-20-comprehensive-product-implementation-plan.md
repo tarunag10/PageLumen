@@ -587,7 +587,7 @@ Initial decisions required before work begins:
 
 A milestone is complete only when all applicable conditions below hold:
 
-- [ ] Code has unit/integration/UI coverage appropriate to risk and passes on supported OS paths.
+- [x] Code has unit/integration/UI coverage appropriate to risk and passes on supported OS paths. `make coverage` produces an LLVM report, `docs/coverage-risk-matrix.md` maps evidence to risk boundaries, and participant/physical-device paths remain explicitly separate gates.
 - [x] New platform APIs are availability-gated and tested with deterministic fallbacks. Foundation Models, Translation, ScreenCaptureKit, and modern PDF recognition paths have explicit availability checks and typed/fallback test coverage; participant execution remains a separate gate.
 - [x] User-facing claims, documentation, and export labels match actual implementation. `docs/claim-audit-2026-08-20.md` maps local processing, translation, Apple Intelligence, capture, search, export, Stirling, and release-state wording to source evidence and caveats.
 - [x] Privacy/retention/download/capture behaviour is explicit, consentful, and documented across `docs/privacy.md`, the search/encryption decision, screen-capture record, Stirling security review, and release evidence.
