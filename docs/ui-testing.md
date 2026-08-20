@@ -156,3 +156,11 @@ the local macOS test worker to materialize. It was interrupted after 58 seconds;
 the result bundle is
 `~/Library/Developer/Xcode/DerivedData/PageLumen-hbeprxkxvdpbnyeekgojupdmzjpn/Logs/Test/Test-PageLumen-2026.08.20_19-43-14-+0530.xcresult`.
 This is infrastructure evidence only; no UI assertion is counted as passed.
+
+A direct launch attempt of the current unsigned Debug bundle on the same host
+also produced no running `PageLumen` process. The host reported `sysmon
+request failed: sysmond service not found`, and deep signature verification of
+the unsigned bundle reported `code has no resources but signature indicates
+they must be present`. This does not invalidate the successful build; it means
+runtime visual and accessibility inspection must use a normal logged-in GUI
+session with a launchable signed/ad-hoc app bundle.
