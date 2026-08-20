@@ -402,7 +402,7 @@ remains an explicit manual gate and is not claimed here.
 
 - [x] Introduce only if implementing Markdown import/editor or AST-level export validation. AST-level export validation is now implemented in `Sources/PageLumenCore/MarkdownExportContract.swift`.
 - [x] Keep the deterministic string writer behind the validation boundary; the AST-backed output tests prove the current writer's structural correctness without introducing destructive AST rewrites.
-- [ ] Define dialect support and preserve unsupported syntax without destructive rewrites.
+- [x] Define dialect support and preserve unsupported syntax without destructive rewrites. `MarkdownDialect` now distinguishes PageLumen GFM tables from CommonMark, reports unsupported table syntax deterministically, and explicitly preserves unknown syntax rather than rewriting it.
 
 ### 5.5 Experimental only: MLX Swift and swift-transformers
 

@@ -1,5 +1,24 @@
 import Markdown
 
+/// Dialects are a validation policy, not a rewrite instruction. Unknown
+/// extensions are retained verbatim by callers; PageLumen never silently
+/// converts syntax it cannot prove equivalent.
+public enum MarkdownDialect: String, Codable, CaseIterable, Identifiable, Sendable {
+    case pageLumenGFM
+    case commonMark
+
+    public var id: String { rawValue }
+
+    public var supportsTables: Bool {
+        switch self {
+        case .pageLumenGFM: return true
+        case .commonMark: return false
+        }
+    }
+
+    public var preservesUnsupportedSyntax: Bool { true }
+}
+
 /// The result of validating an exported Markdown document against PageLumen's
 /// structural contract. Issues are stable, human-readable values so callers
 /// can surface them without exposing parser internals.
@@ -19,7 +38,11 @@ public struct MarkdownExportValidation: Equatable, Sendable {
 /// Keeping this policy in core lets the app and future import/editor features
 /// share one deterministic check.
 public enum MarkdownExportContract {
-    public static func validate(_ markdown: String, expectedPageNumbers: [Int] = []) -> MarkdownExportValidation {
+    public static func validate(
+        _ markdown: String,
+        expectedPageNumbers: [Int] = [],
+        dialect: MarkdownDialect = .pageLumenGFM
+    ) -> MarkdownExportValidation {
         var issues: [String] = []
 
         guard !markdown.isEmpty else {
@@ -61,6 +84,10 @@ public enum MarkdownExportContract {
             issues.append("markdown.page-markers-not-deterministic")
         }
 
+        let containsTableSyntax = markdownHasTableSyntax(markdown)
+        if containsTableSyntax && !dialect.supportsTables {
+            issues.append("markdown.tables-unsupported-by-dialect")
+        }
         validateTables(in: markdown, issues: &issues)
         if topLevel.contains(where: { $0 is Table }) {
             let tables = topLevel.compactMap { $0 as? Table }
@@ -108,6 +135,19 @@ public enum MarkdownExportContract {
                 }
                 index += 1
             }
+        }
+    }
+
+    private static func markdownHasTableSyntax(_ markdown: String) -> Bool {
+        let lines = markdown.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        return zip(lines, lines.dropFirst()).contains { first, second in
+            let firstTrimmed = first.trimmingCharacters(in: .whitespaces)
+            let secondTrimmed = second.trimmingCharacters(in: .whitespaces)
+            return firstTrimmed.hasPrefix("|") && firstTrimmed.hasSuffix("|") &&
+                secondTrimmed.hasPrefix("|") && secondTrimmed.hasSuffix("|") &&
+                secondTrimmed.split(separator: "|", omittingEmptySubsequences: true).allSatisfy {
+                    $0.trimmingCharacters(in: .whitespaces).allSatisfy { $0 == "-" || $0 == ":" }
+                }
         }
     }
 

@@ -64,4 +64,14 @@ final class MarkdownContractTests: XCTestCase {
         XCTAssertTrue(validation.issues.contains("markdown.page-markers-not-deterministic"))
         XCTAssertTrue(validation.issues.contains("markdown.table-column-count-mismatch"))
     }
+
+    func testDialectPolicyReportsUnsupportedTablesWithoutRewritingInput() {
+        let markdown = "# Title\n\n| A | B |\n| --- | --- |\n| 1 | 2 |\n"
+        let validation = MarkdownExportContract.validate(markdown, dialect: .commonMark)
+
+        XCTAssertFalse(validation.isValid)
+        XCTAssertTrue(validation.issues.contains("markdown.tables-unsupported-by-dialect"))
+        XCTAssertTrue(MarkdownDialect.commonMark.preservesUnsupportedSyntax)
+        XCTAssertTrue(markdown.contains("| 1 | 2 |"))
+    }
 }
