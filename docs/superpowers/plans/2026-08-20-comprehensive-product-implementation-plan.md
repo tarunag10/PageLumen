@@ -390,7 +390,35 @@ Third-party code must be adopted only through a small, auditable decision record
 - [ ] Compare against Apple Foundation Models on the same evaluation corpus. Prefer the option with lower unsupported-claim rate and lower operational cost, not merely more fluent prose.
 - [ ] Keep Intel Macs and unsupported Apple-silicon configurations on deterministic non-AI fallbacks.
 
-### 5.6 Defer: Argmax OSS Swift / WhisperKit
+### 5.6 Optional external provider: Stirling-PDF
+
+**Repository:** `Stirling-Tools/Stirling-PDF` — open-core; verify the exact
+release license and community/proprietary module boundaries before shipping.
+
+**Use:** Optional local REST/MCP-backed advanced PDF operations such as
+compression, merge, split, rearrange, redaction, signing, conversion, and
+repeatable pipelines. See [`docs/stirling-pdf-integration.md`](../../stirling-pdf-integration.md).
+
+- [ ] Do not embed Stirling's Java/Spring/React/Tauri application or require a
+  server for the default PageLumen install.
+- [ ] Add a `PDFOperationsProvider` protocol with the native PDFKit/Vision
+  provider as the default and a separately enabled Stirling provider.
+- [ ] Require an explicit local base URL, Keychain-held API key, capability
+  probe, privacy-mode check, and per-operation confirmation before upload.
+- [ ] Start with a cancellable compress operation; validate the returned PDF
+  before offering replacement, and write output atomically.
+- [ ] Add merge/rearrange and typed, bounded pipelines only after Stage B passes
+  fake-server, offline, cancellation, and malformed-response gates.
+- [ ] Keep remote endpoints disabled by default; require HTTPS and an explicit
+  advanced warning for non-local hosts.
+- [ ] Complete license, security, endpoint, source-content retention, and
+  redistribution review for the exact Stirling version before distribution.
+
+**Why optional:** Stirling expands PDF coverage substantially, but a bundled
+server would add Java/Docker lifecycle, network, install-size, licensing, and
+privacy complexity to a native macOS reader.
+
+### 5.7 Defer: Argmax OSS Swift / WhisperKit
 
 **Repository:** `argmaxinc/argmax-oss-swift` — MIT  
 **Potential use:** local transcription/audio intake or higher-quality downloadable speech models.
@@ -398,7 +426,7 @@ Third-party code must be adopted only through a small, auditable decision record
 - [ ] Do not adopt for the present document-to-speech workflow; AVFoundation already handles the core need without model download management.
 - [ ] Revisit only when PageLumen adds audio/lecture import, spoken-note capture, or a demonstrated need for higher-quality local speech.
 
-### 5.7 Dependency governance
+### 5.8 Dependency governance
 
 - [ ] Add `THIRD_PARTY_NOTICES.md`, a dependency inventory, and an SPM lock/review policy.
 - [ ] Add Dependabot or an equivalent update-review workflow after confirming it does not alter release branches automatically.
