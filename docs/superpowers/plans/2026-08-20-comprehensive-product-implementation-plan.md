@@ -585,11 +585,11 @@ Initial decisions required before work begins:
 A milestone is complete only when all applicable conditions below hold:
 
 - [ ] Code has unit/integration/UI coverage appropriate to risk and passes on supported OS paths.
-- [ ] New platform APIs are availability-gated and tested with deterministic fallbacks.
-- [ ] User-facing claims, documentation, and export labels match actual implementation.
-- [ ] Privacy/retention/download/capture behaviour is explicit, consentful, and documented.
+- [x] New platform APIs are availability-gated and tested with deterministic fallbacks. Foundation Models, Translation, ScreenCaptureKit, and modern PDF recognition paths have explicit availability checks and typed/fallback test coverage; participant execution remains a separate gate.
+- [x] User-facing claims, documentation, and export labels match actual implementation. `docs/claim-audit-2026-08-20.md` maps local processing, translation, Apple Intelligence, capture, search, export, Stirling, and release-state wording to source evidence and caveats.
+- [x] Privacy/retention/download/capture behaviour is explicit, consentful, and documented across `docs/privacy.md`, the search/encryption decision, screen-capture record, Stirling security review, and release evidence.
 - [ ] Accessibility review covers keyboard, VoiceOver, appearance, contrast, text size, motion, and transparency.
-- [ ] New dependencies have a decision record, license notice, pinned version, and removal plan.
+- [x] New dependencies have a decision record, license notice, pinned version, and removal plan. `docs/third-party-dependencies.md`, `THIRD_PARTY_NOTICES.md`, `Package.resolved`, and the GRDB/local-model decision records provide the current evidence.
 - [ ] Performance and corpus baselines show no unapproved regression.
 - [x] A release gate records actual archive/upload/review state without conflating local and external proof. `docs/release-checklist.md` and the dated release-evidence record separate local artifacts from unperformed Apple-hosted states.
 
