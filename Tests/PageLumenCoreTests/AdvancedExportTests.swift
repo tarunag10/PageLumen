@@ -335,6 +335,9 @@ final class AdvancedExportTests: XCTestCase {
         XCTAssertTrue(audit.findings.contains { $0.kind == .lowConfidenceText })
         XCTAssertTrue(audit.findings.contains { $0.kind == .missingFigureDescription })
         XCTAssertTrue(audit.findings.contains { $0.kind == .tableNeedsHeaderReview })
+        XCTAssertTrue(audit.unresolvedRiskSummary.contains("High risk"))
+        XCTAssertEqual(audit.remediationChecklist.count, Set(audit.findings.map(\.recommendation).filter { !$0.isEmpty }).count)
+        XCTAssertTrue(audit.manualReviewNotice.contains("PDF/UA"))
     }
 
     func testTaggedHTMLExportIncludesAccessibilityLandmarksAndAuditMetadata() {

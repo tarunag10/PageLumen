@@ -214,6 +214,27 @@ public struct AccessibilityAudit: Codable, Equatable, Sendable {
         }
         return "\(blockerCount) needs-fix item\(blockerCount == 1 ? "" : "s"), \(warningCount) review item\(warningCount == 1 ? "" : "s")."
     }
+
+    public var unresolvedRiskSummary: String {
+        if findings.isEmpty { return "No automated risks detected; manual review is still recommended." }
+        if blockerCount > 0 {
+            return "High risk: resolve \(blockerCount) blocker\(blockerCount == 1 ? "" : "s") before publishing a tagged export."
+        }
+        return "Moderate risk: review \(warningCount) automated warning\(warningCount == 1 ? "" : "s") before publishing."
+    }
+
+    /// Stable, de-duplicated actions suitable for a UI checklist or report.
+    public var remediationChecklist: [String] {
+        if findings.isEmpty { return ["Automated checks complete — perform a final manual review."] }
+        return findings.map(\.recommendation).reduce(into: [String]()) { result, recommendation in
+            guard !recommendation.isEmpty, !result.contains(recommendation) else { return }
+            result.append(recommendation)
+        }
+    }
+
+    public var manualReviewNotice: String {
+        "Automated checks do not prove PDF/UA conformance. Manually verify headings, language, table semantics, figure descriptions, links, and reading order before delivery."
+    }
 }
 
 public struct AccessibilityAuditor: Sendable {

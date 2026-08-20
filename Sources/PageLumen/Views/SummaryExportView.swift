@@ -148,6 +148,10 @@ struct SummaryExportView: View {
                             .foregroundStyle(AccessibleStyle.secondaryText)
                     }
 
+                    Text(accessibilityAudit.unresolvedRiskSummary)
+                        .font(.callout.weight(.semibold))
+                        .foregroundStyle(accessibilityAudit.blockerCount > 0 ? AccessibleStyle.warning : AccessibleStyle.secondaryText)
+
                     if accessibilityAudit.findings.isEmpty {
                         Text("No automated accessibility issues were found for the current export options.")
                             .font(.callout)
@@ -173,6 +177,22 @@ struct SummaryExportView: View {
                                 .foregroundStyle(AccessibleStyle.secondaryText)
                         }
                     }
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Remediation checklist")
+                            .font(.headline)
+                        ForEach(Array(accessibilityAudit.remediationChecklist.enumerated()), id: \.offset) { _, action in
+                            Label(action, systemImage: "circle")
+                                .font(.callout)
+                                .foregroundStyle(AccessibleStyle.secondaryText)
+                        }
+                    }
+                    .accessibilityElement(children: .contain)
+
+                    Text(accessibilityAudit.manualReviewNotice)
+                        .font(.footnote)
+                        .foregroundStyle(AccessibleStyle.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(20)
                 .accessiblePanel()
