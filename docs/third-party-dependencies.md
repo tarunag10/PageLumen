@@ -102,6 +102,10 @@ runs the Markdown, DOCX, and export-snapshot contracts with SwiftPM's
 packages can build and run without a dependency update; it does not claim a
 network firewall test or a signed distribution artifact.
 
+Latest verification: `make offline-dependencies` passed on 20 August 2026
+after the current release rebuild. All resolved checkouts were present and the
+focused Markdown, DOCX, and export-snapshot contracts completed successfully.
+
 Before updating a package:
 
 1. Review the upstream release notes, license, and security advisories.
