@@ -452,7 +452,13 @@ public struct LayoutAnalyzer: Sendable {
                 }
                 .filter { !$0.isEmpty }
             guard !rows.isEmpty else { return nil }
-            return TableRegion(pageNumber: block.pageNumber, bounds: block.bounds, rows: rows, confidence: min(block.confidence, 0.78))
+            return TableRegion(
+                pageNumber: block.pageNumber,
+                bounds: block.bounds,
+                rows: rows,
+                confidence: min(block.confidence, 0.78),
+                provenance: BlockProvenance(source: .heuristic, pageNumber: block.pageNumber, bounds: block.bounds, confidence: block.confidence, parentBlockID: block.id, engine: "LayoutAnalyzer table detection")
+            )
         }
     }
 
@@ -473,7 +479,8 @@ public struct LayoutAnalyzer: Sendable {
                 visibleText: block.text,
                 description: "",
                 confidence: min(block.confidence, 0.72),
-                uncertaintyNotes: ["Generated from visible OCR text and broad layout cues."]
+                uncertaintyNotes: ["Generated from visible OCR text and broad layout cues."],
+                provenance: BlockProvenance(source: .heuristic, pageNumber: block.pageNumber, bounds: block.bounds, confidence: block.confidence, parentBlockID: block.id, engine: "LayoutAnalyzer figure detection")
             )
         }
     }

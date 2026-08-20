@@ -193,6 +193,7 @@ public struct TableRegion: Identifiable, Codable, Equatable, Sendable {
     public var rows: [[String]]
     public var explanation: String
     public var confidence: Double
+    public var provenance: BlockProvenance?
 
     public init(
         id: UUID = UUID(),
@@ -200,7 +201,8 @@ public struct TableRegion: Identifiable, Codable, Equatable, Sendable {
         bounds: BoundingBox,
         rows: [[String]],
         explanation: String = "",
-        confidence: Double
+        confidence: Double,
+        provenance: BlockProvenance? = nil
     ) {
         self.id = id
         self.pageNumber = pageNumber
@@ -208,6 +210,7 @@ public struct TableRegion: Identifiable, Codable, Equatable, Sendable {
         self.rows = rows
         self.explanation = explanation
         self.confidence = confidence
+        self.provenance = provenance
     }
 }
 
@@ -220,6 +223,7 @@ public struct FigureRegion: Identifiable, Codable, Equatable, Sendable {
     public var description: String
     public var confidence: Double
     public var uncertaintyNotes: [String]
+    public var provenance: BlockProvenance?
 
     public init(
         id: UUID = UUID(),
@@ -229,7 +233,8 @@ public struct FigureRegion: Identifiable, Codable, Equatable, Sendable {
         visibleText: String,
         description: String,
         confidence: Double,
-        uncertaintyNotes: [String] = []
+        uncertaintyNotes: [String] = [],
+        provenance: BlockProvenance? = nil
     ) {
         self.id = id
         self.pageNumber = pageNumber
@@ -239,6 +244,7 @@ public struct FigureRegion: Identifiable, Codable, Equatable, Sendable {
         self.description = description
         self.confidence = confidence
         self.uncertaintyNotes = uncertaintyNotes
+        self.provenance = provenance
     }
 }
 

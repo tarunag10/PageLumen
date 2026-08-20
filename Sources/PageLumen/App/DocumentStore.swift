@@ -956,6 +956,14 @@ final class DocumentStore {
         guard document.pages[pageIndex].tables[tableIndex].explanation != text else { return }
         recordEdit()
         document.pages[pageIndex].tables[tableIndex].explanation = text
+        document.pages[pageIndex].tables[tableIndex].provenance = BlockProvenance(
+            source: .userEdit,
+            pageNumber: table.pageNumber,
+            bounds: table.bounds,
+            confidence: table.confidence,
+            parentBlockID: table.id,
+            engine: "PageLumen review editor"
+        )
         document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
     }
 
@@ -967,6 +975,14 @@ final class DocumentStore {
         guard document.pages[pageIndex].figures[figureIndex].description != text else { return }
         recordEdit()
         document.pages[pageIndex].figures[figureIndex].description = text
+        document.pages[pageIndex].figures[figureIndex].provenance = BlockProvenance(
+            source: .userEdit,
+            pageNumber: figure.pageNumber,
+            bounds: figure.bounds,
+            confidence: figure.confidence,
+            parentBlockID: figure.id,
+            engine: "PageLumen review editor"
+        )
         document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
     }
 

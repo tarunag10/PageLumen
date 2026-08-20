@@ -90,6 +90,19 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertTrue(store.statusMessage.contains("discarded"))
     }
 
+    func testTableAndFigureEditsRecordUserProvenance() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let table = TableRegion(pageNumber: 1, bounds: BoundingBox(x: 0, y: 0, width: 100, height: 60), rows: [["A", "B"]], confidence: 0.8)
+        let figure = FigureRegion(pageNumber: 1, bounds: BoundingBox(x: 0, y: 80, width: 100, height: 60), chartType: .bar, visibleText: "Chart", description: "", confidence: 0.7)
+        store.document = ReaderDocument(title: "Regions", sourceType: .sample, pages: [ReaderPage(pageNumber: 1, size: PageSize(width: 400, height: 600), blocks: [], tables: [table], figures: [figure])])
+
+        store.updateTableExplanation(table, text: "Reviewed table")
+        store.updateFigureDescription(figure, text: "Reviewed figure")
+
+        XCTAssertEqual(store.document.pages[0].tables[0].provenance?.source, .userEdit)
+        XCTAssertEqual(store.document.pages[0].figures[0].provenance?.source, .userEdit)
+    }
+
     func testCopySummaryWithCitationsLabelsDraftAndSources() {
         let store = DocumentStore(persisting: InMemoryPersisting())
         NSPasteboard.general.clearContents()
