@@ -843,8 +843,8 @@ final class DocumentStore {
             return true
         }
         guard !privacyMode, !document.pages.isEmpty, !isProcessing else { return false }
-        if #available(macOS 26.0, *) { return true }
-        return false
+        let target = Self.targetLanguageFromDefaults()
+        return TranslationService().availability(for: target) == .available
     }
 
     func exportAvailabilityMessage(for format: ExportFormat) -> String {
@@ -852,13 +852,26 @@ final class DocumentStore {
             return canExport(format) ? "Save (format.rawValue)" : "Import and finish processing a document first"
         }
         if privacyMode { return "Disable Privacy mode to use translation export" }
-        if #available(macOS 26.0, *) { return "Translate the document and save Markdown" }
-        return "Translation export requires macOS 26 or later with an available language model"
+        switch TranslationService().availability(for: Self.targetLanguageFromDefaults()) {
+        case .available:
+            return "Translate the document and save Markdown"
+        case .downloadable:
+            return "Download and approve the language model before translating"
+        case .unsupported:
+            return "Translation export requires macOS 26 or later"
+        case .unavailable:
+            return "Translation is unavailable for the selected language on this Mac"
+        }
     }
 
     private func exportTranslated() {
         guard !privacyMode else {
             statusMessage = "Translated export is disabled in Privacy mode."
+            return
+        }
+        let targetLanguage = Self.targetLanguageFromDefaults()
+        guard TranslationService().availability(for: targetLanguage) == .available else {
+            statusMessage = exportAvailabilityMessage(for: .translated)
             return
         }
         let panel = NSSavePanel()
@@ -870,7 +883,6 @@ final class DocumentStore {
             return
         }
 
-        let targetLanguage = Self.targetLanguageFromDefaults()
         let options = exportOptions
         let sourceDocument = document
 
