@@ -476,7 +476,7 @@ privacy complexity to a native macOS reader.
 ### 5.8 Dependency governance
 
 - [x] Add `THIRD_PARTY_NOTICES.md`, a dependency inventory, and an SPM lock/review policy. The current inventory is maintained in the repository root; `Package.swift` pins the Markdown dependency exactly and records lower bounds for the two other packages, with resolved versions reviewed before release.
-- [ ] Add Dependabot or an equivalent update-review workflow after confirming it does not alter release branches automatically.
+- [x] Add Dependabot or an equivalent update-review workflow after confirming it does not alter release branches automatically. `.github/dependabot.yml` opens bounded weekly Swift and monthly Actions review PRs targeting `main`; it has no release-branch automation.
 - [x] Add a license/security review checklist to `CONTRIBUTING.md`.
 - [ ] Verify new packages work in sandboxed, offline runtime conditions after initial resolution.
 
