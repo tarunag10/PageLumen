@@ -93,6 +93,9 @@ public struct GroundedSummary: Codable, Equatable, Sendable {
     /// Omission and selection scope for the provider request.  This metadata
     /// contains locations and counts only; it never stores prompt excerpts.
     public let contextMetadata: IntelligenceContextMetadata?
+    /// Provider/session metadata for an AI-generated result. This never
+    /// contains prompt text or provider diagnostics.
+    public let provenance: AISummaryProvenance?
 
     public init(
         text: String,
@@ -102,7 +105,8 @@ public struct GroundedSummary: Codable, Equatable, Sendable {
         unsupportedClaims: [String] = [],
         citedPageBlockIDs: [GroundedSourceReference]? = nil,
         suggestedReviewActions: [GroundedReviewAction] = [],
-        contextMetadata: IntelligenceContextMetadata? = nil
+        contextMetadata: IntelligenceContextMetadata? = nil,
+        provenance: AISummaryProvenance? = nil
     ) {
         self.text = text
         self.citations = citations
@@ -114,11 +118,12 @@ public struct GroundedSummary: Codable, Equatable, Sendable {
         }
         self.suggestedReviewActions = suggestedReviewActions
         self.contextMetadata = contextMetadata
+        self.provenance = provenance
     }
 
     private enum CodingKeys: String, CodingKey {
         case text, citations, groundingWarning, uncertaintyNotes, unsupportedClaims,
-             citedPageBlockIDs, suggestedReviewActions, contextMetadata
+             citedPageBlockIDs, suggestedReviewActions, contextMetadata, provenance
     }
 
     public init(from decoder: Decoder) throws {
@@ -132,6 +137,7 @@ public struct GroundedSummary: Codable, Equatable, Sendable {
             ?? citations.map { GroundedSourceReference(pageNumber: $0.pageNumber, blockID: $0.blockID) }
         suggestedReviewActions = try container.decodeIfPresent([GroundedReviewAction].self, forKey: .suggestedReviewActions) ?? []
         contextMetadata = try container.decodeIfPresent(IntelligenceContextMetadata.self, forKey: .contextMetadata)
+        provenance = try container.decodeIfPresent(AISummaryProvenance.self, forKey: .provenance)
     }
 }
 
@@ -470,6 +476,15 @@ public struct ExplanationEngine: Sendable {
                 document: document,
                 unsupportedClaims: []
             )
+            let provenance = AISummaryProvenance(
+                provider: "apple-foundation-models",
+                modelIdentifier: "SystemLanguageModel.default",
+                summaryLength: length,
+                context: contextMetadata,
+                citedPageBlockIDs: citations.map {
+                    GroundedSourceReference(pageNumber: $0.pageNumber, blockID: $0.blockID)
+                }
+            )
             return .generated(
                 GroundedSummary(
                     text: text,
@@ -477,7 +492,8 @@ public struct ExplanationEngine: Sendable {
                     groundingWarning: warning,
                     uncertaintyNotes: notes,
                     suggestedReviewActions: actions,
-                    contextMetadata: contextMetadata
+                    contextMetadata: contextMetadata,
+                    provenance: provenance
                 )
             )
         }

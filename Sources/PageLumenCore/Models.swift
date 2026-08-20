@@ -538,6 +538,9 @@ public struct ReaderDocument: Identifiable, Codable, Equatable, Sendable {
     public var pages: [ReaderPage]
     public var outline: [OutlineItem]
     public var summary: String
+    /// Privacy-safe metadata for the latest generated summary. Prompts and
+    /// provider response diagnostics are deliberately not retained.
+    public var summaryProvenance: AISummaryProvenance?
     /// Non-text PDF metadata retained for provenance and downstream exports.
     public var metadata: [String: String]
 
@@ -552,6 +555,7 @@ public struct ReaderDocument: Identifiable, Codable, Equatable, Sendable {
         pages: [ReaderPage],
         outline: [OutlineItem] = [],
         summary: String = "",
+        summaryProvenance: AISummaryProvenance? = nil,
         metadata: [String: String] = [:]
     ) {
         self.id = id
@@ -564,11 +568,12 @@ public struct ReaderDocument: Identifiable, Codable, Equatable, Sendable {
         self.pages = pages
         self.outline = outline
         self.summary = summary
+        self.summaryProvenance = summaryProvenance
         self.metadata = metadata
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, title, sourceType, sourceURL, createdAt, language, processingStatus, pages, outline, summary, metadata
+        case id, title, sourceType, sourceURL, createdAt, language, processingStatus, pages, outline, summary, summaryProvenance, metadata
     }
 
     public init(from decoder: Decoder) throws {
@@ -583,6 +588,7 @@ public struct ReaderDocument: Identifiable, Codable, Equatable, Sendable {
         pages = try values.decode([ReaderPage].self, forKey: .pages)
         outline = try values.decode([OutlineItem].self, forKey: .outline)
         summary = try values.decode(String.self, forKey: .summary)
+        summaryProvenance = try values.decodeIfPresent(AISummaryProvenance.self, forKey: .summaryProvenance)
         metadata = try values.decodeIfPresent([String: String].self, forKey: .metadata) ?? [:]
     }
 
@@ -648,7 +654,7 @@ public struct ExportOptions: Equatable, Sendable {
     }
 }
 
-public enum SummaryLength: String, CaseIterable, Identifiable, Sendable {
+public enum SummaryLength: String, CaseIterable, Identifiable, Codable, Sendable {
     case short = "30 seconds"
     case medium = "2 minutes"
     case detailed = "Detailed walkthrough"

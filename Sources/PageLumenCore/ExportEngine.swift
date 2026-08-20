@@ -757,6 +757,10 @@ public struct ExportEngine: Sendable {
         encoder.dateEncodingStrategy = .iso8601
 
         var sanitized = sanitizedDocument(document, options: options)
+        // The typed record is emitted only through the explicit additive
+        // envelope below, where anonymous exports can redact section labels.
+        // Do not duplicate it in the legacy ReaderDocument root.
+        sanitized.summaryProvenance = nil
         sanitized.pages = sanitized.pages.map { page in
             var copy = page
             copy.blocks = DocumentEditing.exportableBlocks(on: page, includeHeadersAndFooters: options.includeHeadersAndFooters)
@@ -772,7 +776,7 @@ public struct ExportEngine: Sendable {
         // additive/backward-compatible consumption. The envelope is the
         // stable place for export metadata and provenance going forward.
         root["schemaVersion"] = Self.jsonSchemaVersion
-        root["export"] = jsonExportMetadata(for: sanitized, options: options)
+        root["export"] = jsonExportMetadata(for: document, options: options)
 
         return (try? JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys])) ?? Data("{}".utf8)
     }
@@ -838,7 +842,7 @@ public struct ExportEngine: Sendable {
         }
 
         var result: [String: Any] = [
-            "summaryLength": length.rawValue,
+            "summaryLength": document.summaryProvenance?.summaryLength.rawValue ?? length.rawValue,
             "summaryTextIncluded": includesText,
             "citationExcerptsIncluded": includesText,
             "citationCount": grounded.citations.count,
@@ -850,7 +854,49 @@ public struct ExportEngine: Sendable {
         if let warning = grounded.groundingWarning {
             result["groundingWarning"] = warning
         }
+        if let provenance = document.summaryProvenance {
+            result["generationProvenance"] = jsonSummaryProvenance(
+                provenance,
+                redactSectionLabels: options.redactTextSnippets
+            )
+        }
         return result
+    }
+
+    private func jsonSummaryProvenance(
+        _ provenance: AISummaryProvenance,
+        redactSectionLabels: Bool
+    ) -> [String: Any] {
+        let context = provenance.context
+        var contextJSON: [String: Any] = [
+            "isSelectionScoped": context.isSelectionScoped,
+            "requestedBlockCount": context.requestedBlockCount,
+            "sourceBlockCount": context.sourceBlockCount,
+            "includedBlockCount": context.includedBlockCount,
+            "omittedBlockCount": context.omittedBlockCount,
+            "includedPageNumbers": context.includedPageNumbers,
+            "omittedPageNumbers": context.omittedPageNumbers
+        ]
+        if !redactSectionLabels {
+            contextJSON["includedSectionLabels"] = context.includedSectionLabels
+            contextJSON["omittedSectionLabels"] = context.omittedSectionLabels
+        }
+        return [
+            "schemaVersion": provenance.schemaVersion,
+            "sessionID": provenance.sessionID.uuidString.lowercased(),
+            "requestID": provenance.requestID.uuidString.lowercased(),
+            "provider": provenance.provider,
+            "modelIdentifier": provenance.modelIdentifier,
+            "generatedAt": ISO8601DateFormatter().string(from: provenance.generatedAt),
+            "summaryLength": provenance.summaryLength.rawValue,
+            "context": contextJSON,
+            "citedPageBlockIDs": provenance.citedPageBlockIDs.map {
+                [
+                    "pageNumber": $0.pageNumber,
+                    "blockID": $0.blockID.uuidString.lowercased()
+                ]
+            }
+        ]
     }
 
     private func jsonReviewFindings(for document: ReaderDocument, options: ExportOptions) -> [[String: Any]] {
