@@ -227,7 +227,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [x] Define a format capability matrix in `docs/accessibility.md`: semantics retained, source citations, table support, figure descriptions, metadata, anonymisation, and validation status.
 - [x] Add `ExportValidationResult` with machine-readable warnings and a human-readable report.
 - [x] Block or require confirmation when exporting unresolved blocker-level review findings.
-- [ ] Give each output an embedded provenance/review summary that can be excluded with a clearly labelled privacy setting.
+- [x] Add an additive JSON provenance/review summary backed by `GroundedSummary` and `SummaryCitation`; the export envelope labels inclusion and the existing privacy options exclude summary/citation prose without dropping stable page/block locations. Extending the same contract to every output remains future work.
 - [x] Update Save Panels, file extensions, preview copy, and user documentation to use the same terminology.
 
 ### 2.2 Tagged HTML and Markdown

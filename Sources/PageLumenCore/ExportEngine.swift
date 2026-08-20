@@ -739,7 +739,8 @@ public struct ExportEngine: Sendable {
             return [
                 "format": ExportFormat.json.rawValue,
                 "schemaVersion": Self.jsonSchemaVersion,
-                "provenanceIncluded": false
+                "provenanceIncluded": false,
+                "reviewSummaryIncluded": false
             ]
         }
         let findings = DocumentEditing.reviewFindings(for: document)
@@ -757,12 +758,55 @@ public struct ExportEngine: Sendable {
             provenance["sourceURL"] = sourceURL
         }
 
+        // The review summary is deliberately nested inside the additive
+        // provenance envelope. It gives downstream consumers the same
+        // grounded summary/citation contract used by the review UI without
+        // changing any legacy ReaderDocument fields. Anonymous exports keep
+        // the review signal and stable locations, but never copy extracted
+        // prose into this new envelope.
+        provenance["reviewSummary"] = jsonReviewSummary(for: document, options: options)
+
         return [
             "format": ExportFormat.json.rawValue,
             "schemaVersion": Self.jsonSchemaVersion,
             "provenanceIncluded": true,
+            "reviewSummaryIncluded": true,
             "provenance": provenance
         ]
+    }
+
+    private func jsonReviewSummary(for document: ReaderDocument, options: ExportOptions) -> [String: Any] {
+        let length: SummaryLength = .medium
+        let grounded = ExplanationEngine().groundedSummary(for: document, length: length)
+        let includesText = !options.redactTextSnippets
+
+        let citations: [[String: Any]] = grounded.citations.map { citation in
+            var value: [String: Any] = [
+                "id": citation.id,
+                "pageNumber": citation.pageNumber,
+                "blockID": citation.blockID.uuidString.lowercased(),
+                "excerptIncluded": includesText
+            ]
+            if includesText {
+                value["excerpt"] = citation.excerpt
+            }
+            return value
+        }
+
+        var result: [String: Any] = [
+            "summaryLength": length.rawValue,
+            "summaryTextIncluded": includesText,
+            "citationExcerptsIncluded": includesText,
+            "citationCount": grounded.citations.count,
+            "citations": citations
+        ]
+        if includesText {
+            result["summaryText"] = grounded.text
+        }
+        if let warning = grounded.groundingWarning {
+            result["groundingWarning"] = warning
+        }
+        return result
     }
 
     private func sanitizedDocument(_ document: ReaderDocument, options: ExportOptions) -> ReaderDocument {

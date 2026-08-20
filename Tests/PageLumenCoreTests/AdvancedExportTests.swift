@@ -145,6 +145,16 @@ final class AdvancedExportTests: XCTestCase {
         XCTAssertEqual(provenance["reviewedBlockCount"] as? Int, 1)
         XCTAssertEqual(provenance["unresolvedFindingCount"] as? Int, 0)
         XCTAssertEqual(provenance["sourceURL"] as? String, "file:///tmp/envelope.pdf")
+        XCTAssertEqual(export["reviewSummaryIncluded"] as? Bool, true)
+        let reviewSummary = try XCTUnwrap(provenance["reviewSummary"] as? [String: Any])
+        XCTAssertEqual(reviewSummary["summaryLength"] as? String, SummaryLength.medium.rawValue)
+        XCTAssertEqual(reviewSummary["summaryTextIncluded"] as? Bool, true)
+        XCTAssertEqual(reviewSummary["citationExcerptsIncluded"] as? Bool, true)
+        XCTAssertEqual(reviewSummary["citationCount"] as? Int, 1)
+        XCTAssertTrue((reviewSummary["summaryText"] as? String)?.contains("Reviewed text") == true)
+        let citations = try XCTUnwrap(reviewSummary["citations"] as? [[String: Any]])
+        XCTAssertEqual(citations.first?["pageNumber"] as? Int, 1)
+        XCTAssertEqual(citations.first?["excerpt"] as? String, "Reviewed text")
 
         // Existing consumers can continue reading the legacy root fields.
         XCTAssertEqual(object["title"] as? String, "Envelope")
@@ -168,6 +178,42 @@ final class AdvancedExportTests: XCTestCase {
         XCTAssertNil(provenance["sourceURL"])
     }
 
+    func testJSONExportReviewSummaryRedactsSummaryAndCitationText() throws {
+        let document = ReaderDocument(
+            title: "Private review",
+            sourceType: .pdf,
+            sourceURL: URL(fileURLWithPath: "/private/secret.pdf"),
+            pages: [ReaderPage(
+                pageNumber: 1,
+                size: PageSize(width: 612, height: 792),
+                blocks: [TextBlock(
+                    pageNumber: 1,
+                    type: .paragraph,
+                    text: "Private clinical detail",
+                    bounds: BoundingBox(x: 72, y: 72, width: 300, height: 20),
+                    confidence: 0.5
+                )],
+                warning: "OCR needs review"
+            )]
+        )
+
+        let data = ExportEngine().data(for: document, format: .json, options: .anonymous)
+        let object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let export = try XCTUnwrap(object["export"] as? [String: Any])
+        let provenance = try XCTUnwrap(export["provenance"] as? [String: Any])
+        let reviewSummary = try XCTUnwrap(provenance["reviewSummary"] as? [String: Any])
+
+        XCTAssertEqual(reviewSummary["summaryTextIncluded"] as? Bool, false)
+        XCTAssertNil(reviewSummary["summaryText"])
+        XCTAssertEqual(reviewSummary["citationExcerptsIncluded"] as? Bool, false)
+        let citations = try XCTUnwrap(reviewSummary["citations"] as? [[String: Any]])
+        XCTAssertEqual(citations.count, 1)
+        let firstCitation = try XCTUnwrap(citations.first)
+        XCTAssertEqual(firstCitation["excerptIncluded"] as? Bool, false)
+        XCTAssertNil(firstCitation["excerpt"])
+        XCTAssertEqual(reviewSummary["groundingWarning"] as? String, "Verify this summary against the original source before relying on it.")
+    }
+
     func testJSONExportCanExcludeProvenanceWithExplicitOption() throws {
         var options = ExportOptions.full
         options.includeProvenance = false
@@ -176,6 +222,7 @@ final class AdvancedExportTests: XCTestCase {
         let export = try XCTUnwrap(object["export"] as? [String: Any])
 
         XCTAssertEqual(export["provenanceIncluded"] as? Bool, false)
+        XCTAssertEqual(export["reviewSummaryIncluded"] as? Bool, false)
         XCTAssertNil(export["provenance"])
     }
 

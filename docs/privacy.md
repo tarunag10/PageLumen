@@ -35,7 +35,8 @@ This page summarises the privacy commitments that PageLumen makes to its users. 
 ## Exported JSON and Source URLs
 
 - The JSON export written by `ExportEngine` includes the source `ReaderDocument.sourceURL` by default, because that is often useful when piping output into downstream tooling.
-- The Summary & Export view includes an "Include provenance and review details" toggle. Turn it off when sharing a JSON export without PageLumen's document identifier, source metadata, or review-count envelope. The existing `redactSourceURL` and `redactTextSnippets` options remain available to callers that need finer-grained redaction.
+- The Summary & Export view includes an "Include provenance and review details" toggle. Turn it off when sharing a JSON export without PageLumen's document identifier, source metadata, review-count envelope, or grounded review summary. The JSON envelope labels both `provenanceIncluded` and `reviewSummaryIncluded` as `false` when excluded.
+- When provenance is included, JSON contains a `reviewSummary` derived from the deterministic `GroundedSummary`/`SummaryCitation` contract. It records the summary length, grounding warning, citation count, and stable page/block locations. The default export includes the summary and citation excerpts; the anonymous export (`redactTextSnippets`) keeps the warning, counts, and locations but sets `summaryTextIncluded` and `citationExcerptsIncluded` to `false` and omits those text fields. This prevents the new provenance envelope from becoming an unlabelled OCR-text side channel.
 
 ## Clearing Local Cache and Recent Documents
 
