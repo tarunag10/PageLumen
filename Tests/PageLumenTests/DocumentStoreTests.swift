@@ -302,6 +302,8 @@ final class DocumentStoreTests: XCTestCase {
         let issue = try XCTUnwrap(store.reviewIssues.first)
 
         store.jumpToIssue(issue)
+        XCTAssertEqual(store.selectedPageNumber, issue.pageNumber)
+        XCTAssertEqual(store.selectedBlockID, issue.blockID, "Opening a finding should select its source region")
         XCTAssertEqual(store.currentReviewIssue?.id, issue.id)
         store.acceptCurrentReviewIssue()
 

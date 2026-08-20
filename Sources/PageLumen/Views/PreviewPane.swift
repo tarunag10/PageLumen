@@ -79,6 +79,7 @@ private struct ReadingOrderOverlay: View {
                 } label: {
                     ZStack(alignment: .topLeading) {
                         RoundedRectangle(cornerRadius: 5)
+                            .fill(store.selectedBlockID == block.id ? AccessibleStyle.focusBorder.opacity(0.18) : Color.clear)
                             .stroke(
                                 store.selectedBlockID == block.id ? AccessibleStyle.focusBorder : AccessibleStyle.accentBright,
                                 lineWidth: store.selectedBlockID == block.id ? 3 : 2

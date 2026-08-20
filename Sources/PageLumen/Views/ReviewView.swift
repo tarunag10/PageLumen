@@ -588,6 +588,13 @@ private struct EditableBlockRow: View {
                     .stroke(AccessibleStyle.focusBorder, lineWidth: 2)
             }
         }
+        .background {
+            if store.selectedBlockID == block.id {
+                RoundedRectangle(cornerRadius: AccessibleStyle.cornerRadius)
+                    .fill(AccessibleStyle.focusBorder.opacity(0.08))
+                    .padding(1)
+            }
+        }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(block.type.rawValue.capitalized) block, confidence \(Int(block.confidence * 100)) percent")
         .accessibilityHint("Edit text, change type, drag to reorder, or use the arrow buttons as a keyboard fallback.")
