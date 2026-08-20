@@ -20,9 +20,21 @@ final class ModelComparisonTests: XCTestCase {
         XCTAssertEqual(ModelComparator.compare(a, b), .unavailable("Both models require measured safety and cost metrics"))
     }
 
-    private func snapshot(id: String, revision: String, risk: Double?, cost: Double?) -> ModelEvaluationSnapshot {
+    func testComparisonUsesCitationCoverageBeforeOperationalCostWhenRiskTies() {
+        let a = snapshot(id: "foundation", revision: "r1", risk: 0.02, cost: 10, coverage: 0.98)
+        let b = snapshot(id: "prototype", revision: "r1", risk: 0.02, cost: 1, coverage: 0.80)
+        XCTAssertEqual(ModelComparator.compare(a, b), .preferred("foundation"))
+    }
+
+    func testComparisonRejectsNonFiniteMeasuredMetrics() {
+        let a = snapshot(id: "foundation", revision: "r1", risk: .infinity, cost: 1)
+        let b = snapshot(id: "prototype", revision: "r1", risk: 0.02, cost: 1)
+        XCTAssertEqual(ModelComparator.compare(a, b), .unavailable("Both models require measured safety and cost metrics"))
+    }
+
+    private func snapshot(id: String, revision: String, risk: Double?, cost: Double?, coverage: Double? = 1) -> ModelEvaluationSnapshot {
         ModelEvaluationSnapshot(modelIdentifier: id, corpusRevision: revision,
-                                 unsupportedClaimRate: risk, citationCoverage: 1,
+                                 unsupportedClaimRate: risk, citationCoverage: coverage,
                                  medianLatencyMilliseconds: 10, operationalCost: cost)
     }
 }

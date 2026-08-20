@@ -17,3 +17,11 @@ that a consented model comparison has been performed.
 `Sources/PageLumenCore/EvaluationContract.swift` is the deterministic schema
 validator used by tests. Any future measured report must include exact model,
 Xcode, macOS, device, corpus revision, and processing-profile metadata.
+
+`ModelComparator` is the fail-closed decision boundary for a future
+Foundation-Models comparison: both snapshots must use the same corpus and
+provide finite unsupported-claim and cost measurements. It prefers lower
+unsupported-claim rate, then higher citation coverage when both are measured,
+then lower operational cost. It never treats missing or non-finite values as
+zero, and the current repository does not claim that a consented comparison
+run has occurred.
