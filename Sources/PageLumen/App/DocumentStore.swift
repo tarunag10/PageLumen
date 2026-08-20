@@ -768,6 +768,7 @@ final class DocumentStore {
         let length = summaryLength
         guard useOnDeviceAI else {
             document.summary = explanationEngine.betterSummary(for: source, length: length)
+            clearIntelligenceProvenance()
             return
         }
 
@@ -776,14 +777,31 @@ final class DocumentStore {
         // ready, and discard a late result if the document changed meanwhile.
         Task { @MainActor [weak self] in
             guard let self else { return }
-            let result = await explanationEngine.summary(
-                for: source,
-                length: length,
-                options: SummaryOptions(useIntelligence: true)
-            )
             guard self.document.id == source.id else { return }
-            self.document.summary = result
+            let result = await self.explanationEngine.groundedIntelligenceSummary(for: source, length: length)
+            switch result {
+            case .generated(let grounded):
+                self.document.summary = grounded.text
+                self.document.metadata["intelligenceSource"] = "apple-foundation-models"
+                self.document.metadata["intelligenceEngine"] = "FoundationModels"
+                self.document.metadata["intelligenceGeneratedAt"] = ISO8601DateFormatter().string(from: Date())
+                self.document.metadata["intelligenceCitationCount"] = String(grounded.citations.count)
+                self.document.metadata["intelligenceUncertaintyCount"] = String(grounded.uncertaintyNotes.count)
+                self.document.metadata["intelligenceUnsupportedClaimCount"] = String(grounded.unsupportedClaims.count)
+            case .unavailable, .failed:
+                self.document.summary = self.explanationEngine.betterSummary(for: source, length: length)
+                self.clearIntelligenceProvenance()
+            }
         }
+    }
+
+    private func clearIntelligenceProvenance() {
+        document.metadata.removeValue(forKey: "intelligenceSource")
+        document.metadata.removeValue(forKey: "intelligenceEngine")
+        document.metadata.removeValue(forKey: "intelligenceGeneratedAt")
+        document.metadata.removeValue(forKey: "intelligenceCitationCount")
+        document.metadata.removeValue(forKey: "intelligenceUncertaintyCount")
+        document.metadata.removeValue(forKey: "intelligenceUnsupportedClaimCount")
     }
 
     func persistExportDefaults() {

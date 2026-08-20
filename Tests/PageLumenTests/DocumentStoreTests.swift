@@ -135,6 +135,8 @@ final class DocumentStoreTests: XCTestCase {
         store.setIntelligenceMode(.off)
         XCTAssertEqual(store.intelligenceMode, .off)
         XCTAssertFalse(store.useOnDeviceAI)
+        XCTAssertNil(store.document.metadata["intelligenceSource"])
+        XCTAssertNil(store.document.metadata["intelligenceEngine"])
     }
 
     func testInjectedPersistenceReportsAvailableLibrary() {
