@@ -803,7 +803,10 @@ public struct ExportEngine: Sendable {
 
     private func csvEscape(_ text: String) -> String {
         let safeText = neutralizedSpreadsheetFormula(text)
-        if safeText.contains(",") || safeText.contains("\"") || safeText.contains("\n") {
+        // Quote every RFC 4180 field containing a delimiter, quote, or either
+        // line-ending character. This keeps embedded CRLF text in one cell
+        // and makes output deterministic across source/platform line endings.
+        if safeText.contains(",") || safeText.contains("\"") || safeText.contains("\n") || safeText.contains("\r") {
             return "\"\(safeText.replacingOccurrences(of: "\"", with: "\"\""))\""
         }
         return safeText

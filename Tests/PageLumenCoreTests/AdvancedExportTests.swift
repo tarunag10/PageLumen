@@ -51,6 +51,55 @@ final class AdvancedExportTests: XCTestCase {
         XCTAssertFalse(csv.contains(",  =SUM("))
     }
 
+    func testCSVExportEscapesQuotesAndBothLineEndings() {
+        let document = ReaderDocument(
+            title: "CSV punctuation",
+            sourceType: .sample,
+            pages: [ReaderPage(
+                pageNumber: 1,
+                size: PageSize(width: 612, height: 792),
+                blocks: [],
+                tables: [TableRegion(
+                    pageNumber: 1,
+                    bounds: BoundingBox(x: 72, y: 72, width: 300, height: 120),
+                    rows: [["Label", "Value"], ["Quoted, value", "first\r\nsecond\"line"]],
+                    confidence: 0.95
+                )]
+            )]
+        )
+
+        let csv = ExportEngine().csv(for: document, options: .full)
+
+        XCTAssertTrue(csv.contains("1,1,2,1,\"Quoted, value\""))
+        XCTAssertTrue(csv.contains("1,1,2,2,\"first\r\nsecond\"\"line\""))
+    }
+
+    func testCSVExportPreservesRaggedRowsAsDeterministicCellCoordinates() {
+        let document = ReaderDocument(
+            title: "Ragged table",
+            sourceType: .sample,
+            pages: [ReaderPage(
+                pageNumber: 1,
+                size: PageSize(width: 612, height: 792),
+                blocks: [],
+                tables: [TableRegion(
+                    pageNumber: 1,
+                    bounds: BoundingBox(x: 72, y: 72, width: 300, height: 120),
+                    rows: [["Header", "Value"], ["Only value"], [], ["A", "B", "C"]],
+                    confidence: 0.95
+                )]
+            )]
+        )
+
+        let csv = ExportEngine().csv(for: document, options: .full)
+
+        // CSV is a long-form cell export, so irregular source widths remain
+        // lossless through their page/table/row/column coordinates.
+        XCTAssertTrue(csv.contains("1,1,2,1,Only value"))
+        XCTAssertTrue(csv.contains("1,1,4,3,C"))
+        XCTAssertFalse(csv.contains("1,1,3,"))
+    }
+
     func testJSONExportIncludesBlocksTablesFiguresAndMetadata() throws {
         let document = SampleDataFactory.makeDemoDocument()
 

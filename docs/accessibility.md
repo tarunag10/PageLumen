@@ -56,6 +56,13 @@ they are not deep links that open the PageLumen app.
 | Accessibility Report | automated findings | page/block references | findings only | findings only | redaction options | report is remediation path |
 | Audio | spoken text | not retained | not retained | not retained | configured voice/language | speech service and media review |
 
+CSV export is a locale-neutral, long-form cell contract with the columns
+`Page,Table,Row,Column,Value`. Every non-empty source cell receives a stable
+coordinate, so ragged table rows remain lossless without padding or guessing
+missing columns. Values containing commas, quotes, CR, or LF use RFC 4180
+quoting (quotes are doubled); spreadsheet-formula-leading values are prefixed
+with `'` to prevent formula execution when opened in a spreadsheet.
+
 ## Known Limitations
 
 - **Not PDF/UA compliant.** The current PDF export does not claim PDF/UA conformance. We are tracking this in the audit plan; a tagged-PDF pass would require moving the export onto `PDFKit`'s `PDFDocument` / `PDFPage` APIs and adding structure-tree metadata.
