@@ -413,6 +413,9 @@ private struct StructuredOutputView: View {
                                 ) { newValue in
                                     store.updateTableExplanation(table, text: newValue)
                                 }
+                                TableHeaderAssignmentEditor(table: table) { rows, columns in
+                                    store.updateTableHeaderAssignments(table, columnHeaderRows: rows, rowHeaderColumns: columns)
+                                }
                             }
 
                             ForEach(page.figures) { figure in
@@ -625,6 +628,47 @@ private struct EditableGeneratedNote: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel(title)
         .accessibilityHint("Edit the generated description before export.")
+    }
+}
+
+private struct TableHeaderAssignmentEditor: View {
+    let table: TableRegion
+    let onApply: ([Int], [Int]) -> Void
+    @State private var columnRows = ""
+    @State private var rowColumns = ""
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Table semantics", systemImage: "tablecells.badge.ellipsis")
+                .font(.headline)
+                .foregroundStyle(AccessibleStyle.primaryText)
+            Text("Assign zero-based row and column indexes so accessible exports can distinguish headers from data.")
+                .font(.caption)
+                .foregroundStyle(AccessibleStyle.secondaryText)
+            HStack {
+                TextField("Column header rows (e.g. 0)", text: $columnRows)
+                TextField("Row header columns (e.g. 0)", text: $rowColumns)
+            }
+            .textFieldStyle(.roundedBorder)
+            Button("Apply header assignments") {
+                onApply(parse(columnRows), parse(rowColumns))
+            }
+            .buttonStyle(.bordered)
+            .accessibilityHint("Applies the selected table header row and column indexes.")
+        }
+        .padding(14)
+        .accessiblePanel(borderColor: AccessibleStyle.accent.opacity(0.35))
+        .onAppear { syncFromTable() }
+        .onChange(of: table) { _, _ in syncFromTable() }
+    }
+
+    private func syncFromTable() {
+        columnRows = table.columnHeaderRows.map(String.init).joined(separator: ", ")
+        rowColumns = table.rowHeaderColumns.map(String.init).joined(separator: ", ")
+    }
+
+    private func parse(_ value: String) -> [Int] {
+        value.split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespacesAndNewlines)) }
     }
 }
 

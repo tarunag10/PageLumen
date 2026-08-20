@@ -194,6 +194,10 @@ public struct TableRegion: Identifiable, Codable, Equatable, Sendable {
     public var explanation: String
     public var confidence: Double
     public var provenance: BlockProvenance?
+    /// Zero-based row indexes explicitly assigned as column headers.
+    public var columnHeaderRows: [Int]
+    /// Zero-based column indexes explicitly assigned as row headers.
+    public var rowHeaderColumns: [Int]
 
     public init(
         id: UUID = UUID(),
@@ -202,7 +206,9 @@ public struct TableRegion: Identifiable, Codable, Equatable, Sendable {
         rows: [[String]],
         explanation: String = "",
         confidence: Double,
-        provenance: BlockProvenance? = nil
+        provenance: BlockProvenance? = nil,
+        columnHeaderRows: [Int] = [],
+        rowHeaderColumns: [Int] = []
     ) {
         self.id = id
         self.pageNumber = pageNumber
@@ -211,6 +217,25 @@ public struct TableRegion: Identifiable, Codable, Equatable, Sendable {
         self.explanation = explanation
         self.confidence = confidence
         self.provenance = provenance
+        self.columnHeaderRows = columnHeaderRows
+        self.rowHeaderColumns = rowHeaderColumns
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, pageNumber, bounds, rows, explanation, confidence, provenance, columnHeaderRows, rowHeaderColumns
+    }
+
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(UUID.self, forKey: .id)
+        pageNumber = try values.decode(Int.self, forKey: .pageNumber)
+        bounds = try values.decode(BoundingBox.self, forKey: .bounds)
+        rows = try values.decode([[String]].self, forKey: .rows)
+        explanation = try values.decode(String.self, forKey: .explanation)
+        confidence = try values.decode(Double.self, forKey: .confidence)
+        provenance = try values.decodeIfPresent(BlockProvenance.self, forKey: .provenance)
+        columnHeaderRows = try values.decodeIfPresent([Int].self, forKey: .columnHeaderRows) ?? []
+        rowHeaderColumns = try values.decodeIfPresent([Int].self, forKey: .rowHeaderColumns) ?? []
     }
 }
 

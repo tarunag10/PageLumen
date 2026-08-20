@@ -218,7 +218,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 - [ ] Add a filterable Review Queue with keyboard shortcuts for next/previous finding, accept/reject suggestion, mark reviewed, and open original source region. The queue popover now lists all unresolved findings, filters All/Blockers/Warnings, opens each source region, and resolves/reopens block-backed findings without changing source text; page-warning correction and richer accept/reject suggestion states remain open.
 - [ ] Synchronise preview, extracted text, and issue list selection; support page-level deep links.
-- [ ] Support table-grid editing with explicit column-header and row-header assignment.
+- [ ] Support table-grid editing with explicit column-header and row-header assignment. Header row/column assignment and semantic HTML/JSON preservation are now shipped; direct cell-grid editing remains open.
 - [x] Add reusable review presets for General, Legal, Academic, Receipts, Slides, and Accessibility Remediation. Settings exposes the preset and the core review engine applies only threshold/warning changes; source data remains untouched.
 - [ ] Add undo/redo for edits and an edit history view. Core bounded undo/redo for text, structure, table/figure descriptions, ordering, and review state is now shipped; the visible edit-history view and raw-OCR diff remain open. Do not overwrite raw OCR.
 

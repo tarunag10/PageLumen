@@ -36,6 +36,26 @@ final class ExportEngineTests: XCTestCase {
         XCTAssertTrue(html.contains("id=\"block-\(tableBlock!.id.uuidString.lowercased())\""))
     }
 
+    func testTaggedHTMLUsesExplicitTableHeaderAssignments() {
+        let table = TableRegion(
+            pageNumber: 1,
+            bounds: BoundingBox(x: 0, y: 0, width: 300, height: 120),
+            rows: [["Category", "Value"], ["Total", "42"]],
+            confidence: 0.9,
+            columnHeaderRows: [0],
+            rowHeaderColumns: [0]
+        )
+        let block = TextBlock(pageNumber: 1, type: .table, text: "Category | Value\nTotal | 42", bounds: table.bounds, confidence: 0.9)
+        let document = ReaderDocument(title: "Semantic table", sourceType: .sample, pages: [
+            ReaderPage(pageNumber: 1, size: PageSize(width: 400, height: 600), blocks: [block], tables: [table])
+        ])
+
+        let html = ExportEngine().taggedHTML(for: document, options: .full)
+
+        XCTAssertTrue(html.contains("<th scope=\"col\">Category</th>"))
+        XCTAssertTrue(html.contains("<th scope=\"row\">Total</th>"))
+    }
+
     func testPDFExportReturnsPDFData() {
         let document = SampleDataFactory.makeDemoDocument()
 

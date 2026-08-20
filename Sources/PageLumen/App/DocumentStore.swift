@@ -985,6 +985,32 @@ final class DocumentStore {
         document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
     }
 
+    func updateTableHeaderAssignments(_ table: TableRegion, columnHeaderRows: [Int], rowHeaderColumns: [Int]) {
+        guard let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == table.pageNumber }),
+              let tableIndex = document.pages[pageIndex].tables.firstIndex(where: { $0.id == table.id }) else {
+            return
+        }
+        let validRowIndexes = Set(document.pages[pageIndex].tables[tableIndex].rows.indices)
+        let maxColumnCount = document.pages[pageIndex].tables[tableIndex].rows.map(\.count).max() ?? 0
+        let validColumnIndexes = Set(0..<maxColumnCount)
+        let rows = Array(Set(columnHeaderRows.filter { validRowIndexes.contains($0) })).sorted()
+        let columns = Array(Set(rowHeaderColumns.filter { validColumnIndexes.contains($0) })).sorted()
+        guard document.pages[pageIndex].tables[tableIndex].columnHeaderRows != rows
+                || document.pages[pageIndex].tables[tableIndex].rowHeaderColumns != columns else { return }
+        recordEdit()
+        document.pages[pageIndex].tables[tableIndex].columnHeaderRows = rows
+        document.pages[pageIndex].tables[tableIndex].rowHeaderColumns = columns
+        document.pages[pageIndex].tables[tableIndex].provenance = BlockProvenance(
+            source: .userEdit,
+            pageNumber: table.pageNumber,
+            bounds: table.bounds,
+            confidence: table.confidence,
+            parentBlockID: table.id,
+            engine: "PageLumen table semantics editor"
+        )
+        statusMessage = "Updated table header assignments"
+    }
+
     func updateFigureDescription(_ figure: FigureRegion, text: String) {
         guard let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == figure.pageNumber }),
               let figureIndex = document.pages[pageIndex].figures.firstIndex(where: { $0.id == figure.id }) else {
