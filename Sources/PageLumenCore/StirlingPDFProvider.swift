@@ -1,4 +1,5 @@
 import Foundation
+import PDFKit
 
 /// Connection settings for an optional, user-managed Stirling-PDF instance.
 ///
@@ -114,6 +115,153 @@ public struct URLSessionStirlingPDFHTTPTransport: StirlingPDFHTTPTransport, Send
             throw URLError(.badServerResponse)
         }
         return (data, response)
+    }
+}
+
+public enum StirlingPDFCompressionError: Error, Equatable, Sendable {
+    case invalidEndpoint(StirlingPDFEndpointError)
+    case emptyInput
+    case inputTooLarge(limit: Int)
+    case authenticationRequired(statusCode: Int)
+    case requestFailed(statusCode: Int)
+    case invalidResponse(statusCode: Int)
+    case responseTooLarge(limit: Int)
+    case outputIsNotPDF
+    case cancelled
+    case transportFailure
+}
+
+/// A validated result returned by Stirling's compress endpoint. The bytes are
+/// checked with PDFKit before they leave this boundary, so callers can safely
+/// preview them before choosing a destination.
+public struct StirlingPDFCompressionResult: Sendable {
+    public let data: Data
+    public let httpStatusCode: Int
+
+    public init(data: Data, httpStatusCode: Int) {
+        self.data = data
+        self.httpStatusCode = httpStatusCode
+    }
+}
+
+/// The sole Stage B operation. This type is never constructed by the default
+/// app runtime; callers must explicitly provide a configured endpoint when the
+/// user has opted into sending a document to that service.
+public struct StirlingPDFCompressor: Sendable {
+    public static let defaultCompressPath = "api/v1/misc/compress-pdf"
+    public static let defaultMaximumInputBytes = 100 * 1024 * 1024
+    public static let defaultMaximumOutputBytes = 100 * 1024 * 1024
+
+    private let transport: any StirlingPDFHTTPTransport
+    private let timeout: TimeInterval
+    private let compressPath: String
+
+    public init(
+        transport: any StirlingPDFHTTPTransport = URLSessionStirlingPDFHTTPTransport(),
+        timeout: TimeInterval = 60,
+        compressPath: String = StirlingPDFCompressor.defaultCompressPath
+    ) {
+        self.transport = transport
+        self.timeout = timeout
+        self.compressPath = compressPath
+    }
+
+    public func compress(
+        data: Data,
+        filename: String = "document.pdf",
+        endpoint configuration: StirlingPDFEndpoint,
+        maximumInputBytes: Int = StirlingPDFCompressor.defaultMaximumInputBytes,
+        maximumOutputBytes: Int = StirlingPDFCompressor.defaultMaximumOutputBytes
+    ) async throws -> StirlingPDFCompressionResult {
+        guard !data.isEmpty else { throw StirlingPDFCompressionError.emptyInput }
+        guard data.count <= maximumInputBytes else {
+            throw StirlingPDFCompressionError.inputTooLarge(limit: maximumInputBytes)
+        }
+        guard maximumOutputBytes > 0 else {
+            throw StirlingPDFCompressionError.responseTooLarge(limit: maximumOutputBytes)
+        }
+
+        let endpoint: StirlingPDFEndpoint
+        do {
+            endpoint = try configuration.validated()
+        } catch let error as StirlingPDFEndpointError {
+            throw StirlingPDFCompressionError.invalidEndpoint(error)
+        } catch {
+            throw StirlingPDFCompressionError.invalidEndpoint(.invalidURL)
+        }
+        guard !Task.isCancelled else { throw StirlingPDFCompressionError.cancelled }
+        guard let url = operationURL(for: endpoint.baseURL) else {
+            throw StirlingPDFCompressionError.invalidEndpoint(.invalidURL)
+        }
+
+        let boundary = "PageLumen-\(UUID().uuidString)"
+        var body = Data()
+        body.append(Data("--\(boundary)\r\n".utf8))
+        body.append(Data("Content-Disposition: form-data; name=\"fileInput\"; filename=\"\(safeFilename(filename))\"\r\n".utf8))
+        body.append(Data("Content-Type: application/pdf\r\n\r\n".utf8))
+        body.append(data)
+        body.append(Data("\r\n--\(boundary)--\r\n".utf8))
+
+        var request = URLRequest(url: url, timeoutInterval: timeout)
+        request.httpMethod = "POST"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/pdf", forHTTPHeaderField: "Accept")
+        if let apiKey = endpoint.apiKey, !apiKey.isEmpty {
+            request.setValue(apiKey, forHTTPHeaderField: "X-API-KEY")
+        }
+        request.httpBody = body
+
+        do {
+            let (output, response) = try await transport.data(for: request)
+            guard output.count <= maximumOutputBytes else {
+                throw StirlingPDFCompressionError.responseTooLarge(limit: maximumOutputBytes)
+            }
+            switch response.statusCode {
+            case 401, 403:
+                throw StirlingPDFCompressionError.authenticationRequired(statusCode: response.statusCode)
+            case 200..<300:
+                guard !output.isEmpty, PDFDocument(data: output) != nil else {
+                    throw StirlingPDFCompressionError.outputIsNotPDF
+                }
+                return StirlingPDFCompressionResult(data: output, httpStatusCode: response.statusCode)
+            default:
+                throw StirlingPDFCompressionError.requestFailed(statusCode: response.statusCode)
+            }
+        } catch let error as StirlingPDFCompressionError {
+            throw error
+        } catch is CancellationError {
+            throw StirlingPDFCompressionError.cancelled
+        } catch let error as URLError where error.code == .cancelled {
+            throw StirlingPDFCompressionError.cancelled
+        } catch {
+            throw StirlingPDFCompressionError.transportFailure
+        }
+    }
+
+    private func operationURL(for baseURL: URL) -> URL? {
+        let path = compressPath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard !path.isEmpty else { return nil }
+        return baseURL.appendingPathComponent(path)
+    }
+
+    private func safeFilename(_ filename: String) -> String {
+        let name = URL(fileURLWithPath: filename).lastPathComponent
+        let sanitized = name
+            .filter { !$0.isNewline && !$0.isWhitespace || $0 == " " }
+            .map { $0 == "\"" ? "_" : String($0) }
+            .joined()
+        return sanitized.isEmpty ? "document.pdf" : sanitized
+    }
+}
+
+/// Writes a validated provider result without exposing a partially-written
+/// destination if the process is interrupted.
+public enum StirlingPDFAtomicOutput {
+    public static func write(_ data: Data, to destination: URL) throws {
+        guard PDFDocument(data: data) != nil else {
+            throw StirlingPDFCompressionError.outputIsNotPDF
+        }
+        try data.write(to: destination, options: .atomic)
     }
 }
 

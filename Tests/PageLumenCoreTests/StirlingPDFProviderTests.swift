@@ -74,14 +74,107 @@ final class StirlingPDFProviderTests: XCTestCase {
         XCTAssertEqual(file.state, .invalidEndpoint(.invalidURL))
     }
 
+    @MainActor
+    func testCompressUsesDocumentedMultipartRequestWithoutLeakingKey() async throws {
+        let input = try XCTUnwrap(Data(contentsOf: Fixtures.tinyPDF(text: "input")))
+        let transport = StubTransport { request in
+            XCTAssertEqual(request.httpMethod, "POST")
+            XCTAssertEqual(request.url?.path, "/api/v1/misc/compress-pdf")
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Accept"), "application/pdf")
+            XCTAssertEqual(request.value(forHTTPHeaderField: "X-API-KEY"), "secret")
+            let body = try XCTUnwrap(request.httpBody)
+            XCTAssertTrue(String(decoding: body, as: UTF8.self).contains("name=\"fileInput\""))
+            XCTAssertFalse(String(decoding: body, as: UTF8.self).contains("secret"))
+            XCTAssertNotNil(body.range(of: input))
+            return (input, makeResponse(for: request, statusCode: 200, contentType: "application/pdf"))
+        }
+
+        let result = try await StirlingPDFCompressor(transport: transport).compress(
+            data: input,
+            filename: "../../private.pdf",
+            endpoint: StirlingPDFEndpoint(baseURL: URL(string: "http://localhost:8080")!, apiKey: "secret")
+        )
+        XCTAssertEqual(result.data, input)
+        XCTAssertEqual(result.httpStatusCode, 200)
+    }
+
+    @MainActor
+    func testCompressMapsAuthenticationAndHTTPFailures() async throws {
+        let input = try XCTUnwrap(Data(contentsOf: Fixtures.tinyPDF(text: "input")))
+        let auth = StirlingPDFCompressor(transport: StubTransport { request in
+            (Data(), makeResponse(for: request, statusCode: 403))
+        })
+        await XCTAssertThrowsErrorAsync(try await auth.compress(data: input, endpoint: localEndpoint())) { error in
+            XCTAssertEqual(error as? StirlingPDFCompressionError, .authenticationRequired(statusCode: 403))
+        }
+
+        let failed = StirlingPDFCompressor(transport: StubTransport { request in
+            (Data(), makeResponse(for: request, statusCode: 422))
+        })
+        await XCTAssertThrowsErrorAsync(try await failed.compress(data: input, endpoint: localEndpoint())) { error in
+            XCTAssertEqual(error as? StirlingPDFCompressionError, .requestFailed(statusCode: 422))
+        }
+    }
+
+    @MainActor
+    func testCompressMapsCancellationAndMalformedOutput() async throws {
+        let input = try XCTUnwrap(Data(contentsOf: Fixtures.tinyPDF(text: "input")))
+        let cancelled = StirlingPDFCompressor(transport: StubTransport { _ in throw CancellationError() })
+        await XCTAssertThrowsErrorAsync(try await cancelled.compress(data: input, endpoint: localEndpoint())) { error in
+            XCTAssertEqual(error as? StirlingPDFCompressionError, .cancelled)
+        }
+
+        let malformed = StirlingPDFCompressor(transport: StubTransport { request in
+            (Data("not a PDF".utf8), makeResponse(for: request, statusCode: 200, contentType: "application/pdf"))
+        })
+        await XCTAssertThrowsErrorAsync(try await malformed.compress(data: input, endpoint: localEndpoint())) { error in
+            XCTAssertEqual(error as? StirlingPDFCompressionError, .outputIsNotPDF)
+        }
+    }
+
+    @MainActor
+    func testCompressRejectsRemoteEndpointAndAtomicWriterValidatesPDF() async throws {
+        let input = try XCTUnwrap(Data(contentsOf: Fixtures.tinyPDF(text: "input")))
+        let compressor = StirlingPDFCompressor(transport: StubTransport { request in
+            XCTFail("transport must not be called for an unvalidated endpoint")
+            return (input, makeResponse(for: request, statusCode: 200, contentType: "application/pdf"))
+        })
+        await XCTAssertThrowsErrorAsync(try await compressor.compress(
+            data: input,
+            endpoint: StirlingPDFEndpoint(baseURL: URL(string: "http://example.com")!)
+        )) { error in
+            XCTAssertEqual(error as? StirlingPDFCompressionError, .invalidEndpoint(.remoteHTTPNotAllowed))
+        }
+
+        let destination = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".pdf")
+        try StirlingPDFAtomicOutput.write(input, to: destination)
+        XCTAssertEqual(try Data(contentsOf: destination), input)
+        XCTAssertThrowsError(try StirlingPDFAtomicOutput.write(Data("bad".utf8), to: destination)) { error in
+            XCTAssertEqual(error as? StirlingPDFCompressionError, .outputIsNotPDF)
+        }
+        try? FileManager.default.removeItem(at: destination)
+    }
+
     private func localEndpoint() -> StirlingPDFEndpoint {
         StirlingPDFEndpoint(baseURL: URL(string: "http://127.0.0.1:8080")!)
     }
 
 }
 
-private func makeResponse(for request: URLRequest, statusCode: Int) -> HTTPURLResponse {
-    HTTPURLResponse(url: request.url!, statusCode: statusCode, httpVersion: nil, headerFields: ["Content-Type": "application/json"])!
+private func makeResponse(for request: URLRequest, statusCode: Int, contentType: String = "application/json") -> HTTPURLResponse {
+    HTTPURLResponse(url: request.url!, statusCode: statusCode, httpVersion: nil, headerFields: ["Content-Type": contentType])!
+}
+
+private func XCTAssertThrowsErrorAsync<T>(
+    _ expression: @autoclosure () async throws -> T,
+    _ handler: (Error) -> Void
+) async {
+    do {
+        _ = try await expression()
+        XCTFail("Expected expression to throw")
+    } catch {
+        handler(error)
+    }
 }
 
 private struct StubTransport: StirlingPDFHTTPTransport {

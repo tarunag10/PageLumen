@@ -79,6 +79,21 @@ multipart contract. Add request-size limits, cancellation, atomic output, and
 tests with a fake URL protocol. Compare the returned PDF with PDFKit before
 offering to replace the original.
 
+#### Current implementation checkpoint
+
+The Stage B boundary is implemented in
+`Sources/PageLumenCore/StirlingPDFProvider.swift` as
+`StirlingPDFCompressor`. It is opt-in and additive: no app runtime path
+constructs it implicitly. Every call validates the configured endpoint before
+building a request, enforces bounded input/output sizes, sends the source only
+as the documented multipart `fileInput` field, and keeps the API key in the
+request header without logging or embedding it in the URL. Cancellation is
+mapped to a typed error, successful output is validated with PDFKit, and
+`StirlingPDFAtomicOutput` uses an atomic write for a caller-selected
+destination. The focused fake-transport coverage includes request shape and
+secret non-leakage, success, authentication/HTTP failures, cancellation,
+malformed output, endpoint rejection, and atomic output validation.
+
 ### Stage C — multi-input and pipelines
 
 Add merge/rearrange and then pipeline execution. Every pipeline must have a
