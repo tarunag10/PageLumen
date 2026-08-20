@@ -400,6 +400,10 @@ release license and community/proprietary module boundaries before shipping.
 compression, merge, split, rearrange, redaction, signing, conversion, and
 repeatable pipelines. See [`docs/stirling-pdf-integration.md`](../../stirling-pdf-integration.md).
 
+- [x] Stage A capability probe: injectable HTTP transport, metadata-only GET,
+  distinct availability/authentication/timeout/cancellation/TLS/malformed
+  response states, and loopback-first endpoint validation. No document upload
+  or mandatory dependency is introduced. Focused fake-transport tests pass.
 - [ ] Do not embed Stirling's Java/Spring/React/Tauri application or require a
   server for the default PageLumen install.
 - [ ] Add a `PDFOperationsProvider` protocol with the native PDFKit/Vision

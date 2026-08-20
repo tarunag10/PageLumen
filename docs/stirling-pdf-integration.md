@@ -46,6 +46,32 @@ Java/Spring/React/Tauri implementation.
 - Add URL validation that rejects non-local HTTP endpoints by default. Permit a
   remote HTTPS endpoint only after an explicit advanced setting and warning.
 
+#### Current implementation
+
+The Stage A boundary is implemented in
+`Sources/PageLumenCore/StirlingPDFProvider.swift` as
+`StirlingPDFCapabilityProbe`. It is an additive PageLumenCore capability and
+does not add a server, Java runtime, Docker dependency, or package dependency.
+The default `URLSessionStirlingPDFHTTPTransport` issues only a `GET` request;
+the transport protocol is injectable so tests can exercise a fake server
+without binding a port or sending document data.
+
+`StirlingPDFEndpoint` accepts loopback HTTP (`localhost`, `127.0.0.1`, or
+`::1`) and rejects remote HTTP by default. Remote HTTPS is also rejected until
+the caller explicitly sets `allowRemoteHTTPS`, which is the point where the
+future Settings warning and confirmation must be attached. URLs containing
+credentials, query strings, or fragments are rejected. Stage A keeps an API
+key in memory only and sends it as `X-API-KEY`; it does not persist, log, or
+export the key. Keychain storage is required before any user-facing provider
+configuration ships.
+
+The probe returns distinct states for availability, authentication failure,
+timeout, cancellation, TLS failure, unavailable services, malformed status
+responses, and invalid endpoints. A successful response is reduced to
+version/status/operation metadata; unknown response fields are discarded and
+no source content is accepted by this API. The focused fake-transport suite
+is `StirlingPDFProviderTests`.
+
 ### Stage B — one safe operation
 
 Implement `compress` using the documented `POST /api/v1/misc/compress-pdf`
