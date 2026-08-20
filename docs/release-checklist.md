@@ -10,7 +10,8 @@ App Store review or live availability.
 - [x] `xcodebuild -project PageLumen.xcodeproj -scheme PageLumen -configuration Release -destination 'generic/platform=macOS' archive` succeeds (`dist/PageLumen.xcarchive`, evidence record dated 2026-08-20).
 - [x] Exported artifact is validated with `codesign --verify --deep --strict` (Developer ID, universal arm64/x86_64 archive).
 - [x] `git diff --check` and dependency/license review pass for this phase.
-- [ ] Fixture, malformed-input, and performance smoke tests pass.
+- [x] Deterministic fixture-corpus, malformed-input, and embedded-text performance tests pass; the current regression evidence is recorded in `docs/performance-baseline-2026-08-20.md` and the full package run in `docs/release-evidence-2026-08-20.md`.
+- [ ] Scanned-image OCR latency and peak resident-memory smoke tests pass on a physical supported Mac; the embedded-text guards above do not prove this device-dependent gate.
 - [x] CI validates package tests, an unsigned Xcode build, local quality gates,
       the bounded fixture manifests, and the release-evidence manifest. CI does
       not hold signing credentials or claim notarization/App Review/live-store

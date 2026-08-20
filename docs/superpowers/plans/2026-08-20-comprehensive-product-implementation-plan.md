@@ -25,7 +25,7 @@ This plan deliberately separates:
 - A native SwiftUI macOS app, deployment target macOS 14, with a testable `PageLumenCore` framework and an app-shell `DocumentStore`.
 - Local PDF embedded-text extraction, Vision OCR, structured document recognition on newer macOS releases, layout heuristics, review/editing, speech, and exports.
 - SwiftData-backed recent documents, sandbox entitlements, App Intents, TipKit, a menu-bar capture surface, and unit coverage.
-- Baseline verification on 2026-08-20: `swift test` passed **107 tests** and `xcodebuild -project PageLumen.xcodeproj -scheme PageLumen -configuration Debug -destination 'generic/platform=macOS' build` succeeded.
+- Initial pre-implementation baseline verification on 2026-08-20: `swift test` passed **107 tests** and `xcodebuild -project PageLumen.xcodeproj -scheme PageLumen -configuration Debug -destination 'generic/platform=macOS' build` succeeded. This historical count is not the current regression count; the current source-level release record reports 332 executed tests with 2 documented translation-model skips.
 
 ### Truths that require correction before a public release
 
