@@ -62,6 +62,9 @@ final class PageLumenUITests: XCTestCase {
         XCTAssertTrue(settingsApp.checkBoxes["settings.searchableCopies"].exists)
         XCTAssertTrue(settingsApp.popUpButtons["settings.appearance"].exists)
         XCTAssertTrue(settingsApp.checkBoxes["settings.boostContrast"].exists)
+        XCTAssertTrue(settingsApp.popUpButtons["settings.intelligenceMode"].exists)
+        XCTAssertTrue(settingsApp.checkBoxes["settings.documentIntelligenceOptOut"].exists)
+        XCTAssertTrue(settingsApp.staticTexts["settings.intelligenceAvailability"].exists)
         XCTAssertTrue(settingsApp.buttons["settings.forgetAll"].exists)
     }
 

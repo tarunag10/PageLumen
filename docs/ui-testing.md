@@ -28,7 +28,7 @@ participant-driven XCUITest flows:
 | --- | --- |
 | Review | `review.undo`, `review.redo`, `review.queue`, `review.continue`, `review.search`, `review.nextMatch`, `review.previousMatch` |
 | Export | `export.backToReview`, `export.<format>` |
-| Settings | `settings.privacyMode`, `settings.searchableCopies`, `settings.forgetAll`, `settings.appearance`, `settings.boostContrast` |
+| Settings | `settings.privacyMode`, `settings.searchableCopies`, `settings.forgetAll`, `settings.appearance`, `settings.boostContrast`, `settings.intelligenceMode`, `settings.documentIntelligenceOptOut`, `settings.intelligenceAvailability` |
 
 The bounded import seam accepts `-ui-testing -ui-testing-import` and exposes
 `home.uiTestImportFixture`; activating it loads the in-memory demo document and
@@ -43,6 +43,13 @@ The additional identifiers are intentionally not asserted from the initial
 Home-only headless contract because their views are reached after import or
 settings navigation. A participant run must exercise each enabled control and
 record the resulting state transition.
+
+The deterministic settings launch now also asserts the on-device intelligence
+controls and availability announcement. This proves that the explicit
+intelligence opt-in/opt-out surface is present and discoverable in a clean
+settings launch; it does not prove Apple Intelligence availability on a given
+Mac, model output quality, or the behavior of the system settings that govern
+eligibility.
 
 Workflow step buttons retain their accessible labels (`Step 1, Add` through
 `Step 4, Export`) so navigation checks do not depend on SwiftUI view hierarchy

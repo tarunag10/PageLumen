@@ -209,6 +209,7 @@ struct SettingsView: View {
                         store.setIntelligenceMode(mode)
                     }
                 }
+                .accessibilityIdentifier("settings.intelligenceMode")
                 .accessibilityHint("Choose whether PageLumen may use Apple Intelligence for the current summary")
 
                 Toggle(
@@ -219,6 +220,7 @@ struct SettingsView: View {
                     )
                 )
                 .disabled(store.intelligenceMode == .off)
+                .accessibilityIdentifier("settings.documentIntelligenceOptOut")
                 Text("Apple Intelligence is opt-in and receives only bounded selected document text. This document-level control overrides the global mode and is retained locally by document identifier.")
                     .font(.callout)
                     .foregroundStyle(AccessibleStyle.secondaryText)
@@ -234,6 +236,7 @@ struct SettingsView: View {
                     Label(IntelligentExplainer().availabilityInfo.message, systemImage: "info.circle")
                         .foregroundStyle(AccessibleStyle.secondaryText)
                 }
+                .accessibilityIdentifier("settings.intelligenceAvailability")
                 Text(IntelligentExplainer().availabilityInfo.deviceRequirement)
                     .font(.caption)
                     .foregroundStyle(AccessibleStyle.secondaryText)
