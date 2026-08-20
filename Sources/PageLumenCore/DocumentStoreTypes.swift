@@ -7,6 +7,18 @@ public protocol DocumentImporting: Sendable {
     func processClipboardImage(_ image: NSImage, onProgress: DocumentProcessingProgressHandler?) async throws -> ReaderDocument
 }
 
+public extension DocumentImporting {
+    /// Compatibility default keeps lightweight test/import providers working
+    /// while the production processor accepts quality and page-range choices.
+    func process(url: URL, options: ProcessingImportOptions, onProgress: DocumentProcessingProgressHandler?) async throws -> ReaderDocument {
+        try await process(url: url, onProgress: onProgress)
+    }
+
+    func process(securityScopedURL url: URL, options: ProcessingImportOptions, onProgress: DocumentProcessingProgressHandler?) async throws -> ReaderDocument {
+        try await process(securityScopedURL: url, onProgress: onProgress)
+    }
+}
+
 public protocol DocumentPersisting: Sendable {
     func save(_ document: ReaderDocument) throws
     func load(id: UUID) throws -> ReaderDocument?

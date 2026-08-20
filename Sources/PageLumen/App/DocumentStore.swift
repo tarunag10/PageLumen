@@ -2,7 +2,14 @@ import AppKit
 import Combine
 import Foundation
 import PageLumenCore
+import PDFKit
 import UniformTypeIdentifiers
+
+struct ProcessingBudgetPrompt: Identifiable {
+    let id = UUID()
+    let url: URL
+    let estimate: ProcessingBudgetEstimate
+}
 
 struct EditHistoryEntry: Identifiable, Equatable {
     let id: UUID
@@ -93,6 +100,8 @@ final class DocumentStore {
     var watchFolderPathLabel = "Not configured"
     var watchFolderCandidates: [WatchFolderCandidate] = []
     var watchFolderFailures: [WatchFolderImportFailure] = []
+    var processingBudgetPrompt: ProcessingBudgetPrompt?
+    private var pendingImportURLs: [URL] = []
 
     private(set) var canUndo = false
     private(set) var canRedo = false
@@ -683,12 +692,69 @@ final class DocumentStore {
 
     func startImport(urls: [URL]) {
         importTask?.cancel()
+        let supportedURLs = urls.filter(BatchImportQueue.isSupportedURL)
+        guard !supportedURLs.isEmpty else {
+            statusMessage = "No supported PDF or image files were selected."
+            return
+        }
+        if let first = supportedURLs.first,
+           let estimate = processingBudgetEstimate(for: first), estimate.requiresChoice {
+            pendingImportURLs = supportedURLs
+            processingBudgetPrompt = ProcessingBudgetPrompt(url: first, estimate: estimate)
+            statusMessage = "Choose a bounded processing option before importing."
+            return
+        }
+        beginImport(urls: supportedURLs, options: .full)
+    }
+
+    func chooseFullProcessing() {
+        guard !pendingImportURLs.isEmpty else { return }
+        let urls = pendingImportURLs
+        pendingImportURLs = []
+        processingBudgetPrompt = nil
+        beginImport(urls: urls, options: .full)
+    }
+
+    func chooseBalancedProcessing() {
+        guard !pendingImportURLs.isEmpty else { return }
+        let urls = pendingImportURLs
+        let pageRange: ClosedRange<Int>? = (processingBudgetPrompt?.estimate.pageCount ?? 0) > 100 ? 1...100 : nil
+        pendingImportURLs = []
+        processingBudgetPrompt = nil
+        beginImport(urls: urls, options: ProcessingImportOptions(quality: .balanced, pageRange: pageRange))
+    }
+
+    func chooseFirstHundredPages() {
+        guard !pendingImportURLs.isEmpty else { return }
+        let urls = pendingImportURLs
+        pendingImportURLs = []
+        processingBudgetPrompt = nil
+        beginImport(urls: urls, options: ProcessingImportOptions(pageRange: 1...100))
+    }
+
+    func dismissProcessingBudgetPrompt() {
+        pendingImportURLs = []
+        processingBudgetPrompt = nil
+        statusMessage = "Import cancelled; choose a smaller page range or lower quality to continue."
+    }
+
+    private func beginImport(urls: [URL], options: ProcessingImportOptions) {
         importTask = Task { [weak self] in
-            await self?.importURLs(urls)
+            await self?.importURLs(urls, options: options)
         }
     }
 
-    func importURLs(_ urls: [URL]) async {
+    private func processingBudgetEstimate(for url: URL) -> ProcessingBudgetEstimate? {
+        guard url.pathExtension.lowercased() == "pdf", let pdf = PDFDocument(url: url) else { return nil }
+        let sizes = (0..<pdf.pageCount).compactMap { index -> (width: Double, height: Double)? in
+            guard let page = pdf.page(at: index) else { return nil }
+            let bounds = page.bounds(for: .mediaBox)
+            return (Double(bounds.width), Double(bounds.height))
+        }
+        return ProcessingBudgetEstimator.estimate(pageSizes: sizes)
+    }
+
+    func importURLs(_ urls: [URL], options: ProcessingImportOptions = .full) async {
         let supportedURLs = urls.filter(BatchImportQueue.isSupportedURL)
         guard !supportedURLs.isEmpty else {
             statusMessage = "No supported PDF or image files were selected."
@@ -709,7 +775,7 @@ final class DocumentStore {
                 statusMessage = "Processing \(item.fileName)..."
 
                 do {
-                    let processed = try await processor.process(securityScopedURL: item.url) { [weak self] snapshot in
+                    let processed = try await processor.process(securityScopedURL: item.url, options: options) { [weak self] snapshot in
                         guard let self, !Task.isCancelled else { return }
                         var preparedSnapshot = snapshot
                         self.applyLanguagePreference(to: &preparedSnapshot)

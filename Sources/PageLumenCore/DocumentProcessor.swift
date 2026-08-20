@@ -65,16 +65,24 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         url: URL,
         onProgress: DocumentProcessingProgressHandler? = nil
     ) async throws -> ReaderDocument {
+        try await process(url: url, options: .full, onProgress: onProgress)
+    }
+
+    public func process(
+        url: URL,
+        options: ProcessingImportOptions,
+        onProgress: DocumentProcessingProgressHandler? = nil
+    ) async throws -> ReaderDocument {
         let ext = url.pathExtension.lowercased()
         if ext == "pdf" {
             try validateFileBudget(url)
-            return try await processPDF(url: url, onProgress: onProgress)
+            return try await processPDF(url: url, options: options, onProgress: onProgress)
         }
 
         if Self.supportedExtensions.contains(ext) {
             try validateFileBudget(url)
             let image = try loadImage(from: url)
-            return try await process(image: image, title: url.deletingPathExtension().lastPathComponent, sourceType: .image, sourceURL: url, onProgress: onProgress)
+            return try await process(image: image, title: url.deletingPathExtension().lastPathComponent, sourceType: .image, sourceURL: url, options: options, onProgress: onProgress)
         }
 
         throw DocumentProcessorError.unsupportedFile(url)
@@ -84,9 +92,17 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         securityScopedURL url: URL,
         onProgress: DocumentProcessingProgressHandler? = nil
     ) async throws -> ReaderDocument {
+        try await process(securityScopedURL: url, options: .full, onProgress: onProgress)
+    }
+
+    public func process(
+        securityScopedURL url: URL,
+        options: ProcessingImportOptions,
+        onProgress: DocumentProcessingProgressHandler? = nil
+    ) async throws -> ReaderDocument {
         let didStart = url.startAccessingSecurityScopedResource()
         defer { if didStart { url.stopAccessingSecurityScopedResource() } }
-        return try await process(url: url, onProgress: onProgress)
+        return try await process(url: url, options: options, onProgress: onProgress)
     }
 
     public func processClipboardImage(
@@ -96,18 +112,23 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         try await process(image: image, title: "Clipboard Image", sourceType: .clipboard, sourceURL: nil, onProgress: onProgress)
     }
 
-    private func processPDF(url: URL, onProgress: DocumentProcessingProgressHandler?) async throws -> ReaderDocument {
+    private func processPDF(url: URL, options: ProcessingImportOptions, onProgress: DocumentProcessingProgressHandler?) async throws -> ReaderDocument {
         guard let pdf = PDFDocument(url: url) else {
             throw DocumentProcessorError.unreadablePDF(url)
         }
-        try validatePDFBudget(pdf)
+        try validatePDFBudget(pdf, options: options)
+
+        let requestedRange = options.pageRange ?? 1...max(1, pdf.pageCount)
+        let lowerBound = max(1, min(requestedRange.lowerBound, pdf.pageCount))
+        let upperBound = max(lowerBound, min(requestedRange.upperBound, pdf.pageCount))
+        let selectedIndices = (lowerBound...upperBound).map { $0 - 1 }
 
         var document = ReaderDocument(
             title: url.deletingPathExtension().lastPathComponent,
             sourceType: .pdf,
             sourceURL: url,
             processingStatus: .processing,
-            pages: (0..<pdf.pageCount).compactMap { index in
+            pages: selectedIndices.compactMap { index in
                 guard let pdfPage = pdf.page(at: index) else { return nil }
                 let bounds = pdfPage.bounds(for: .mediaBox)
                 return ReaderPage(
@@ -142,10 +163,10 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
                 pageSize: CGSize(width: page.size.width, height: page.size.height),
                 embeddedText: embeddedText,
                 cgImage: embeddedText.isEmpty
-                    ? pdf.page(at: index).flatMap { render(pdfPage: $0)?.cgImage(forProposedRect: nil, context: nil, hints: nil) }
+                    ? pdf.page(at: page.pageNumber - 1).flatMap { render(pdfPage: $0, quality: options.quality)?.cgImage(forProposedRect: nil, context: nil, hints: nil) }
                     : nil
             )
-            let blocks = await extractBlocks(input: pageInput).1
+            let blocks = await extractBlocks(input: pageInput, quality: options.quality).1
             document.pages[index].ocrStatus = .complete
             document.pages[index].blocks = blocks
             await onProgress?(document)
@@ -256,7 +277,7 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         let cgImage: CGImage?
     }
 
-    private func extractBlocks(input: PageInput) async -> (Int, [TextBlock]) {
+    private func extractBlocks(input: PageInput, quality: ProcessingQuality = .full) async -> (Int, [TextBlock]) {
         if !input.embeddedText.isEmpty {
             let blocks = makeBlocks(from: input.embeddedText, pageNumber: input.pageNumber, pageSize: input.pageSize, source: BlockSource.embeddedPDF.metadataValue, confidence: 0.98)
             return (input.pageNumber, blocks)
@@ -304,7 +325,9 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         title: String,
         sourceType: SourceType,
         sourceURL: URL?,
-        onProgress: DocumentProcessingProgressHandler?
+        options: ProcessingImportOptions = .full,
+        onProgress: DocumentProcessingProgressHandler?,
+        quality: ProcessingQuality? = nil
     ) async throws -> ReaderDocument {
         guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
             throw DocumentProcessorError.unreadableImage
@@ -312,7 +335,7 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         try validateImageBudget(cgImage)
 
         let pageSize = CGSize(width: cgImage.width, height: cgImage.height)
-        let ocrImage = boundedOCRImage(cgImage, sourceDPI: sourceDPI(for: image))
+        let ocrImage = boundedOCRImage(cgImage, sourceDPI: sourceDPI(for: image), quality: quality ?? options.quality)
         var document = ReaderDocument(
             title: title,
             sourceType: sourceType,
@@ -545,8 +568,9 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         }
     }
 
-    private func validatePDFBudget(_ pdf: PDFDocument) throws {
-        if pdf.pageCount > ImportBudget.maxPDFPages {
+    private func validatePDFBudget(_ pdf: PDFDocument, options: ProcessingImportOptions = .full) throws {
+        let selectedPageCount = options.pageRange.map { max(0, min($0.upperBound, pdf.pageCount) - max(1, $0.lowerBound) + 1) } ?? pdf.pageCount
+        if selectedPageCount > ImportBudget.maxPDFPages {
             throw DocumentProcessorError.documentTooLarge
         }
 
@@ -566,13 +590,13 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         }
     }
 
-    private func boundedOCRImage(_ image: CGImage, sourceDPI: CGFloat? = nil) -> CGImage {
+    private func boundedOCRImage(_ image: CGImage, sourceDPI: CGFloat? = nil, quality: ProcessingQuality = .full) -> CGImage {
         let width = CGFloat(image.width)
         let height = CGFloat(image.height)
         let pixelScale = sqrt(ImportBudget.maxOCRImagePixels / max(1, width * height))
         let dimensionScale = ImportBudget.maxOCRImageDimension / max(width, height)
         let dpiScale = Self.sourceAwareOCRScale(sourceDPI: sourceDPI)
-        let scale = min(1, dpiScale, pixelScale, dimensionScale)
+        let scale = min(1, dpiScale, pixelScale, dimensionScale) * quality.renderScaleMultiplier
         guard scale < 1 else { return image }
 
         let targetWidth = max(1, Int((width * scale).rounded(.down)))
@@ -614,9 +638,9 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         return CGFloat(values.min()!)
     }
 
-    private func render(pdfPage: PDFPage) -> NSImage? {
+    private func render(pdfPage: PDFPage, quality: ProcessingQuality = .full) -> NSImage? {
         let bounds = pdfPage.bounds(for: .mediaBox)
-        let requestedScale = ImportBudget.ocrTargetScale
+        let requestedScale = ImportBudget.ocrTargetScale * quality.renderScaleMultiplier
         let area = max(1, bounds.width * bounds.height)
         let budgetScale = sqrt(ImportBudget.maxPagePixelsAsCGFloat / area)
         let scale = max(1, min(requestedScale, budgetScale))

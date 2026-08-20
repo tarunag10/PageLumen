@@ -34,6 +34,21 @@ struct ContentView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background(AccessibleStyle.appBackground)
+        .alert(item: Binding(
+            get: { store.processingBudgetPrompt },
+            set: { store.processingBudgetPrompt = $0 }
+        )) { prompt in
+            Alert(
+                title: Text("Large import needs a choice"),
+                message: Text("PageLumen estimates (prompt.estimate.summary). Choose a bounded option; peak memory still needs validation on a physical Mac."),
+                primaryButton: .default(Text("Balanced quality")) {
+                    store.chooseBalancedProcessing()
+                },
+                secondaryButton: .default(Text("First 100 pages")) {
+                    store.chooseFirstHundredPages()
+                }
+            )
+        }
         .toolbar {
             ToolbarItemGroup {
                 Button {
