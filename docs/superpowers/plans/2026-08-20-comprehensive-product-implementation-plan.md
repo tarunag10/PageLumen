@@ -310,7 +310,7 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 ### 4.1 Intelligence policy and UX
 
 - [x] Add an `IntelligenceMode` setting: `Off`, `Apple Foundation Models`, and future `Downloaded local model`. It defaults to Off, migrates the legacy opt-in boolean, and supports a locally retained per-document opt-out.
-- [ ] Show availability, expected privacy boundary, device requirement, input scope, and failure state before execution.
+- [x] Show availability, expected privacy boundary, device requirement, input scope, and failure state before execution. `IntelligentExplainerAvailabilityInfo` is a privacy-safe, deterministic contract surfaced in Settings before execution.
 - [ ] Never make a generative result appear indistinguishable from extracted source text.
 - [x] Provide “Copy with citations,” “Insert as draft,” “Replace selected description after review,” and “Discard” actions; no unattended edits. The Summary workspace now holds a cited review draft separately from extracted source and requires an explicit action for insert, selected-block replacement, or discard.
 - [ ] Offer a per-document “do not use intelligence” control for sensitive material.
@@ -325,7 +325,7 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 - [ ] Pass only bounded, selected, source-labelled context. The current prefix-bounded adapter reports omitted blocks; selection-aware prompting and omitted page/section labels remain open.
 - [ ] Support a deliberate “summarise selection,” “explain table,” “describe figure,” “study notes,” and “compare passages” set before adding an open-ended chat interface.
 - [ ] Preserve session/model/provider metadata in provenance but do not persist full prompts unless the person opts in.
-- [ ] Provide a deterministic fallback `ExplanationEngine` result for unsupported Macs and model failures.
+- [x] Provide a deterministic fallback `ExplanationEngine` result for unsupported Macs and model failures. `deterministicFallbackSummary` preserves local citations and records a sanitized reason plus explicit fallback uncertainty metadata.
 
 ### 4.3 Evaluation harness
 

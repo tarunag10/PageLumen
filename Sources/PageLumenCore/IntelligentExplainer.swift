@@ -9,6 +9,42 @@ public enum IntelligentExplainerAvailability: Equatable, Sendable {
     case notSupported
 }
 
+/// The copy used by UI surfaces before an intelligence request starts.  It
+/// deliberately contains policy text, not document text or model prompts.
+public struct IntelligentExplainerAvailabilityInfo: Equatable, Sendable {
+    public let availability: IntelligentExplainerAvailability
+    public let title: String
+    public let message: String
+    public let privacyBoundary: String
+    public let deviceRequirement: String
+    public let inputScope: String
+
+    public init(availability: IntelligentExplainerAvailability) {
+        self.availability = availability
+        self.privacyBoundary = "On-device only; prompts and responses are not retained by PageLumen."
+        self.inputScope = "Only the bounded, source-labelled blocks selected for this operation are provided."
+        switch availability {
+        case .available:
+            title = "Available on this Mac"
+            message = "Results are drafts and require review against cited source pages."
+            deviceRequirement = "Apple Intelligence-compatible Mac with the on-device model ready."
+        case .unavailable(let reason):
+            title = "Temporarily unavailable"
+            message = "\(reason) PageLumen will use its deterministic local fallback."
+            deviceRequirement = "Apple Intelligence-compatible Mac and a ready on-device model."
+        case .notSupported:
+            title = "Not supported on this macOS release"
+            message = "Upgrade to a supported macOS release to enable on-device intelligence."
+            deviceRequirement = "macOS 26 or later with Apple Intelligence support."
+        }
+    }
+
+    public var canExecute: Bool {
+        if case .available = availability { return true }
+        return false
+    }
+}
+
 /// The outcome of an opt-in Foundation Models request. The legacy string APIs
 /// below remain available for callers that only need text; new callers can use
 /// this value to explain why a result was not generated.
@@ -32,6 +68,10 @@ public struct IntelligentExplainer: Sendable {
         } else {
             return .notSupported
         }
+    }
+
+    public var availabilityInfo: IntelligentExplainerAvailabilityInfo {
+        IntelligentExplainerAvailabilityInfo(availability: availability)
     }
 
     public func summary(for document: ReaderDocument, length: SummaryLength) async -> String {

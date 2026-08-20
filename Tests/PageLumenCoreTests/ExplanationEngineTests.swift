@@ -103,6 +103,22 @@ final class ExplanationEngineTests: XCTestCase {
         XCTAssertTrue(SummaryEvaluator.evaluate(grounded, against: document).passed)
     }
 
+    func testDeterministicFallbackCarriesReasonAndCitationsWithoutModelClaim() {
+        let document = SampleDataFactory.makeDemoDocument()
+        let fallback = ExplanationEngine().deterministicFallbackSummary(
+            for: document,
+            length: .short,
+            reason: "model unavailable\nprivate detail"
+        )
+
+        XCTAssertFalse(fallback.text.isEmpty)
+        XCTAssertFalse(fallback.citations.isEmpty)
+        XCTAssertTrue(fallback.groundingWarning?.contains("Deterministic local summary") == true)
+        XCTAssertTrue(fallback.groundingWarning?.contains("private detail") == true)
+        XCTAssertFalse(fallback.groundingWarning?.contains("\n") == true)
+        XCTAssertTrue(fallback.uncertaintyNotes.contains("This is a fallback result and must be checked against the cited source."))
+    }
+
     func testGroundedIntelligenceResultDistinguishesUnavailableWithoutSourceContent() async {
         let document = SampleDataFactory.makeDemoDocument()
         let result = await ExplanationEngine().groundedIntelligenceSummary(for: document, length: .short)

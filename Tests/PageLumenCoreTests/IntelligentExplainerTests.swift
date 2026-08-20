@@ -15,6 +15,15 @@ final class IntelligentExplainerTests: XCTestCase {
         }
     }
 
+    func testAvailabilityInfoIsPrivacySafeAndExplainsFallback() {
+        let info = IntelligentExplainer().availabilityInfo
+        XCTAssertFalse(info.title.isEmpty)
+        XCTAssertFalse(info.message.isEmpty)
+        XCTAssertTrue(info.privacyBoundary.localizedCaseInsensitiveContains("on-device"))
+        XCTAssertTrue(info.inputScope.localizedCaseInsensitiveContains("bounded"))
+        XCTAssertFalse(info.message.contains("Page 1"))
+    }
+
     func testSummaryFallsBackWhenIntelligenceDisabled() async {
         let document = SampleDataFactory.makeDemoDocument()
         let options = SummaryOptions(useIntelligence: false, maxSentences: 0)
