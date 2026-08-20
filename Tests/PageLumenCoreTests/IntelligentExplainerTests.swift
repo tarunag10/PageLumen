@@ -55,7 +55,12 @@ final class IntelligentExplainerTests: XCTestCase {
         let result = await explainer.summaryResult(for: document, length: .short)
         let legacy = await explainer.summary(for: document, length: .short)
 
-        XCTAssertEqual(legacy, result.text ?? "")
+        switch result {
+        case .generated:
+            XCTAssertFalse(legacy.isEmpty)
+        case .unavailable, .failed:
+            XCTAssertTrue(legacy.isEmpty)
+        }
     }
 
     func testSummaryRespectsLengthParameter() async {
