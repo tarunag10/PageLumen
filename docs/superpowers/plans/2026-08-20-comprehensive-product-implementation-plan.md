@@ -359,7 +359,7 @@ Third-party code must be adopted only through a small, auditable decision record
 - [x] Add as an SPM dependency to the app target that owns DOCX output; pin the reviewed `0.9.20` release exactly and record its immutable resolved revision.
 - [x] Replace low-level archive assembly incrementally behind a `DOCXArchiveWriting` protocol.
 - [x] Add generated-document tests that inspect required OOXML parts.
-- [ ] Open the generated output with an independent consumer in manual QA.
+- [ ] Open the generated output with an independent consumer in manual QA. Automated independent-consumer coverage now includes `/usr/bin/unzip -tqq` and an available LibreOffice headless DOCX-to-PDF conversion; visual Word/Pages/LibreOffice review remains open.
 - [x] Update `THIRD_PARTY_NOTICES.md` and `docs/third-party-dependencies.md` with exact version/revision, MIT notice links, target boundary, removal procedure, and deterministic archive-retention/path checks. Independent desktop-consumer review remains manual.
 
 Current checkpoint: ZIPFoundation is exactly pinned for the shipping app target;

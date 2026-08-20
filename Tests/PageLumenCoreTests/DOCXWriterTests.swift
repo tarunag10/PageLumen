@@ -100,6 +100,35 @@ final class DOCXWriterTests: XCTestCase {
                        "Independent unzip consumer rejected the generated DOCX")
     }
 
+    func testDOCXOutputConvertsThroughIndependentLibreOfficeConsumerWhenAvailable() throws {
+        let candidates = ["/opt/homebrew/bin/soffice", "/usr/local/bin/soffice"]
+        guard let executable = candidates.first(where: { FileManager.default.isExecutableFile(atPath: $0) }) else {
+            throw XCTSkip("LibreOffice is not installed on this verification host")
+        }
+
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pagelumen-docx-libreoffice-(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let input = directory.appendingPathComponent("PageLumen.docx")
+        try DOCXWriter().data(for: SampleDataFactory.makeDemoDocument(), options: .full)
+            .write(to: input, options: .atomic)
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: executable)
+        process.arguments = ["--headless", "--convert-to", "pdf", "--outdir", directory.path, input.path]
+        process.standardOutput = Pipe()
+        process.standardError = Pipe()
+        try process.run()
+        process.waitUntilExit()
+
+        XCTAssertEqual(process.terminationStatus, 0, "LibreOffice rejected the generated DOCX")
+        let converted = directory.appendingPathComponent("PageLumen.pdf")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: converted.path))
+        XCTAssertGreaterThan(try Data(contentsOf: converted).count, 100)
+    }
+
     func testDOCXPackageValidatorRejectsUnsafeAndDanglingRelationships() {
         let valid = """
         <?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
