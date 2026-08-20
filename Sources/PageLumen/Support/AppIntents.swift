@@ -32,13 +32,13 @@ struct PageLumenDocumentQuery: EntityQuery {
 
     private func libraryEntities() -> [PageLumenDocumentEntity] {
         guard let repository = PageLumenIntentBridge.repository(),
-              let documents = try? repository.recentDocuments() else { return [] }
-        return documents.map { document in
+              let documents = try? repository.recentMetadata() else { return [] }
+        return documents.map { metadata in
             PageLumenDocumentEntity(
-                id: document.id,
-                title: document.title,
-                pageCount: document.pageCount,
-                unresolvedFindings: repository.unresolvedFindingCount(for: document)
+                id: metadata.id,
+                title: metadata.title,
+                pageCount: metadata.pageCount,
+                unresolvedFindings: metadata.unresolvedFindingCount
             )
         }
     }

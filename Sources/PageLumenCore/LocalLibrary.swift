@@ -4,10 +4,46 @@ import Foundation
 /// library/search consumers independent from SwiftData and makes the retention
 /// policy explicit: only documents already approved for local recents are read.
 public protocol DocumentRepository: Sendable {
-    func recentDocuments() throws -> [ReaderDocument]
+    /// Metadata-only reads for library lists. Full page/block payloads are
+    /// loaded explicitly with `document(id:)`.
+    func recentMetadata() throws -> [DocumentMetadata]
+    func metadata(id: UUID) throws -> DocumentMetadata?
     func document(id: UUID) throws -> ReaderDocument?
     func search(query: String, limit: Int) throws -> [LibrarySearchResult]
-    func unresolvedFindingCount(for document: ReaderDocument) -> Int
+}
+
+public struct DocumentMetadata: Identifiable, Codable, Equatable, Sendable {
+    public var id: UUID
+    public var title: String
+    public var sourceType: SourceType
+    public var sourceURL: URL?
+    public var createdAt: Date
+    public var language: String?
+    public var processingStatus: ProcessingStatus
+    public var pageCount: Int
+    public var unresolvedFindingCount: Int
+
+    public init(
+        id: UUID,
+        title: String,
+        sourceType: SourceType,
+        sourceURL: URL?,
+        createdAt: Date,
+        language: String?,
+        processingStatus: ProcessingStatus,
+        pageCount: Int,
+        unresolvedFindingCount: Int
+    ) {
+        self.id = id
+        self.title = title
+        self.sourceType = sourceType
+        self.sourceURL = sourceURL
+        self.createdAt = createdAt
+        self.language = language
+        self.processingStatus = processingStatus
+        self.pageCount = pageCount
+        self.unresolvedFindingCount = unresolvedFindingCount
+    }
 }
 
 public struct LibrarySearchResult: Identifiable, Codable, Equatable, Sendable {
@@ -35,8 +71,13 @@ public final class LocalDocumentRepository: DocumentRepository, @unchecked Senda
         self.persisting = persisting
     }
 
-    public func recentDocuments() throws -> [ReaderDocument] {
-        try persisting.recentDocuments()
+    public func recentMetadata() throws -> [DocumentMetadata] {
+        try persisting.recentDocuments().map(metadata(for:))
+    }
+
+    public func metadata(id: UUID) throws -> DocumentMetadata? {
+        guard let document = try persisting.load(id: id) else { return nil }
+        return metadata(for: document)
     }
 
     public func document(id: UUID) throws -> ReaderDocument? {
@@ -46,7 +87,7 @@ public final class LocalDocumentRepository: DocumentRepository, @unchecked Senda
     public func search(query: String, limit: Int = 20) throws -> [LibrarySearchResult] {
         let terms = Self.tokens(query)
         guard !terms.isEmpty else { return [] }
-        let documents = try recentDocuments()
+        let documents = try persisting.recentDocuments()
         var results: [LibrarySearchResult] = []
         for document in documents {
             for page in document.pages {
@@ -67,8 +108,18 @@ public final class LocalDocumentRepository: DocumentRepository, @unchecked Senda
         return results
     }
 
-    public func unresolvedFindingCount(for document: ReaderDocument) -> Int {
-        DocumentEditing.reviewFindings(for: document).filter { !$0.isResolved }.count
+    private func metadata(for document: ReaderDocument) -> DocumentMetadata {
+        DocumentMetadata(
+            id: document.id,
+            title: document.title,
+            sourceType: document.sourceType,
+            sourceURL: document.sourceURL,
+            createdAt: document.createdAt,
+            language: document.language,
+            processingStatus: document.processingStatus,
+            pageCount: document.pageCount,
+            unresolvedFindingCount: DocumentEditing.reviewFindings(for: document).filter { !$0.isResolved }.count
+        )
     }
 
     private static func tokens(_ value: String) -> [String] {

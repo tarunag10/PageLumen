@@ -32,6 +32,24 @@ final class LocalLibraryTests: XCTestCase {
         try persisting.save(document)
 
         let repository = LocalDocumentRepository(persisting: persisting)
-        XCTAssertEqual(repository.unresolvedFindingCount(for: document), DocumentEditing.reviewFindings(for: document).count)
+        let metadata = try XCTUnwrap(repository.metadata(id: document.id))
+        XCTAssertEqual(metadata.unresolvedFindingCount, DocumentEditing.reviewFindings(for: document).count)
+    }
+
+    func testRecentMetadataDoesNotRequireLoadingFullDocumentPayload() throws {
+        let document = SampleDataFactory.makeDemoDocument()
+        let persisting = FilePersisting(fileURL: FileManager.default.temporaryDirectory.appendingPathComponent("pagelumen-library-\(UUID().uuidString).json"))
+        try persisting.save(document)
+
+        let repository: any DocumentRepository = LocalDocumentRepository(persisting: persisting)
+        let metadata = try XCTUnwrap(repository.recentMetadata().first)
+
+        XCTAssertEqual(metadata.id, document.id)
+        XCTAssertEqual(metadata.title, document.title)
+        XCTAssertEqual(metadata.pageCount, document.pageCount)
+        XCTAssertEqual(metadata.sourceType, document.sourceType)
+        XCTAssertEqual(metadata.unresolvedFindingCount, DocumentEditing.reviewFindings(for: document).count)
+        XCTAssertNil(try repository.metadata(id: UUID()))
+        XCTAssertEqual(try repository.document(id: document.id)?.pages.count, document.pages.count)
     }
 }
