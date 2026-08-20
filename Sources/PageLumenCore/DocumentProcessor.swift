@@ -106,6 +106,7 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
                     pageLabel: pdfPage.label
                 )
             },
+            outline: pdfOutline(pdf),
             metadata: pdfDocumentMetadata(pdf)
         )
         await onProgress?(document)
@@ -156,6 +157,35 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         }
     }
 
+    private func pdfOutline(_ pdf: PDFDocument) -> [OutlineItem] {
+        guard let root = pdf.outlineRoot else { return [] }
+        var items: [OutlineItem] = []
+
+        func append(_ outline: PDFOutline, level: Int) {
+            for index in 0..<outline.numberOfChildren {
+                guard let child = outline.child(at: index),
+                      let title = child.label?.trimmingCharacters(in: .whitespacesAndNewlines),
+                      !title.isEmpty,
+                      let page = child.destination?.page else {
+                    if let child = outline.child(at: index) {
+                        append(child, level: level + 1)
+                    }
+                    continue
+                }
+                let pageIndex = pdf.index(for: page)
+                guard pageIndex >= 0 else {
+                    append(child, level: level + 1)
+                    continue
+                }
+                items.append(OutlineItem(title: title, pageNumber: pageIndex + 1, level: max(1, level)))
+                append(child, level: level + 1)
+            }
+        }
+
+        append(root, level: 1)
+        return items
+    }
+
     private struct PageInput: Sendable {
         let pageNumber: Int
         let pageSize: CGSize
@@ -198,7 +228,12 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         var completed = document
         completed.processingStatus = .complete
         let analyzed = analyzer.analyze(document: completed)
-        return analyzed
+        // Prefer explicit PDF bookmarks over heuristic heading outlines. The
+        // latter remains the fallback for PDFs without a document outline.
+        guard !document.outline.isEmpty else { return analyzed }
+        var preserved = analyzed
+        preserved.outline = document.outline
+        return preserved
     }
 
     private func process(

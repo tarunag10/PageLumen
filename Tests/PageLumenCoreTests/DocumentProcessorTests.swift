@@ -60,6 +60,38 @@ final class DocumentProcessorTests: XCTestCase {
         XCTAssertTrue(document.allBlocks.map(\.text).joined(separator: " ").contains("Metadata fixture"))
     }
 
+    @MainActor
+    func testPDFBookmarksBecomeNestedOutlineItems() async throws {
+        let source = try makePDF(containingPages: ["Introduction", "Details"])
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("pdf")
+        defer { try? FileManager.default.removeItem(at: source); try? FileManager.default.removeItem(at: url) }
+        guard let pdf = PDFDocument(url: source),
+              let firstPage = pdf.page(at: 0),
+              let secondPage = pdf.page(at: 1) else {
+            XCTFail("Could not open generated PDF")
+            return
+        }
+        let root = PDFOutline()
+        let introduction = PDFOutline()
+        introduction.label = "Introduction"
+        introduction.destination = PDFDestination(page: firstPage, at: .zero)
+        let details = PDFOutline()
+        details.label = "Details"
+        details.destination = PDFDestination(page: secondPage, at: .zero)
+        introduction.insertChild(details, at: 0)
+        root.insertChild(introduction, at: 0)
+        pdf.outlineRoot = root
+        XCTAssertTrue(pdf.write(to: url))
+
+        let document = try await DocumentProcessor().process(url: url)
+
+        XCTAssertEqual(document.outline.map(\.title), ["Introduction", "Details"])
+        XCTAssertEqual(document.outline.map(\.pageNumber), [1, 2])
+        XCTAssertEqual(document.outline.map(\.level), [1, 2])
+    }
+
     func testUnsupportedFileThrowsReadableError() async {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
