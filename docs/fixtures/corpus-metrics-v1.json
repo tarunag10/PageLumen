@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "status": "scaffold-only",
+  "measurementPolicy": "Only values backed by a consented, versioned reference transcript and a repeatable physical OCR run may be populated.",
+  "fixtures": [
+    {"id":"two-column-paper","class":"two/three-column paper","groundTruth":"synthetic-native-text"},
+    {"id":"three-column-paper","class":"three-column paper","groundTruth":"synthetic-native-text"},
+    {"id":"legal-filing","class":"legal filing","groundTruth":"synthetic-native-text"},
+    {"id":"form","class":"form","groundTruth":"synthetic-native-text"},
+    {"id":"receipt","class":"receipt","groundTruth":"synthetic-native-text"},
+    {"id":"slides","class":"slides","groundTruth":"synthetic-native-text"},
+    {"id":"multi-page-table","class":"multi-page table","groundTruth":"synthetic-native-text"},
+    {"id":"chart","class":"chart","groundTruth":"synthetic-native-text"},
+    {"id":"rotated-page","class":"rotated page","groundTruth":"synthetic-native-text"},
+    {"id":"multilingual-text","class":"multilingual text","groundTruth":"synthetic-native-text"},
+    {"id":"low-quality-scan","class":"low-quality scan","groundTruth":"synthetic-proxy"},
+    {"id":"handwriting","class":"handwriting","groundTruth":"synthetic-proxy"},
+    {"id":"equations","class":"equations","groundTruth":"synthetic-native-text"},
+    {"id":"ocr-traps","class":"deliberate OCR traps","groundTruth":"synthetic-native-text"}
+  ],
+  "metrics": {
+    "characterErrorRate": null,
+    "wordErrorRate": null,
+    "readingOrderAccuracy": null,
+    "tableCellAccuracy": null,
+    "falseHeadingRate": null,
+    "processingTimeMilliseconds": null
+  },
+  "unavailableReasons": [
+    "No consented human-transcribed OCR reference corpus is checked in.",
+    "Scanned-image latency and peak memory require a physical-device run.",
+    "Synthetic native-text fixtures can exercise structure regressions but cannot establish OCR accuracy."
+  ]
+}
