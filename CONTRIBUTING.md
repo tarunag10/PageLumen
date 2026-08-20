@@ -39,6 +39,23 @@ Before opening a pull request, skim the docs that match your change so the new b
 - Be precise about export claims. Do not describe readable PDF output as full PDF/UA compliance unless validated.
 - Keep features scoped and reviewable.
 
+## Dependency and security review
+
+Before adding or updating a package:
+
+1. Record the exact URL, resolved version, license, and shipped/test-only scope
+   in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+2. Review the upstream release notes and security advisories, then run the
+   package tests in an offline-capable checkout after resolution.
+3. Keep credentials, document content, and generated user data out of build
+   logs, fixtures, snapshots, and issue reports.
+4. Add a removal or fallback path for every non-system dependency; optional
+   integrations must not become a requirement for the default local workflow.
+
+Dependency updates require a focused test run plus the full regression command
+documented in the pull request. Automated update tooling may open review-only
+changes, but must not merge directly into a release branch.
+
 ## Pull Requests
 
 Please include:

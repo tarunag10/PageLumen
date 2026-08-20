@@ -435,9 +435,9 @@ privacy complexity to a native macOS reader.
 
 ### 5.8 Dependency governance
 
-- [ ] Add `THIRD_PARTY_NOTICES.md`, a dependency inventory, and an SPM lock/review policy.
+- [x] Add `THIRD_PARTY_NOTICES.md`, a dependency inventory, and an SPM lock/review policy. The current inventory is maintained in the repository root; `Package.swift` pins the Markdown test dependency exactly and records lower bounds for the two other packages, with resolved versions reviewed before release.
 - [ ] Add Dependabot or an equivalent update-review workflow after confirming it does not alter release branches automatically.
-- [ ] Add a license/security review checklist to `CONTRIBUTING.md`.
+- [x] Add a license/security review checklist to `CONTRIBUTING.md`.
 - [ ] Verify new packages work in sandboxed, offline runtime conditions after initial resolution.
 
 **Exit gate for Phase 5:** Every adopted package has a documented user outcome, license, owner, pinned version, tests, and removal plan. No model-downloading package is enabled without explicit user action.
