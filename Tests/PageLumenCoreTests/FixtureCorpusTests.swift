@@ -1,6 +1,7 @@
 import XCTest
 @testable import PageLumenCore
 
+@MainActor
 final class FixtureCorpusTests: XCTestCase {
     func testTwoColumnPDFReadingOrderPreservesParagraphOrder() async throws {
         let url = Fixtures.twoColumnPDF()
