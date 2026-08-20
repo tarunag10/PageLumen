@@ -52,6 +52,8 @@ targets:
         embed: true
       - target: PageLumenQuickLookExtension
         embed: true
+      - target: PageLumenFinderActionExtension
+        embed: true
     settings:
       base:
         CODE_SIGN_ENTITLEMENTS: Config/PageLumen.entitlements
@@ -191,6 +193,30 @@ targets:
         NSExtension:
           NSExtensionPointIdentifier: com.apple.quicklook.thumbnail
           NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).ThumbnailProvider"
+  PageLumenFinderActionExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Sources/PageLumenShareExtension
+    settings:
+      base:
+        APPLICATION_EXTENSION_API_ONLY: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.PageLumen.finder-action
+        PRODUCT_NAME: PageLumenFinderActionExtension
+        SKIP_INSTALL: YES
+    info:
+      path: generated/PageLumenFinderActionExtension-Info.plist
+      properties:
+        CFBundleName: PageLumenFinderActionExtension
+        CFBundlePackageType: XPC!
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        NSExtension:
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsFileWithMaxCount: 20
+          NSExtensionPointIdentifier: com.apple.ui-services
+          NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).ShareViewController"
 schemes:
   PageLumen:
     build:
@@ -209,3 +235,4 @@ schemes:
         - PageLumenUITests
         - PageLumenShareExtension
         - PageLumenQuickLookExtension
+        - PageLumenFinderActionExtension

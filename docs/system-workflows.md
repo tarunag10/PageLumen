@@ -16,11 +16,12 @@ PDF/image file URLs. It filters extensions and caps the invocation at 20 files,
 does no OCR or persistence, and opens accepted URLs through the extension
 context so the app delegate remains the single import entry point. Its archive,
 sandbox/security-scoped behavior, and Finder host behavior still require
-participant validation. Finder Quick Action and Quick Look preview remain
-unclaimed. The `PageLumenQuickLookExtension` target now renders a bounded first
-PDF page or image thumbnail with a 512-pixel cap, without OCR, persistence, or
-shared caches. Its sandbox, memory/latency, and real Quick Look host behavior
-still require participant validation. A complete system-workflow
+participant validation. The `PageLumenFinderActionExtension` and
+`PageLumenQuickLookExtension` targets now provide bounded Finder handoff and
+first-page/image thumbnail paths. Quick Look preview remains unclaimed. The
+thumbnail target renders a bounded PDF page or image with a 512-pixel cap,
+without OCR, persistence, or shared caches. Sandbox, memory/latency, and real
+host behavior still require participant validation. A complete system-workflow
 implementation must verify:
 
 1. The extension can access a user-selected file without retaining a stale

@@ -10,7 +10,7 @@ final class SystemWorkflowContractTests: XCTestCase {
     }
 
     func testPackagedCapabilitiesMatchCurrentTargets() {
-        let packaged: Set<PageLumenSystemWorkflowContract.PackagedCapability> = [.finderOpenFile, .shareExtension, .quickLookThumbnail]
+        let packaged: Set<PageLumenSystemWorkflowContract.PackagedCapability> = [.finderOpenFile, .finderQuickAction, .shareExtension, .quickLookThumbnail]
         for capability in PageLumenSystemWorkflowContract.PackagedCapability.allCases {
             XCTAssertEqual(capability.isPackagedInCurrentTarget, packaged.contains(capability), "Unexpected packaging claim for \(capability.rawValue)")
         }
