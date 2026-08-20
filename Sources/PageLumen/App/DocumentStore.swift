@@ -342,6 +342,28 @@ final class DocumentStore {
         reviewFilter = .needsReview
     }
 
+    /// Resolves a block-backed finding without discarding the original OCR.
+    /// Page-level warnings remain visible until their source warning is fixed.
+    func resolveReviewIssue(_ issue: ReviewIssue) {
+        guard let blockID = issue.blockID,
+              let block = document.allBlocks.first(where: { $0.id == blockID }) else {
+            statusMessage = "This page warning needs source-level correction"
+            return
+        }
+        setBlockReviewed(block, isReviewed: true)
+        statusMessage = "Resolved: (issue.title)"
+    }
+
+    func reopenReviewIssue(_ issue: ReviewIssue) {
+        guard let blockID = issue.blockID,
+              let block = document.allBlocks.first(where: { $0.id == blockID }) else {
+            statusMessage = "This page warning remains open until its source is corrected"
+            return
+        }
+        setBlockReviewed(block, isReviewed: false)
+        statusMessage = "Reopened: (issue.title)"
+    }
+
     func jumpToNextSearchMatch() {
         jumpToSearchMatch(direction: 1)
     }

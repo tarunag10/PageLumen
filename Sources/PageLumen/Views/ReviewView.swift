@@ -340,25 +340,38 @@ private struct ReviewQueuePopover: View {
                 ContentUnavailableView("Queue is clear", systemImage: "checkmark.circle", description: Text("All current extraction issues are resolved."))
             } else {
                 List(findings) { finding in
-                    Button {
-                        if let issue = store.reviewIssues.first(where: { $0.id == finding.id }) {
-                            store.jumpToIssue(issue)
+                    HStack(alignment: .top, spacing: 8) {
+                        Button {
+                            if let issue = store.reviewIssues.first(where: { $0.id == finding.id }) {
+                                store.jumpToIssue(issue)
+                            }
+                        } label: {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(finding.title)
+                                    .font(.callout.weight(.semibold))
+                                    .foregroundStyle(AccessibleStyle.primaryText)
+                                Text("Page \(finding.pageNumber) · \(finding.severity.rawValue.capitalized) · \(finding.detail)")
+                                    .font(.caption)
+                                    .foregroundStyle(AccessibleStyle.secondaryText)
+                                    .lineLimit(2)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                    } label: {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(finding.title)
-                                .font(.callout.weight(.semibold))
-                                .foregroundStyle(AccessibleStyle.primaryText)
-                            Text("Page \(finding.pageNumber) · \(finding.severity.rawValue.capitalized) · \(finding.detail)")
-                                .font(.caption)
-                                .foregroundStyle(AccessibleStyle.secondaryText)
-                                .lineLimit(2)
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Page \(finding.pageNumber), \(finding.title), \(finding.severity.rawValue)")
+                        .accessibilityHint("Open this issue in the review editor")
+
+                        if let issue = store.reviewIssues.first(where: { $0.id == finding.id }), issue.blockID != nil {
+                            Button {
+                                store.resolveReviewIssue(issue)
+                            } label: {
+                                Image(systemName: "checkmark.circle")
+                            }
+                            .buttonStyle(.borderless)
+                            .help("Mark finding reviewed")
+                            .accessibilityLabel("Resolve \(finding.title)")
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Page \(finding.pageNumber), \(finding.title), \(finding.severity.rawValue)")
-                    .accessibilityHint("Open this issue in the review editor")
                 }
                 .listStyle(.inset)
             }

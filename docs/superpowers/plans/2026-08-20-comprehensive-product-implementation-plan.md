@@ -216,7 +216,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 ### 1.4 Create the review workspace
 
-- [ ] Add a filterable Review Queue with keyboard shortcuts for next/previous finding, accept/reject suggestion, mark reviewed, and open original source region. The queue popover now lists all unresolved findings, filters All/Blockers/Warnings, and opens each source region; accept/reject actions remain open.
+- [ ] Add a filterable Review Queue with keyboard shortcuts for next/previous finding, accept/reject suggestion, mark reviewed, and open original source region. The queue popover now lists all unresolved findings, filters All/Blockers/Warnings, opens each source region, and resolves/reopens block-backed findings without changing source text; page-warning correction and richer accept/reject suggestion states remain open.
 - [ ] Synchronise preview, extracted text, and issue list selection; support page-level deep links.
 - [ ] Support table-grid editing with explicit column-header and row-header assignment.
 - [ ] Add reusable review presets for General, Legal, Academic, Receipts, Slides, and Accessibility Remediation. Presets alter warnings/thresholds, not source data.

@@ -155,6 +155,35 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertTrue(DocumentEditing.isReviewed(store.document.pages[0].blocks[0]))
     }
 
+    func testReviewIssueCanBeResolvedAndReopenedWithoutChangingSourceText() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let sourceText = "Needs review"
+        store.document = ReaderDocument(
+            title: "Review",
+            sourceType: .sample,
+            pages: [ReaderPage(
+                pageNumber: 1,
+                size: PageSize(width: 400, height: 600),
+                blocks: [TextBlock(
+                    pageNumber: 1,
+                    type: .unknown,
+                    text: sourceText,
+                    bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20),
+                    confidence: 0.4
+                )]
+            )]
+        )
+        let issue = try! XCTUnwrap(store.reviewIssues.first)
+
+        store.resolveReviewIssue(issue)
+        XCTAssertTrue(store.reviewIssues.isEmpty)
+        XCTAssertEqual(store.document.pages[0].blocks[0].text, sourceText)
+
+        store.reopenReviewIssue(issue)
+        XCTAssertEqual(store.reviewIssues.count, 1)
+        XCTAssertEqual(store.document.pages[0].blocks[0].text, sourceText)
+    }
+
     func testUndoAndRedoRestoreTextEdits() {
         let store = DocumentStore(persisting: InMemoryPersisting())
         let block = store.document.pages[0].blocks[0]
