@@ -159,8 +159,8 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 ### 0.5 Correct product terminology
 
-- [ ] Rename `Accessible PDF` to `Readable PDF` in UI, source, tests, documentation, and marketing until validation supports a stronger claim.
-- [ ] Keep `Tagged HTML` as the recommended remediation export and explain its verification scope.
+- [x] Rename `Accessible PDF` to `Readable PDF` in UI, source, tests, documentation, and marketing until validation supports a stronger claim.
+- [x] Keep `Tagged HTML` as the recommended remediation export and explain its verification scope.
 - [ ] Standardise the app name as **PageLumen**; archive or explicitly mark the older “Sightline Reader” PRD naming as historical.
 - [ ] Reconcile `README.md`, `docs/accessibility.md`, Settings copy, and `pagelumen_prd.md` against implemented behaviour.
 
@@ -241,7 +241,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 ### 2.3 DOCX, CSV, JSON, and audio
 
 - [ ] Replace hand-rolled ZIP concerns in DOCX generation with a tested archive library, validate generated DOCX parts, and preserve headings/tables/alt text where OOXML permits.
-- [ ] Retain CSV formula neutralisation; add locale/newline/quote and malformed-table tests.
+- [x] Retain CSV formula neutralisation; add locale/newline/quote and malformed-table tests.
 - [x] Version the JSON schema, make source URL/text-snippet redaction explicit, and provide a schema document.
 - [ ] Make audio export use the selected speech voice/language rather than hard-coded `en-US`; include cancellation/progress and verify generated media metadata.
 
@@ -273,8 +273,8 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 
 ### 3.2 Implement the selected library
 
-- [ ] Create a `DocumentRepository` protocol that returns document metadata and source-derived data separately.
-- [ ] Store document text in a local index only when the person enables “Keep searchable local copies.” Default retention must be an explicit product decision documented in onboarding.
+- [x] Create a `DocumentRepository` protocol that returns document metadata and source-derived data separately.
+- [x] Store document text in a local index only when the person enables “Keep searchable local copies.” Default retention must be an explicit product decision documented in onboarding.
 - [ ] Support delete-one, delete-all, remove-index-only, and reveal storage size. Do not delete source files.
 - [ ] Add a search UI with result snippets, page/block location, and keyboard navigation.
 - [ ] Build migration and rollback tests before release. If a migration fails, preserve the old store, create a backup, and offer recovery rather than silently deleting data.
