@@ -3,7 +3,6 @@ import XCTest
 @testable import PageLumenCore
 
 @MainActor
-@MainActor
 final class PDFOperationsProviderTests: XCTestCase {
     func testNativeProviderValidatesLocallyWithoutNetworkSemantics() async throws {
         let input = try Data(contentsOf: Fixtures.tinyPDF(text: "native"))
