@@ -691,26 +691,40 @@ private struct EditableBlockRow: View {
                 Button {
                     store.moveBlock(block, direction: .up)
                 } label: {
-                    Image(systemName: "arrow.up")
+                    ViewThatFits(in: .horizontal) {
+                        Label("Move earlier", systemImage: "arrow.up")
+                        Image(systemName: "arrow.up")
+                    }
                 }
                 .buttonStyle(.borderless)
                 .help("Move earlier in reading order")
+                .accessibilityLabel("Move block earlier")
+                .accessibilityHint("Moves this block earlier in the reading order.")
 
                 Button {
                     store.moveBlock(block, direction: .down)
                 } label: {
-                    Image(systemName: "arrow.down")
+                    ViewThatFits(in: .horizontal) {
+                        Label("Move later", systemImage: "arrow.down")
+                        Image(systemName: "arrow.down")
+                    }
                 }
                 .buttonStyle(.borderless)
                 .help("Move later in reading order")
+                .accessibilityLabel("Move block later")
+                .accessibilityHint("Moves this block later in the reading order.")
 
                 Button {
                     store.copyAccessibleExcerpt(block)
                 } label: {
-                    Label("Copy accessible excerpt", systemImage: "quote.closing")
+                    ViewThatFits(in: .horizontal) {
+                        Label("Copy accessible excerpt", systemImage: "quote.closing")
+                        Image(systemName: "quote.closing")
+                    }
                 }
                 .buttonStyle(.borderless)
                 .help("Copy this block with its page and reading-order citation")
+                .accessibilityLabel("Copy accessible excerpt")
                 .accessibilityHint("Copies the block text and a page and block citation to the clipboard.")
 
                 Spacer()
