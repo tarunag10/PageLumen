@@ -2,10 +2,14 @@ import Foundation
 
 public enum FilePersistingError: Error, Equatable, Sendable {
     case corruptStore
+    case unsupportedSchemaVersion(Int)
 }
 
 public final class FilePersisting: DocumentPersisting, @unchecked Sendable {
     public static let recentDocumentsLimit = 12
+    /// Version of the on-disk JSON envelope. Legacy array stores are accepted
+    /// and upgraded on the next successful write.
+    public static let schemaVersion = 1
 
     private let fileURL: URL
     private let encoder: JSONEncoder
@@ -78,7 +82,20 @@ public final class FilePersisting: DocumentPersisting, @unchecked Sendable {
             return []
         }
         do {
+            if let envelope = try? decoder.decode(PersistedLibrary.self, from: data) {
+                guard envelope.schemaVersion == Self.schemaVersion else {
+                    throw FilePersistingError.unsupportedSchemaVersion(envelope.schemaVersion)
+                }
+                return envelope.documents
+            }
+
+            // Version 0 was an unversioned top-level array. Keep it readable
+            // so upgrades never strand a person's local recents.
             return try decoder.decode([ReaderDocument].self, from: data)
+        } catch let error as FilePersistingError {
+            // A future schema must remain in place for a newer binary to
+            // recover; do not relabel it as corruption or move it aside.
+            throw error
         } catch {
             // Preserve the bytes for recovery instead of silently converting a
             // damaged local library into an empty one. The next save can create
@@ -94,7 +111,12 @@ public final class FilePersisting: DocumentPersisting, @unchecked Sendable {
     private func persist(_ documents: [ReaderDocument]) throws {
         let directory = fileURL.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let data = try encoder.encode(documents)
+        let data = try encoder.encode(PersistedLibrary(schemaVersion: Self.schemaVersion, documents: documents))
         try data.write(to: fileURL, options: .atomic)
     }
+}
+
+private struct PersistedLibrary: Codable {
+    let schemaVersion: Int
+    let documents: [ReaderDocument]
 }

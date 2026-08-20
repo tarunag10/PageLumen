@@ -131,6 +131,10 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [x] Add JSON-store corruption recovery: preserve the damaged file under a
   recovery name, surface a degraded persistence status, and continue with an
   in-memory document. Read-only, no-space, and migration cases remain open.
+- [x] Version the JSON fallback store with a `schemaVersion` envelope. Legacy
+  unversioned arrays remain readable and are upgraded on the next write;
+  future versions fail without moving or deleting the store so a newer binary
+  can recover it. SwiftData schema migration remains a separate release gate.
 - [ ] Add `lastClearedAt` and a clear statement of what “Forget all” deletes; do not imply it deletes original user-selected source files.
 - [x] Persist and display `lastClearedAt`; the Settings copy explicitly describes retained local copies and source files remain untouched.
 

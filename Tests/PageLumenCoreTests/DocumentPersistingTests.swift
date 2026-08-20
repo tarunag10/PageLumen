@@ -118,6 +118,38 @@ final class DocumentPersistingTests: XCTestCase {
         XCTAssertEqual(size, fileSize.int64Value)
     }
 
+    func testWritesVersionedEnvelopeAndReadsLegacyArray() throws {
+        let url = tempDirectory.appendingPathComponent("recent.json")
+        let persisting = FilePersisting(fileURL: url)
+        try persisting.save(SampleDataFactory.makeDemoDocument())
+
+        let object = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
+        XCTAssertEqual(object["schemaVersion"] as? Int, FilePersisting.schemaVersion)
+        XCTAssertNotNil(object["documents"] as? [[String: Any]])
+
+        // Version 0 was a top-level array. It remains readable for upgrades.
+        let documents = try XCTUnwrap(object["documents"] as? [[String: Any]])
+        try JSONSerialization.data(withJSONObject: documents).write(to: url)
+        XCTAssertEqual(try persisting.recentDocuments().count, 1)
+        try persisting.save(makeAlternateDocument(title: "Migrated"))
+        let upgraded = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
+        XCTAssertEqual(upgraded["schemaVersion"] as? Int, FilePersisting.schemaVersion)
+        XCTAssertEqual(try persisting.recentDocuments().count, 2)
+    }
+
+    func testUnsupportedSchemaVersionIsPreservedForRecovery() throws {
+        let url = tempDirectory.appendingPathComponent("recent.json")
+        let future: [String: Any] = ["schemaVersion": 99, "documents": [[String: Any]]()]
+        let data = try JSONSerialization.data(withJSONObject: future)
+        try data.write(to: url)
+
+        XCTAssertThrowsError(try FilePersisting(fileURL: url).recentDocuments()) { error in
+            XCTAssertEqual(error as? FilePersistingError, .unsupportedSchemaVersion(99))
+        }
+        XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(at: tempDirectory, includingPropertiesForKeys: nil).count, 1)
+    }
+
     private func makeAlternateDocument(title: String) -> ReaderDocument {
         ReaderDocument(
             title: title,
