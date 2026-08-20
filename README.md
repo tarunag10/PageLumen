@@ -13,9 +13,15 @@ The project focuses on accessibility-first document understanding: local OCR, re
 - Review extracted text beside the source preview with reading-order overlays.
 - Edit OCR text, block type, reading order, table explanations, and figure descriptions.
 - Track review issues and mark blocks or pages as reviewed.
+- Accept or reject review suggestions with mouse actions or `Cmd-Shift-A` / `Cmd-Shift-X`; decisions remain auditable in JSON exports.
+- Retain privacy-safe raw OCR observations and reading-order evidence for source-to-output review.
 - Generate summaries and use built-in macOS speech playback.
 - Export Markdown, TXT, HTML, tagged HTML, readable PDF, CSV, JSON, and accessibility reports.
 - Use a high-contrast SwiftUI interface designed around native macOS accessibility conventions.
+
+The older product brief in [`pagelumen_prd.md`](pagelumen_prd.md) uses the
+historical working name “Sightline Reader”; PageLumen is the current product
+name.
 
 ## Requirements
 

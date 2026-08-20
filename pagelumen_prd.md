@@ -1,6 +1,12 @@
-# Sightline Reader PRD
+# PageLumen PRD (historical Sightline Reader draft)
 
-**Suggested app name:** Sightline Reader  
+> Historical note: this document began under the working name “Sightline
+> Reader”. The shipped product name, bundle, and repository are **PageLumen**;
+> references below retain the old name only where they describe the original
+> product brief.
+
+**Current app name:** PageLumen
+**Historical working name:** Sightline Reader
 **Product concept:** Accessible PDF and Screenshot Reader  
 **Product type:** Mac-native App Store app  
 **Primary platform:** macOS  
@@ -11,7 +17,7 @@
 
 ## 1. Executive Summary
 
-Sightline Reader is a Mac-native app that turns inaccessible visual documents into readable, structured, audio-friendly, and exportable content.
+PageLumen is a Mac-native app that turns inaccessible visual documents into readable, structured, audio-friendly, and exportable content.
 
 Users can import a PDF, screenshot, scan, slide, or image. The app extracts text, preserves likely reading order, generates headings, explains tables and charts, creates audio-friendly summaries, and exports the result as Markdown, TXT, HTML, or an accessible PDF.
 

@@ -7,6 +7,7 @@ PageLumen is an accessibility-first product: the app exists to make other docume
 - The four-step workflow — **Add → Process → Review → Export** — is fully labelled. Every major control has an `accessibilityLabel`, an `accessibilityHint` where the action is non-obvious, and a `traits` value that matches what the control actually does.
 - Editable text blocks in the review surface expose a live `.accessibilityValue` so VoiceOver reads the current OCR text, not just the placeholder.
 - The reading-order overlay in `PreviewPane` labels each rectangle with its block index, type, and the first 40 characters of the block text, so a screen-reader user can navigate the page in the same order as a sighted user.
+- Review Queue actions expose `Cmd-Shift-A` to accept and `Cmd-Shift-X` to reject the current block-backed finding; page warnings remain source-correction work.
 
 ## Colour, Contrast, and Status
 

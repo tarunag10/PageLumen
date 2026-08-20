@@ -169,8 +169,8 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 - [x] Rename `Accessible PDF` to `Readable PDF` in UI, source, tests, documentation, and marketing until validation supports a stronger claim.
 - [x] Keep `Tagged HTML` as the recommended remediation export and explain its verification scope.
-- [ ] Standardise the app name as **PageLumen**; archive or explicitly mark the older “Sightline Reader” PRD naming as historical.
-- [ ] Reconcile `README.md`, `docs/accessibility.md`, Settings copy, and `pagelumen_prd.md` against implemented behaviour.
+- [x] Standardise the app name as **PageLumen**; `pagelumen_prd.md` now labels “Sightline Reader” as the historical working name and identifies PageLumen as the shipped product.
+- [x] Reconcile `README.md`, `docs/accessibility.md`, Settings copy, and `pagelumen_prd.md` against implemented behaviour; current review shortcuts, raw OCR/read-order evidence, and product naming are documented.
 
 **Exit gate for Phase 0:** `swift test`, app-target build, lint/release scripts, manual import/capture/translate smoke test, and a copy audit all pass. No user-facing feature claims remain knowingly false.
 
@@ -218,7 +218,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 - [ ] Add a filterable Review Queue with keyboard shortcuts for next/previous finding, accept/reject suggestion, mark reviewed, and open original source region. The queue popover now lists all unresolved findings, filters All/Blockers/Warnings, opens each source region, and offers separate accept/reject actions without changing source text; page-warning correction and original-region highlighting remain open.
 - [x] Add Cmd-Shift-A/X actions for accepting or rejecting the currently selected review finding; commands preserve source-block selection and fall back to a selected-page warning.
-- [ ] Synchronise preview, extracted text, and issue list selection; support page-level deep links.
+- [ ] Synchronise preview, extracted text, and issue list selection; support page-level deep links. Queue openings now apply a visible focus fill and border to the selected source block in both preview and extracted text; page-level deep-link and participant validation remain open.
 - [x] Support table-grid editing with explicit column-header and row-header assignment. Review now provides validated cell editing plus explicit header row/column assignment, with semantic HTML/JSON preservation.
 - [x] Add reusable review presets for General, Legal, Academic, Receipts, Slides, and Accessibility Remediation. Settings exposes the preset and the core review engine applies only threshold/warning changes; source data remains untouched.
 - [x] Add undo/redo for edits and an edit history view. Core bounded undo/redo, an accessible labeled edit-history popover, and an original-OCR disclosure now cover text, structure, table/figure descriptions, ordering, and review state. Do not overwrite raw OCR.
