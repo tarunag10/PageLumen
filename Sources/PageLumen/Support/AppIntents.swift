@@ -227,9 +227,15 @@ enum PageLumenCoreSummaryBridge {
 enum PageLumenIntentBridge {
     static func repository() -> LocalDocumentRepository? {
         if #available(macOS 14.0, *), let persisting = try? SwiftDataPersisting() {
-            return LocalDocumentRepository(persisting: persisting)
+            return LocalDocumentRepository(
+                persisting: persisting,
+                keepSearchableLocalCopies: UserDefaults.standard.bool(forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey)
+            )
         }
-        return LocalDocumentRepository(persisting: FilePersisting())
+        return LocalDocumentRepository(
+            persisting: FilePersisting(),
+            keepSearchableLocalCopies: UserDefaults.standard.bool(forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey)
+        )
     }
 
     static func exportTaggedHTML(document: ReaderDocument, to destination: URL, options: ExportOptions = .full) throws {
