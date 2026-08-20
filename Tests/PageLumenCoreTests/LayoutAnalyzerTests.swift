@@ -19,6 +19,8 @@ final class LayoutAnalyzerTests: XCTestCase {
         XCTAssertEqual(analyzed.layoutType, .multiColumn)
         XCTAssertEqual(analyzed.blocks.map(\.text), ["Left top", "Left bottom", "Right top", "Right bottom"])
         XCTAssertEqual(analyzed.blocks.map(\.readingOrderIndex), [0, 1, 2, 3])
+        XCTAssertTrue(analyzed.blocks.allSatisfy { $0.readingOrderEvidence?.strategy == "column detection, then top-to-bottom" })
+        XCTAssertTrue(analyzed.blocks.allSatisfy { ($0.readingOrderEvidence?.confidence ?? 0) > 0.7 })
     }
 
     func testLikelyHeadingsArePromotedAndOutlineCreated() {

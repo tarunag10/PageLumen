@@ -48,6 +48,11 @@ public struct LayoutAnalyzer: Sendable {
             .map { index, block in
                 var copy = block
                 copy.readingOrderIndex = index
+                copy.readingOrderEvidence = ReadingOrderEvidence(
+                    strategy: readingOrderStrategy(for: layoutType),
+                    confidence: readingOrderConfidence(for: layoutType),
+                    pageNumber: page.pageNumber
+                )
                 if isLikelyTable(copy) {
                     copy.type = .table
                 } else if isLikelyFigure(copy) {
@@ -78,6 +83,28 @@ public struct LayoutAnalyzer: Sendable {
         page.tables = detectTables(in: ordered)
         page.figures = detectFigures(in: ordered)
         return page
+    }
+
+    private func readingOrderStrategy(for layoutType: LayoutType) -> String {
+        switch layoutType {
+        case .singleColumn: return "top-to-bottom, left-to-right"
+        case .multiColumn: return "column detection, then top-to-bottom"
+        case .form: return "key-value/form row ordering"
+        case .slide: return "slide title-first, then spatial ordering"
+        case .mixed: return "main content before sidebar"
+        case .unknown: return "spatial fallback ordering"
+        }
+    }
+
+    private func readingOrderConfidence(for layoutType: LayoutType) -> Double {
+        switch layoutType {
+        case .singleColumn: return 0.86
+        case .multiColumn: return 0.74
+        case .form: return 0.78
+        case .slide: return 0.80
+        case .mixed: return 0.68
+        case .unknown: return 0.55
+        }
     }
 
     public func classifyLayout(for page: ReaderPage) -> LayoutType {

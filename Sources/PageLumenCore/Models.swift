@@ -169,6 +169,18 @@ public struct OCRObservationRecord: Codable, Equatable, Sendable {
     }
 }
 
+public struct ReadingOrderEvidence: Codable, Equatable, Sendable {
+    public var strategy: String
+    public var confidence: Double
+    public var pageNumber: Int
+
+    public init(strategy: String, confidence: Double, pageNumber: Int) {
+        self.strategy = strategy
+        self.confidence = confidence
+        self.pageNumber = pageNumber
+    }
+}
+
 public struct TextBlock: Identifiable, Codable, Equatable, Sendable {
     public var id: UUID
     public var pageNumber: Int
@@ -185,6 +197,7 @@ public struct TextBlock: Identifiable, Codable, Equatable, Sendable {
     /// Raw, privacy-sensitive OCR observation metadata retained for audit and
     /// layout regression; this stores no Vision framework object.
     public var rawObservation: OCRObservationRecord?
+    public var readingOrderEvidence: ReadingOrderEvidence?
 
     public var hasTextEdit: Bool {
         guard let originalText else { return false }
@@ -202,7 +215,8 @@ public struct TextBlock: Identifiable, Codable, Equatable, Sendable {
         metadata: [String: String] = [:],
         provenance: BlockProvenance? = nil,
         originalText: String? = nil,
-        rawObservation: OCRObservationRecord? = nil
+        rawObservation: OCRObservationRecord? = nil,
+        readingOrderEvidence: ReadingOrderEvidence? = nil
     ) {
         self.id = id
         self.pageNumber = pageNumber
@@ -215,6 +229,7 @@ public struct TextBlock: Identifiable, Codable, Equatable, Sendable {
         self.provenance = provenance
         self.originalText = originalText
         self.rawObservation = rawObservation
+        self.readingOrderEvidence = readingOrderEvidence
     }
 }
 
