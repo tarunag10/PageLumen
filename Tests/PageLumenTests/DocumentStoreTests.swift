@@ -97,8 +97,10 @@ final class DocumentStoreTests: XCTestCase {
         store.document = ReaderDocument(title: "Regions", sourceType: .sample, pages: [ReaderPage(pageNumber: 1, size: PageSize(width: 400, height: 600), blocks: [], tables: [table], figures: [figure])])
 
         store.updateTableExplanation(table, text: "Reviewed table")
+        store.updateTableCell(table, row: 0, column: 1, text: "Updated")
         store.updateFigureDescription(figure, text: "Reviewed figure")
 
+        XCTAssertEqual(store.document.pages[0].tables[0].rows[0][1], "Updated")
         XCTAssertEqual(store.document.pages[0].tables[0].provenance?.source, .userEdit)
         XCTAssertEqual(store.document.pages[0].figures[0].provenance?.source, .userEdit)
     }

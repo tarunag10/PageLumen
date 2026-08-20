@@ -416,6 +416,9 @@ private struct StructuredOutputView: View {
                                 TableHeaderAssignmentEditor(table: table) { rows, columns in
                                     store.updateTableHeaderAssignments(table, columnHeaderRows: rows, rowHeaderColumns: columns)
                                 }
+                                TableGridEditor(table: table) { row, column, value in
+                                    store.updateTableCell(table, row: row, column: column, text: value)
+                                }
                             }
 
                             ForEach(page.figures) { figure in
@@ -669,6 +672,48 @@ private struct TableHeaderAssignmentEditor: View {
 
     private func parse(_ value: String) -> [Int] {
         value.split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespacesAndNewlines)) }
+    }
+}
+
+private struct TableGridEditor: View {
+    let table: TableRegion
+    let onCellChange: (Int, Int, String) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Table cells", systemImage: "square.grid.3x3")
+                .font(.headline)
+                .foregroundStyle(AccessibleStyle.primaryText)
+            ScrollView(.horizontal) {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(table.rows.indices, id: \.self) { rowIndex in
+                        HStack(spacing: 6) {
+                            Text("(rowIndex)")
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(AccessibleStyle.secondaryText)
+                                .frame(width: 24)
+                            ForEach(table.rows[rowIndex].indices, id: \.self) { columnIndex in
+                                TextField(
+                                    "r\(rowIndex)c\(columnIndex)",
+                                    text: Binding(
+                                        get: { table.rows[rowIndex][columnIndex] },
+                                        set: { onCellChange(rowIndex, columnIndex, $0) }
+                                    )
+                                )
+                                .textFieldStyle(.roundedBorder)
+                                .frame(minWidth: 120)
+                                .accessibilityLabel("Row \(rowIndex), column \(columnIndex)")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding(14)
+        .accessiblePanel(borderColor: AccessibleStyle.accent.opacity(0.35))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Editable table grid")
+        .accessibilityHint("Edit individual table cells. Header semantics are assigned separately above.")
     }
 }
 

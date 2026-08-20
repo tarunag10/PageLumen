@@ -1011,6 +1011,27 @@ final class DocumentStore {
         statusMessage = "Updated table header assignments"
     }
 
+    func updateTableCell(_ table: TableRegion, row: Int, column: Int, text: String) {
+        guard let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == table.pageNumber }),
+              let tableIndex = document.pages[pageIndex].tables.firstIndex(where: { $0.id == table.id }),
+              document.pages[pageIndex].tables[tableIndex].rows.indices.contains(row),
+              document.pages[pageIndex].tables[tableIndex].rows[row].indices.contains(column) else {
+            return
+        }
+        guard document.pages[pageIndex].tables[tableIndex].rows[row][column] != text else { return }
+        recordEdit()
+        document.pages[pageIndex].tables[tableIndex].rows[row][column] = text
+        document.pages[pageIndex].tables[tableIndex].provenance = BlockProvenance(
+            source: .userEdit,
+            pageNumber: table.pageNumber,
+            bounds: table.bounds,
+            confidence: table.confidence,
+            parentBlockID: table.id,
+            engine: "PageLumen table cell editor"
+        )
+        document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
+    }
+
     func updateFigureDescription(_ figure: FigureRegion, text: String) {
         guard let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == figure.pageNumber }),
               let figureIndex = document.pages[pageIndex].figures.firstIndex(where: { $0.id == figure.id }) else {
