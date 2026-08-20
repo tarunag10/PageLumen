@@ -29,7 +29,7 @@ This plan deliberately separates:
 
 ### Truths that require correction before a public release
 
-1. `TranslationService.translateOnMacOS15` returns the source text unchanged. It must not be presented as translation.
+1. Translation is availability-gated through the Apple Translation framework and must not be presented as available when the language model is missing.
 2. `SwiftDataPersisting` calls `fatalError` if its store cannot open. Recents storage cannot be allowed to prevent document reading.
 3. Screen capture chooses the first eligible window and falls back after all modern-capture failures. It needs user-controlled selection and a clear permission/cancellation path.
 4. The app forces Dark Mode. A reader and accessibility tool must respect system appearance by default.
@@ -109,9 +109,9 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 **Files:** `Sources/PageLumen/Support/TranslationService.swift`, `DocumentStore.swift`, `SettingsView.swift`, `SummaryExportView.swift`, `TranslationServiceTests.swift`
 
-- [ ] Replace the macOS 15 stub with a `TranslationSession`-backed adapter.
+- [x] Replace the old identity/stub path with a `TranslationSession`-backed adapter on supported systems; older/unsupported systems return a typed unavailable error.
 - [ ] Before displaying a target language, use language-availability APIs and distinguish: installed, downloadable with user approval, unsupported, and failed.
-- [ ] Translate blocks in batches where possible, preserve block IDs/bounds, and add `translatedFrom`, `translationTargetLanguage`, and `translationEngine` metadata.
+- [x] Translate blocks while preserving block IDs/bounds and record `translatedFrom`, `translationTargetLanguage`, and `translationEngine` metadata.
 - [ ] Never create a translated export if translation was unavailable or if the returned text is unchanged for a source/target pair that should differ. Surface a recoverable error instead.
 - [ ] Rename the export action to `Translate and Export Markdown` until additional output formats are intentionally supported.
 - [ ] On macOS 14, hide or disable the action with an explanatory label; do not create an incorrectly labelled source-language export.
