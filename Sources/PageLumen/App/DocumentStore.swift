@@ -63,6 +63,8 @@ final class DocumentStore {
     var reviewSearchQuery = ""
     var reviewFilter: ReviewFilter = .all
     var exportPreviewFormat: ExportFormat = .markdown
+    var librarySearchQuery = ""
+    var librarySearchResults: [LibrarySearchResult] = []
 
     var libraryStorageSizeLabel: String {
         do {
@@ -310,6 +312,48 @@ final class DocumentStore {
         recentDocuments.removeAll()
         try? persisting.forgetAll()
         statusMessage = count == 0 ? "No recent documents to forget" : "Forgot \(count) recent document\(count == 1 ? "" : "s")"
+    }
+
+    /// Searches only retained local copies when the person has explicitly
+    /// enabled searchable library storage. Source files are never opened by
+    /// this path, and a disabled setting clears any prior result list.
+    func searchLibrary(query: String? = nil) {
+        if let query {
+            librarySearchQuery = query
+        }
+        guard UserDefaults.standard.bool(forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey) else {
+            librarySearchResults = []
+            statusMessage = "Library search is off; enable searchable local copies in Settings"
+            return
+        }
+        let repository = LocalDocumentRepository(
+            persisting: persisting,
+            keepSearchableLocalCopies: true
+        )
+        do {
+            librarySearchResults = try repository.search(query: librarySearchQuery, limit: 20)
+            if librarySearchResults.isEmpty {
+                statusMessage = "No library matches"
+            } else {
+                let suffix = librarySearchResults.count == 1 ? "" : "es"
+                statusMessage = "Found \(librarySearchResults.count) library match\(suffix)"
+            }
+        } catch {
+            librarySearchResults = []
+            statusMessage = "Library search unavailable: \(error.localizedDescription)"
+        }
+    }
+
+    func openLibrarySearchResult(_ result: LibrarySearchResult) {
+        guard let selected = recentDocuments.first(where: { $0.id == result.documentID }) else {
+            statusMessage = "The matching document is no longer in the local library"
+            return
+        }
+        selectRecentDocument(selected)
+        selectedPageNumber = result.pageNumber
+        selectedBlockID = result.blockID
+        selectedDestination = .review
+        statusMessage = "Opened \(result.title), page \(result.pageNumber)"
     }
 
     /// Removes one retained library copy without touching its source file.

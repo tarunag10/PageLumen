@@ -277,7 +277,9 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 - [x] Store document text in a local index only when the person enables “Keep searchable local copies.” Default retention must be an explicit product decision documented in onboarding.
 - [ ] Support delete-one, delete-all, remove-index-only, and reveal storage size. Do not delete source files.
 - [x] Reveal the local library store's measured on-disk size in Settings; source files are excluded.
-- [ ] Add a search UI with result snippets, page/block location, and keyboard navigation.
+- [x] Add a local-library search UI with result snippets, page/block location,
+  keyboard-accessible result buttons, explicit searchable-copy gating, and
+  deep-link navigation into Review.
 - [ ] Build migration and rollback tests before release. If a migration fails, preserve the old store, create a backup, and offer recovery rather than silently deleting data.
 
 ### 3.3 Finder and system workflows

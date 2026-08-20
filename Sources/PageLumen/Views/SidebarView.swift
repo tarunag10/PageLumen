@@ -4,6 +4,8 @@ import SwiftUI
 struct SidebarView: View {
     @Environment(DocumentStore.self) private var store
     @State private var documentToForget: ReaderDocument?
+    @State private var librarySearchField = ""
+    @AppStorage(DocumentRepositorySettings.keepSearchableLocalCopiesKey) private var keepSearchableLocalCopies = false
     // Re-render when the high-contrast toggle changes so AccessibleStyle tokens
     // (border, elevatedBackground) pick up the new value.
     @AppStorage("boostContrast") private var boostContrast = false
@@ -57,6 +59,7 @@ struct SidebarView: View {
 
                 if !store.recentDocuments.isEmpty {
                     Section("Most recent") {
+                        librarySearchFieldView(store: store)
                         if let mostRecent = store.recentDocuments.first {
                             recentDocumentRow(mostRecent, subtitle: lastOpenedLabel(for: mostRecent))
                         }
@@ -95,6 +98,29 @@ struct SidebarView: View {
                                 }
                                 .accessibilityLabel("\(document.title), \(librarySubtitle(for: document))")
                                 .accessibilityHint("Open this document in Review.")
+                            }
+                        }
+                    }
+
+                    if !store.librarySearchResults.isEmpty {
+                        Section("Search results") {
+                            ForEach(store.librarySearchResults) { result in
+                                Button {
+                                    store.openLibrarySearchResult(result)
+                                } label: {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(result.title)
+                                            .font(.callout.weight(.medium))
+                                            .lineLimit(1)
+                                        Text("Page \(result.pageNumber) • \(result.snippet)")
+                                            .font(.caption2)
+                                            .foregroundStyle(AccessibleStyle.secondaryText)
+                                            .lineLimit(2)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("\(result.title), page \(result.pageNumber)")
+                                .accessibilityHint("Open this local-library search result in Review.")
                             }
                         }
                     }
@@ -141,6 +167,12 @@ struct SidebarView: View {
             .liquidGlassIfAvailable(boostContrast: boostContrast)
         }
         .background(AccessibleStyle.appBackground)
+        .onChange(of: keepSearchableLocalCopies) { _, enabled in
+            if !enabled {
+                librarySearchField = ""
+                store.librarySearchResults = []
+            }
+        }
         .safeAreaInset(edge: .bottom) {
             SidebarStatusFooter(
                 title: store.document.title,
@@ -166,6 +198,20 @@ struct SidebarView: View {
         } message: { document in
             Text("This removes the retained PageLumen copy. The original source file at \(document.sourceURL?.path ?? "its original location") is not deleted.")
         }
+    }
+
+    @ViewBuilder
+    private func librarySearchFieldView(store: DocumentStore) -> some View {
+        TextField("Search local library", text: $librarySearchField)
+            .textFieldStyle(.roundedBorder)
+            .accessibilityHint("Searches retained OCR text only when searchable local copies are enabled in Settings")
+            .onSubmit {
+                store.searchLibrary(query: librarySearchField)
+            }
+            .onChange(of: librarySearchField) { _, value in
+                store.searchLibrary(query: value)
+            }
+            .disabled(!keepSearchableLocalCopies)
     }
 
     private func detail(for item: BatchImportItem) -> String {

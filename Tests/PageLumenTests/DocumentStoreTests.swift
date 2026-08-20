@@ -16,6 +16,7 @@ final class DocumentStoreTests: XCTestCase {
         UserDefaults.standard.removeObject(forKey: "includeConfidenceNotes")
         UserDefaults.standard.removeObject(forKey: "includeHeadersAndFooters")
         UserDefaults.standard.removeObject(forKey: "privacyMode")
+        UserDefaults.standard.removeObject(forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey)
         try await super.tearDown()
     }
 
@@ -57,6 +58,30 @@ final class DocumentStoreTests: XCTestCase {
         let store = DocumentStore(persisting: InMemoryPersisting())
 
         XCTAssertEqual(store.persistenceStatus, .available)
+    }
+
+    func testLibrarySearchRequiresOptInAndOpensPageBlockResult() throws {
+        let persisting = InMemoryPersisting()
+        let searchable = makeSearchableDocument()
+        try persisting.save(searchable)
+        UserDefaults.standard.set(true, forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey)
+        let store = DocumentStore(persisting: persisting)
+
+        store.searchLibrary(query: "import")
+
+        let result = try XCTUnwrap(store.librarySearchResults.first)
+        XCTAssertEqual(result.documentID, searchable.id)
+        XCTAssertEqual(result.pageNumber, 1)
+        XCTAssertTrue(result.snippet.localizedCaseInsensitiveContains("import"))
+
+        store.openLibrarySearchResult(result)
+        XCTAssertEqual(store.selectedDestination, .review)
+        XCTAssertEqual(store.selectedPageNumber, result.pageNumber)
+        XCTAssertEqual(store.selectedBlockID, result.blockID)
+
+        UserDefaults.standard.set(false, forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey)
+        store.searchLibrary(query: "import")
+        XCTAssertTrue(store.librarySearchResults.isEmpty)
     }
 
     func testExportAvailabilityBlocksTranslationInPrivacyMode() {
