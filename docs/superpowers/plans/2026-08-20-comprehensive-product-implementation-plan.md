@@ -160,7 +160,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 - [x] Remove all forced `.preferredColorScheme(.dark)` calls; the app now defaults to system appearance and offers explicit system/light/dark selection in Settings.
 - [x] Add an optional Appearance setting (`System`, `Light`, `Dark`) that defaults to System and leaves contrast/transparency controls independent.
-- [ ] Verify system Increase Contrast, Reduce Transparency, Reduce Motion, VoiceOver focus, keyboard-only navigation, large text, and light/dark appearance.
+- [ ] Verify system Increase Contrast, Reduce Transparency, Reduce Motion, VoiceOver focus, keyboard-only navigation, large text, and light/dark appearance. The UI design system now reads `accessibilityReduceTransparency` at render time for Liquid Glass fallback and keeps reduced-motion behavior animation-free; system/participant verification remains open.
 - [x] Ensure colours have semantic names/tokens and all status indicators retain a text and symbol equivalent. Shared `AccessibleStyle` tokens now cover accent foregrounds, surfaces, text, borders, and status colors; system contrast/VoiceOver participant verification remains a separate release gate.
 
 **Acceptance:** The app follows system appearance by default and no core workflow loses usable contrast in either appearance.

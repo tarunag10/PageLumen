@@ -240,15 +240,10 @@ extension View {
     }
 
     /// Applies Liquid Glass material on macOS 26+ when accessibility settings allow.
-    /// Falls back to the existing solid panel background on older macOS or when
-    /// the user has Boost Contrast enabled or Reduce Transparency turned on.
-    @ViewBuilder
-    func liquidGlassIfAvailable(boostContrast: Bool = false, reduceTransparency: Bool = false) -> some View {
-        if #available(macOS 26.0, *), !boostContrast, !reduceTransparency {
-            self.background(.regularMaterial)
-        } else {
-            self
-        }
+    /// The environment value is read at render time so Reduce Transparency is
+    /// honored even when callers use the default arguments.
+    func liquidGlassIfAvailable(boostContrast: Bool = false, reduceTransparency: Bool? = nil) -> some View {
+        modifier(LiquidGlassModifier(boostContrast: boostContrast, explicitReduceTransparency: reduceTransparency))
     }
 
     /// Renders primary-styled text using the design system's primary color.
@@ -259,5 +254,24 @@ extension View {
     /// Renders secondary-styled text using the design system's secondary color.
     func secondaryTextStyle() -> some View {
         foregroundStyle(AccessibleStyle.secondaryText)
+    }
+}
+
+private struct LiquidGlassModifier: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var environmentReduceTransparency
+    let boostContrast: Bool
+    let explicitReduceTransparency: Bool?
+
+    private var reduceTransparency: Bool {
+        explicitReduceTransparency ?? environmentReduceTransparency
+    }
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(macOS 26.0, *), !boostContrast, !reduceTransparency {
+            content.background(.regularMaterial)
+        } else {
+            content
+        }
     }
 }
