@@ -164,3 +164,9 @@ the unsigned bundle reported `code has no resources but signature indicates
 they must be present`. This does not invalidate the successful build; it means
 runtime visual and accessibility inspection must use a normal logged-in GUI
 session with a launchable signed/ad-hoc app bundle.
+
+The newly generated Developer ID-signed archive was also launched directly from
+`dist/PageLumen.xcarchive/Products/Applications/PageLumen.app`; this host again
+produced no running process or matching unified-log event. The archive itself
+passes `codesign --verify --deep --strict` and the release validator, so this is
+recorded as a host GUI/runtime limitation rather than an application assertion.
