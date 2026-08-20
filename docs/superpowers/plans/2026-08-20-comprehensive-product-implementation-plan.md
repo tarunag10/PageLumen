@@ -248,7 +248,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 ### 2.3 DOCX, CSV, JSON, and audio
 
-- [ ] Replace hand-rolled ZIP concerns in DOCX generation with a tested archive library, validate generated DOCX parts, and preserve headings/tables/alt text where OOXML permits.
+- [x] Replace hand-rolled ZIP concerns in DOCX generation with ZIPFoundation, validate generated DOCX parts, and preserve headings/tables/alt text where OOXML permits. `DOCXPackageValidator` checks required parts, XML well-formedness, content types, relationships, and the main document contract; `DOCXWriterTests` covers generated, missing-part, and malformed-package cases. Independent desktop-consumer/manual QA remains open.
 - [x] Retain CSV formula neutralisation; add locale/newline/quote and malformed-table tests.
 - [x] Version the JSON schema, make source URL/text-snippet redaction explicit, and provide a schema document.
 - [ ] Make audio export use the selected speech voice/language rather than hard-coded `en-US`; include cancellation/progress and verify generated media metadata.

@@ -54,6 +54,33 @@ final class DOCXWriterTests: XCTestCase {
         XCTAssertTrue(names.contains("word/document.xml"))
     }
 
+    func testDOCXPackageValidatorAcceptsGeneratedPackage() {
+        let data = DOCXWriter().data(for: SampleDataFactory.makeDemoDocument(), options: .full)
+
+        let validation = DOCXPackageValidator.validate(parts: packageParts(from: data))
+
+        XCTAssertTrue(validation.isValid, "Generated DOCX should pass deterministic OOXML checks: \(validation.issues)")
+    }
+
+    func testDOCXPackageValidatorReportsMissingRequiredPart() {
+        let validation = DOCXPackageValidator.validate(parts: [
+            "word/document.xml": Data("<w:document xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:body/></w:document>".utf8)
+        ])
+
+        XCTAssertEqual(validation.issues, [.missingRequiredPart])
+    }
+
+    func testDOCXPackageValidatorReportsMalformedOOXML() {
+        let validation = DOCXPackageValidator.validate(parts: [
+            "[Content_Types].xml": Data("<Types>".utf8),
+            "_rels/.rels": Data("<Relationships/>".utf8),
+            "word/_rels/document.xml.rels": Data("<Relationships/>".utf8),
+            "word/document.xml": Data("<w:document>".utf8)
+        ])
+
+        XCTAssertEqual(validation.issues, [.invalidXML])
+    }
+
     func testDOCXTablesUseWordprocessingMLTableCells() {
         let document = SampleDataFactory.makeDemoDocument()
         let data = DOCXWriter().data(for: document, options: .full)
@@ -132,6 +159,10 @@ final class DOCXWriterTests: XCTestCase {
             }
         }
         return entries
+    }
+
+    private func packageParts(from data: Data) -> [String: Data] {
+        Dictionary(uniqueKeysWithValues: parseZipEntries(in: data).map { ($0.name, $0.payload) })
     }
 
     private func readUInt16(_ bytes: [UInt8], at offset: Int) -> UInt16 {
