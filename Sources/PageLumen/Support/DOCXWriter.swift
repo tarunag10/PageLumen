@@ -29,17 +29,20 @@ public struct ZIPFoundationDOCXArchiveWriter: DOCXArchiveWriting, Sendable {
         defer { try? FileManager.default.removeItem(at: url) }
 
         do {
-            guard let destination = Archive(url: url, accessMode: .create) else { return Data() }
+            let destination = try Archive(url: url, accessMode: .create)
             for (path, payload) in parts.sorted(by: { $0.key < $1.key }) {
                 try destination.addEntry(
                     with: path,
                     type: .file,
-                    uncompressedSize: UInt32(payload.count),
+                    uncompressedSize: Int64(payload.count),
                     // Store OOXML parts without compression so lightweight
                     // package inspectors can validate them without a
                     // decompressor. ZIPFoundation still owns archive framing.
                     compressionMethod: .none
                 ) { position, size in
+                    guard position >= 0, position <= Int64(payload.count), position <= Int64(Int.max) else {
+                        return Data()
+                    }
                     let start = Int(position)
                     let end = min(start + size, payload.count)
                     return start < end ? payload.subdata(in: start..<end) : Data()
