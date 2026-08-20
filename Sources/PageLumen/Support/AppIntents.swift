@@ -122,7 +122,7 @@ struct ExportTaggedHTMLIntent: AppIntent {
             try PageLumenIntentBridge.exportTaggedHTML(document: loaded, to: destination)
             return .result(dialog: "Exported Tagged HTML for \(document.title) to \(destination.lastPathComponent).")
         } catch let error as PageLumenIntentExportError {
-            return .result(dialog: error.localizedDescription)
+            return .result(dialog: "\(error.localizedDescription)")
         } catch {
             return .result(dialog: "Tagged HTML export failed: \(error.localizedDescription)")
         }
@@ -176,6 +176,7 @@ struct GetSummaryIntent: AppIntent {
 @available(macOS 14.0, *)
 struct PageLumenShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
+        return [
         AppShortcut(
             intent: OpenDocumentIntent(),
             phrases: [
@@ -184,7 +185,7 @@ struct PageLumenShortcuts: AppShortcutsProvider {
             ],
             shortTitle: "Open Document",
             systemImageName: "doc.fill"
-        )
+        ),
         AppShortcut(
             intent: GetSummaryIntent(),
             phrases: [
@@ -193,7 +194,7 @@ struct PageLumenShortcuts: AppShortcutsProvider {
             ],
             shortTitle: "Get Summary",
             systemImageName: "text.bubble"
-        )
+        ),
         AppShortcut(
             intent: SearchPageLumenLibraryIntent(),
             phrases: ["Search my \(.applicationName) library", "Find in my \(.applicationName) documents"],
@@ -206,6 +207,7 @@ struct PageLumenShortcuts: AppShortcutsProvider {
             shortTitle: "Export Tagged HTML",
             systemImageName: "doc.richtext"
         )
+        ]
     }
 }
 
