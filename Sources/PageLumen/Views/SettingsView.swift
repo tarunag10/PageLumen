@@ -224,25 +224,7 @@ struct SettingsView: View {
                 Text("Apple Intelligence is opt-in and receives only bounded selected document text. This document-level control overrides the global mode and is retained locally by document identifier.")
                     .font(.callout)
                     .foregroundStyle(AccessibleStyle.secondaryText)
-                let availability = IntelligentExplainer().availability
-                switch availability {
-                case .available:
-                    Label(IntelligentExplainer().availabilityInfo.title, systemImage: "checkmark.circle")
-                        .foregroundStyle(AccessibleStyle.success)
-                case .unavailable:
-                    Label(IntelligentExplainer().availabilityInfo.message, systemImage: "info.circle")
-                        .foregroundStyle(AccessibleStyle.secondaryText)
-                case .notSupported:
-                    Label(IntelligentExplainer().availabilityInfo.message, systemImage: "info.circle")
-                        .foregroundStyle(AccessibleStyle.secondaryText)
-                }
-                .accessibilityIdentifier("settings.intelligenceAvailability")
-                Text(IntelligentExplainer().availabilityInfo.deviceRequirement)
-                    .font(.caption)
-                    .foregroundStyle(AccessibleStyle.secondaryText)
-                Text(IntelligentExplainer().availabilityInfo.privacyBoundary + " " + IntelligentExplainer().availabilityInfo.inputScope)
-                    .font(.caption)
-                    .foregroundStyle(AccessibleStyle.secondaryText)
+                intelligenceAvailabilityView
                 Text("Apple Intelligence is optional. It receives only the selected document text and must not be treated as a source of truth without checking the cited page.")
                     .font(.callout)
                     .foregroundStyle(AccessibleStyle.secondaryText)
@@ -362,6 +344,27 @@ struct SettingsView: View {
             store.exportOptions[keyPath: keyPath] = newValue
             store.persistExportDefaults()
         }
+    }
+
+    @ViewBuilder
+    private var intelligenceAvailabilityView: some View {
+        let explainer = IntelligentExplainer()
+        switch explainer.availability {
+        case .available:
+            Label(explainer.availabilityInfo.title, systemImage: "checkmark.circle")
+                .foregroundStyle(AccessibleStyle.success)
+        case .unavailable, .notSupported:
+            Label(explainer.availabilityInfo.message, systemImage: "info.circle")
+                .foregroundStyle(AccessibleStyle.secondaryText)
+        }
+        .accessibilityIdentifier("settings.intelligenceAvailability")
+
+        Text(explainer.availabilityInfo.deviceRequirement)
+            .font(.caption)
+            .foregroundStyle(AccessibleStyle.secondaryText)
+        Text(explainer.availabilityInfo.privacyBoundary + " " + explainer.availabilityInfo.inputScope)
+            .font(.caption)
+            .foregroundStyle(AccessibleStyle.secondaryText)
     }
 
     private var showOnLaunchBinding: Binding<Bool> {

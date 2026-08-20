@@ -58,8 +58,12 @@ struct SummaryExportView: View {
                     Button {
                         speech.isSpeaking ? speech.stop() : speech.speak(store.fullExtractedText())
                     } label: {
-                        Label("Read Full Text", systemImage: "text.bubble")
+                        Label(
+                            speech.isSpeaking ? "Stop" : "Read Full Text",
+                            systemImage: speech.isSpeaking ? "stop.fill" : "text.bubble"
+                        )
                     }
+                    .help(speech.isSpeaking ? "Stop reading aloud" : "Read the full extracted text aloud")
 
                     Button {
                         store.copySummaryWithCitations()
