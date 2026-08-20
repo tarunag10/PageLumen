@@ -233,6 +233,10 @@ final class DocumentStore {
         DocumentEditing.reviewIssues(for: document)
     }
 
+    var reviewFindings: [ReviewFinding] {
+        DocumentEditing.reviewFindings(for: document)
+    }
+
     var reviewProgress: ReviewProgress {
         DocumentEditing.reviewProgress(for: document)
     }

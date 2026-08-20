@@ -296,6 +296,22 @@ private struct TrustMetric: View {
 
 private struct ReviewQueuePopover: View {
     @Environment(DocumentStore.self) private var store
+    @State private var filter: QueueFilter = .all
+
+    private enum QueueFilter: String, CaseIterable, Identifiable {
+        case all = "All"
+        case blockers = "Blockers"
+        case warnings = "Warnings"
+        var id: String { rawValue }
+    }
+
+    private var findings: [ReviewFinding] {
+        switch filter {
+        case .all: return store.reviewFindings
+        case .blockers: return store.reviewFindings.filter { $0.severity == .blocker }
+        case .warnings: return store.reviewFindings.filter { $0.severity == .warning }
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -313,18 +329,27 @@ private struct ReviewQueuePopover: View {
                     .foregroundStyle(AccessibleStyle.accentBright)
             }
 
-            if store.reviewIssues.isEmpty {
+            Picker("Queue filter", selection: $filter) {
+                ForEach(QueueFilter.allCases) { value in
+                    Text(value.rawValue).tag(value)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            if findings.isEmpty {
                 ContentUnavailableView("Queue is clear", systemImage: "checkmark.circle", description: Text("All current extraction issues are resolved."))
             } else {
-                List(store.reviewIssues) { issue in
+                List(findings) { finding in
                     Button {
-                        store.jumpToIssue(issue)
+                        if let issue = store.reviewIssues.first(where: { $0.id == finding.id }) {
+                            store.jumpToIssue(issue)
+                        }
                     } label: {
                         VStack(alignment: .leading, spacing: 3) {
-                            Text(issue.title)
+                            Text(finding.title)
                                 .font(.callout.weight(.semibold))
                                 .foregroundStyle(AccessibleStyle.primaryText)
-                            Text("Page \(issue.pageNumber) · \(issue.detail)")
+                            Text("Page \(finding.pageNumber) · \(finding.severity.rawValue.capitalized) · \(finding.detail)")
                                 .font(.caption)
                                 .foregroundStyle(AccessibleStyle.secondaryText)
                                 .lineLimit(2)
@@ -332,7 +357,7 @@ private struct ReviewQueuePopover: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Page \(issue.pageNumber), \(issue.title)")
+                    .accessibilityLabel("Page \(finding.pageNumber), \(finding.title), \(finding.severity.rawValue)")
                     .accessibilityHint("Open this issue in the review editor")
                 }
                 .listStyle(.inset)
