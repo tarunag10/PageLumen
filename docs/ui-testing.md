@@ -26,7 +26,7 @@ participant-driven XCUITest flows:
 
 | Surface | Identifiers |
 | --- | --- |
-| Review | `review.undo`, `review.redo`, `review.queue`, `review.continue`, `review.search`, `review.nextMatch`, `review.previousMatch` |
+| Review | `review.undo`, `review.redo`, `review.queue`, `review.continue`, `review.issueNavigator`, `review.firstIssue`, `review.more`, `review.search`, `review.nextMatch`, `review.previousMatch` |
 | Export | `export.backToReview`, `export.<format>` |
 | Settings | `settings.privacyMode`, `settings.searchableCopies`, `settings.forgetAll`, `settings.appearance`, `settings.boostContrast`, `settings.intelligenceMode`, `settings.documentIntelligenceOptOut`, `settings.intelligenceAvailability` |
 
