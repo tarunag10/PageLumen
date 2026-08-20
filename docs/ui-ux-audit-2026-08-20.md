@@ -78,3 +78,52 @@ The interface is not declared “perfect” from source inspection alone. A fina
 quality bar still requires a clean physical run at compact and expanded window
 sizes, Light/Dark appearance, large text, VoiceOver, keyboard-only navigation,
 and the reduced-transparency/motion settings.
+
+---
+
+# Current runtime slice
+
+## Runtime evidence
+
+The signed archive was launched in the current macOS GUI session and captured at
+2880×1800 (`/tmp/pagelumen-runtime-clean4.png`). This is evidence that the
+application window can render and accept the fixture document in a real host
+session. It is not evidence of VoiceOver, Switch Control, large-text, reduced
+motion/transparency, or participant acceptance.
+
+## Findings
+
+### Resolved in this slice
+
+- The Review workspace no longer gives every secondary action equal visual
+  weight. Continue, page selection, and reading-order visibility are primary.
+- Confidence, edit history, and compare-edits are grouped under a labelled
+  **More** menu, while the review queue remains directly reachable and keeps
+  the `review.queue` UI-test/accessibility identifier.
+- Review controls and search/filter controls are horizontally scrollable rather
+  than silently clipping actions at constrained widths.
+- The review heading and explanatory copy are single-line, priority-preserved
+  content so they do not collapse behind the preview divider.
+- The review trust bar uses a compact issue count and first-issue action rather
+  than a long, competing toolbar label.
+
+### Still open before calling the UI release-ready
+
+- Verify the redesigned workspace at the minimum supported window size and at
+  large text sizes; screenshots are still not a substitute for participant
+  testing.
+- Run keyboard-only, VoiceOver, Switch Control, Increase Contrast, Reduce
+  Transparency, and Reduce Motion checks on a physical Mac.
+- Exercise every control in a live worker: import/drop/paste, page navigation,
+  queue resolution, editing, undo/redo, audio playback, and every export/save
+  panel. The deterministic tests cover state seams but not all native panels.
+- Validate light, dark, and system appearance with a human review of focus
+  rings, disabled states, contrast, and text truncation.
+
+## Acceptance bar for the next UI phase
+
+The phase is complete only when the review screen remains usable at the minimum
+window size, all primary actions are visible without truncation, secondary
+actions remain discoverable, and the manual accessibility/participant gates are
+recorded with observed outcomes. Until then this is a substantial polish slice,
+not a claim that the UI is perfect.

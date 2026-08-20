@@ -1,4 +1,4 @@
-.PHONY: help test build release lint quality fixtures ai-evaluation release-manifest privacy-matrix coverage release-preflight clean
+.PHONY: help test build release lint quality fixtures ai-evaluation release-manifest privacy-matrix coverage release-preflight runtime-acceptance-preflight clean
 
 APP_NAME := PageLumen
 SCHEME := PageLumen
@@ -15,6 +15,7 @@ help:
 	@echo "  make release-manifest - validate the unsigned CI/release evidence contract"
 	@echo "  make coverage  - run tests with LLVM coverage and write a risk report"
 	@echo "  make release-preflight - check local archive/signing prerequisites"
+	@echo "  make runtime-acceptance-preflight - check physical GUI runtime prerequisites"
 	@echo "  make clean     - remove .build, dist, DerivedData"
 
 test:
@@ -53,6 +54,9 @@ coverage:
 
 release-preflight:
 	./script/release_preflight.sh
+
+runtime-acceptance-preflight:
+	./script/runtime_acceptance_preflight.sh
 
 clean:
 	rm -rf .build dist DerivedData

@@ -64,28 +64,44 @@ private struct ReviewHeader: View {
     var body: some View {
         @Bindable var store = store
         VStack(alignment: .leading, spacing: 12) {
-            ScrollView(.horizontal, showsIndicators: false) {
-            HStack {
+            HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Step 3: Review text")
                         .font(.headline)
                         .foregroundStyle(AccessibleStyle.primaryText)
+                        .lineLimit(1)
                     Text("Compare the preview with extracted blocks, then resolve anything marked for review.")
                         .font(.caption)
                         .foregroundStyle(AccessibleStyle.secondaryText)
+                        .lineLimit(1)
                 }
-
-                Spacer()
+                .layoutPriority(1)
 
                 Picker("Page", selection: $store.selectedPageNumber) {
                     ForEach(store.document.pages) { page in
                         Text("Page \(page.pageNumber)").tag(page.pageNumber)
                     }
                 }
-                .frame(width: 150)
+                .frame(width: 132)
 
-                Toggle("Show order", isOn: $showReadingOrder)
+                Spacer(minLength: 8)
+
+                Button {
+                    store.selectedDestination = .summaryExport
+                } label: {
+                    Label("Continue", systemImage: "arrow.right")
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!store.canNavigate(to: .summaryExport))
+                .accessibilityIdentifier("review.continue")
+                .help(store.isProcessing ? "Finish processing before exporting" : "Open summary and export options")
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                Toggle("Reading order", isOn: $showReadingOrder)
                     .toggleStyle(.switch)
+                    .help("Show the detected reading order on the page preview")
 
                 ReadingControls(preferences: $readingPreferences)
 
@@ -108,19 +124,9 @@ private struct ReviewHeader: View {
                 .help("Redo the last undone change")
 
                 Button {
-                    showConfidenceChart = true
-                } label: {
-                    Label("Confidence", systemImage: "chart.bar.doc.horizontal")
-                }
-                .popover(isPresented: $showConfidenceChart) {
-                    ConfidenceChartView(document: store.document)
-                        .frame(minWidth: 400, minHeight: 300)
-                }
-
-                Button {
                     showReviewQueue = true
                 } label: {
-                    Label("Review Queue", systemImage: "list.bullet.clipboard")
+                    Label("Queue", systemImage: "list.bullet.clipboard")
                 }
                 .accessibilityIdentifier("review.queue")
                 .popover(isPresented: $showReviewQueue, arrowEdge: .top) {
@@ -128,23 +134,35 @@ private struct ReviewHeader: View {
                         .frame(width: 360, height: 420)
                 }
 
-                Button {
-                    showEditHistory = true
+                Menu {
+                    Button {
+                        showConfidenceChart = true
+                    } label: {
+                        Label("Confidence chart", systemImage: "chart.bar.doc.horizontal")
+                    }
+                    Button {
+                        showEditHistory = true
+                    } label: {
+                        Label("Edit history", systemImage: "clock.arrow.circlepath")
+                    }
+                    Button {
+                        showDocumentChanges = true
+                    } label: {
+                        Label("Compare edits", systemImage: "arrow.left.arrow.right")
+                    }
+                    .disabled(store.documentChanges.isEmpty && store.comparisonRevisionCount == 0)
                 } label: {
-                    Label("Edit History", systemImage: "clock.arrow.circlepath")
+                    Label("More", systemImage: "ellipsis.circle")
+                }
+                .help("More review tools")
+                .popover(isPresented: $showConfidenceChart, arrowEdge: .top) {
+                    ConfidenceChartView(document: store.document)
+                        .frame(minWidth: 400, minHeight: 300)
                 }
                 .popover(isPresented: $showEditHistory, arrowEdge: .top) {
                     EditHistoryPopover()
                         .frame(width: 360, height: 360)
                 }
-
-                Button {
-                    showDocumentChanges = true
-                } label: {
-                    Label("Compare Edits", systemImage: "arrow.left.arrow.right")
-                }
-                .disabled(store.documentChanges.isEmpty && store.comparisonRevisionCount == 0)
-                .help("Compare current text with retained original OCR")
                 .popover(isPresented: $showDocumentChanges, arrowEdge: .top) {
                     DocumentChangesPopover()
                         .frame(width: 520, height: 440)
@@ -158,19 +176,12 @@ private struct ReviewHeader: View {
                         .padding(.vertical, 4)
                         .background(AccessibleStyle.elevatedBackground, in: Capsule())
                 }
-
-                Button {
-                    store.selectedDestination = .summaryExport
-                } label: {
-                    Label("Continue", systemImage: "arrow.right")
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(!store.canNavigate(to: .summaryExport))
-                .accessibilityIdentifier("review.continue")
-                .help(store.isProcessing ? "Finish processing before exporting" : "Open summary and export options")
+                Spacer(minLength: 4)
             }
+            .controlSize(.small)
             }
 
+            ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
                 TextField("Search extracted text", text: $store.reviewSearchQuery)
                     .textFieldStyle(.roundedBorder)
@@ -202,13 +213,14 @@ private struct ReviewHeader: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .frame(minWidth: 220, maxWidth: 360)
+                .frame(width: 280)
 
                 Spacer()
 
                 Text(searchSummary)
                     .font(.caption)
                     .foregroundStyle(AccessibleStyle.secondaryText)
+            }
             }
         }
         .padding(14)
@@ -312,13 +324,14 @@ private struct ReviewTrustBar: View {
                     }
                 }
             } label: {
-                Label("Issue Navigator", systemImage: "list.bullet.rectangle")
+                Label("Issues (\(store.reviewIssueCount))", systemImage: "list.bullet.rectangle")
             }
+            .help("Jump to an unresolved review issue")
 
             Button {
                 store.jumpToFirstReviewIssue()
             } label: {
-                Label("Review Issues", systemImage: "scope")
+                Label("First issue", systemImage: "scope")
             }
             .popoverTip(ReviewIssueTip(), arrowEdge: .top)
             .disabled(store.reviewIssueCount == 0)

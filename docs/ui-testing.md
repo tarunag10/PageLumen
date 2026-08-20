@@ -125,6 +125,13 @@ must separately record outcomes for onboarding, dark/light appearance,
 permission denial/recovery, import, review, and export; compilation alone is
 not evidence for those gates.
 
+Before a physical acceptance session, run `make runtime-acceptance-preflight`.
+It verifies the current signed archive and reports whether WindowServer and
+sysmond are visible to the shell. `WARN` results are host diagnostics, not app
+failures; a participant session should be run in a normal logged-in GUI
+session. `script/runtime_acceptance_preflight.sh --strict` fails only when the
+signed archive is missing or fails deep signature verification.
+
 For deterministic review/export coverage, launch with both
 `-ui-testing -ui-testing-fixture`. This loads the bounded in-memory demo
 document and opens Review without touching the persisted library. The fixture
