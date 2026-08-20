@@ -129,6 +129,33 @@ struct SettingsView: View {
                         .accessibilityElement(children: .contain)
                     }
                 }
+
+                if !store.watchFolderFailures.isEmpty {
+                    Text("Needs attention")
+                        .font(.headline)
+                        .accessibilityAddTraits(.isHeader)
+                    ForEach(store.watchFolderFailures) { failure in
+                        VStack(alignment: .leading, spacing: 6) {
+                            Label(failure.fileName, systemImage: "exclamationmark.triangle")
+                                .lineLimit(1)
+                            Text(failure.message)
+                                .font(.caption)
+                                .foregroundStyle(AccessibleStyle.secondaryText)
+                                .fixedSize(horizontal: false, vertical: true)
+                            HStack {
+                                Button("Retry") {
+                                    store.retryWatchFolderFailure(failure)
+                                }
+                                Button("Dismiss") {
+                                    store.dismissWatchFolderFailure(failure)
+                                }
+                                .buttonStyle(.borderless)
+                            }
+                        }
+                        .accessibilityElement(children: .contain)
+                        .padding(.vertical, 3)
+                    }
+                }
             }
 
             Section("Onboarding") {
@@ -193,15 +220,21 @@ struct SettingsView: View {
                 let availability = IntelligentExplainer().availability
                 switch availability {
                 case .available:
-                    Label("Available on this Mac. Results stay on-device and remain drafts until reviewed.", systemImage: "checkmark.circle")
+                    Label(IntelligentExplainer().availabilityInfo.title, systemImage: "checkmark.circle")
                         .foregroundStyle(AccessibleStyle.success)
-                case .unavailable(let reason):
-                    Label("Unavailable: \(reason). PageLumen will use deterministic summaries.", systemImage: "info.circle")
+                case .unavailable:
+                    Label(IntelligentExplainer().availabilityInfo.message, systemImage: "info.circle")
                         .foregroundStyle(AccessibleStyle.secondaryText)
                 case .notSupported:
-                    Label("Requires a newer macOS release. PageLumen will use deterministic summaries.", systemImage: "info.circle")
+                    Label(IntelligentExplainer().availabilityInfo.message, systemImage: "info.circle")
                         .foregroundStyle(AccessibleStyle.secondaryText)
                 }
+                Text(IntelligentExplainer().availabilityInfo.deviceRequirement)
+                    .font(.caption)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
+                Text(IntelligentExplainer().availabilityInfo.privacyBoundary + " " + IntelligentExplainer().availabilityInfo.inputScope)
+                    .font(.caption)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
                 Text("Apple Intelligence is optional. It receives only the selected document text and must not be treated as a source of truth without checking the cited page.")
                     .font(.callout)
                     .foregroundStyle(AccessibleStyle.secondaryText)

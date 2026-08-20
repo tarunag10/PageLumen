@@ -11,6 +11,47 @@ public struct WatchFolderCandidate: Identifiable, Equatable, Sendable {
     }
 }
 
+/// A confirmed watch-folder import that failed. The URL is retained only so
+/// the person can retry the same security-scoped file; presentation should use
+/// `fileName` and `message`, never the full path.
+public struct WatchFolderImportFailure: Identifiable, Equatable, Sendable {
+    public let id: URL
+    public let fileName: String
+    public let message: String
+
+    public init(url: URL, message: String) {
+        self.id = url
+        self.fileName = url.lastPathComponent.isEmpty ? "Unnamed file" : url.lastPathComponent
+        self.message = Self.privacySafeMessage(message, fileURL: url)
+    }
+
+    public init(url: URL, error: Error) {
+        self.init(url: url, message: error.localizedDescription)
+    }
+
+    /// Removes the source path from importer errors. This deliberately keeps
+    /// the error useful while preventing a watch-folder location from leaking
+    /// into status text, accessibility output, or screenshots.
+    public static func privacySafeMessage(_ message: String, fileURL: URL) -> String {
+        let replacements = [
+            fileURL.standardizedFileURL.path,
+            fileURL.resolvingSymlinksInPath().path,
+            fileURL.path
+        ].filter { !$0.isEmpty }
+        var sanitized = message
+        for path in replacements {
+            sanitized = sanitized.replacingOccurrences(of: path, with: "[path omitted]")
+        }
+        // Some Foundation errors include a parent path without the exact file
+        // path. Strip path-shaped whitespace-delimited tokens as a final guard.
+        sanitized = sanitized
+            .split(whereSeparator: { $0.isWhitespace })
+            .map { token in token.contains("/") ? "[path omitted]" : String(token) }
+            .joined(separator: " ")
+        return sanitized.isEmpty ? "Import failed" : sanitized
+    }
+}
+
 public enum WatchFolderError: LocalizedError, Equatable, Sendable {
     case notDirectory
     case inaccessible

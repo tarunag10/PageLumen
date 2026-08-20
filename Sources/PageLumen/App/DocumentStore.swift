@@ -92,6 +92,7 @@ final class DocumentStore {
     var watchFolderEnabled = false
     var watchFolderPathLabel = "Not configured"
     var watchFolderCandidates: [WatchFolderCandidate] = []
+    var watchFolderFailures: [WatchFolderImportFailure] = []
 
     private(set) var canUndo = false
     private(set) var canRedo = false
@@ -177,6 +178,7 @@ final class DocumentStore {
     private let watchFolderMonitor = WatchFolderMonitor()
     private var importTask: Task<Void, Never>?
     private var audioExportTask: Task<Void, Never>?
+    private var watchFolderImportsInFlight = Set<URL>()
 
     private let processor: any DocumentImporting
     private let persisting: any DocumentPersisting
@@ -277,6 +279,8 @@ final class DocumentStore {
         guard enabled else {
             watchFolderMonitor.stop()
             watchFolderCandidates.removeAll()
+            watchFolderFailures.removeAll()
+            watchFolderImportsInFlight.removeAll()
             return
         }
         startConfiguredWatchFolder()
@@ -284,11 +288,23 @@ final class DocumentStore {
 
     func importWatchFolderCandidate(_ candidate: WatchFolderCandidate) {
         watchFolderCandidates.removeAll { $0.id == candidate.id }
+        watchFolderFailures.removeAll { $0.id == candidate.id }
+        watchFolderImportsInFlight.insert(candidate.url)
         startImport(urls: [candidate.url])
     }
 
     func dismissWatchFolderCandidate(_ candidate: WatchFolderCandidate) {
         watchFolderCandidates.removeAll { $0.id == candidate.id }
+    }
+
+    func retryWatchFolderFailure(_ failure: WatchFolderImportFailure) {
+        watchFolderFailures.removeAll { $0.id == failure.id }
+        watchFolderImportsInFlight.insert(failure.id)
+        startImport(urls: [failure.id])
+    }
+
+    func dismissWatchFolderFailure(_ failure: WatchFolderImportFailure) {
+        watchFolderFailures.removeAll { $0.id == failure.id }
     }
 
     private func startConfiguredWatchFolder() {
@@ -700,6 +716,7 @@ final class DocumentStore {
                     var prepared = processed
                     applyLanguagePreference(to: &prepared)
                     batchQueue.markCompleted(item.id, document: prepared)
+                    watchFolderImportsInFlight.remove(item.url)
                     remember(prepared)
                     document = prepared
                     processingDocument = prepared
@@ -707,8 +724,13 @@ final class DocumentStore {
                 } catch is CancellationError {
                     throw CancellationError()
                 } catch {
-                    batchQueue.markFailed(item.id, message: error.localizedDescription)
-                    statusMessage = "Failed \(item.fileName): \(error.localizedDescription)"
+                    let safeMessage = WatchFolderImportFailure.privacySafeMessage(error.localizedDescription, fileURL: item.url)
+                    batchQueue.markFailed(item.id, message: safeMessage)
+                    if watchFolderImportsInFlight.remove(item.url) != nil {
+                        watchFolderFailures.removeAll { $0.id == item.url }
+                        watchFolderFailures.append(WatchFolderImportFailure(url: item.url, message: safeMessage))
+                    }
+                    statusMessage = "Failed \(item.fileName): \(safeMessage)"
                 }
             }
 

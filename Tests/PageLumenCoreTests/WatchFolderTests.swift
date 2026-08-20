@@ -82,4 +82,25 @@ final class WatchFolderTests: XCTestCase {
 
         XCTAssertEqual(reportedError, .inaccessible)
     }
+
+    func testImportFailureKeepsFilenameAndRedactsSourcePath() {
+        let file = URL(fileURLWithPath: "/Users/example/Private Watch Folder/incoming.pdf")
+        let failure = WatchFolderImportFailure(
+            url: file,
+            message: "Could not read /Users/example/Private Watch Folder/incoming.pdf: permission denied"
+        )
+
+        XCTAssertEqual(failure.fileName, "incoming.pdf")
+        XCTAssertEqual(failure.message, "Could not read [path omitted]: permission denied")
+        XCTAssertFalse(failure.message.contains("Private Watch Folder"))
+        XCTAssertFalse(failure.message.contains(file.path))
+    }
+
+    func testImportFailureProvidesFallbackMessageForEmptyErrors() {
+        let file = URL(fileURLWithPath: "/tmp/incoming.pdf")
+        let failure = WatchFolderImportFailure(url: file, message: "")
+
+        XCTAssertEqual(failure.fileName, "incoming.pdf")
+        XCTAssertEqual(failure.message, "Import failed")
+    }
 }
