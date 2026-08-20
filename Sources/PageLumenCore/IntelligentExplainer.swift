@@ -191,8 +191,14 @@ public struct IntelligentExplainer: Sendable {
         guard case .available = model.availability else { return .unavailable(Self.checkAvailabilityOnMacOS26()) }
         do {
             let session = LanguageModelSession()
-            let response = try await session.respond(to: context.prompt)
-            let text = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+            let response = try await session.respond(
+                to: context.prompt,
+                generating: GeneratedSummaryPayload.self
+            )
+            // Page references are schema-validated but are not trusted as the
+            // app's citations. GroundedSummary derives citations from the
+            // bounded source blocks supplied to this request.
+            let text = response.content.body.trimmingCharacters(in: .whitespacesAndNewlines)
             return text.isEmpty ? .failed(reason: "The on-device model returned an empty response.") : .generated(text)
         } catch {
             return .failed(reason: error.localizedDescription)
@@ -270,3 +276,15 @@ public struct IntelligentExplainer: Sendable {
 
     #endif
 }
+
+#if canImport(FoundationModels)
+/// The only Foundation Models response shape currently accepted by PageLumen.
+/// Page references are model-side hints; trusted citations remain local
+/// page/block IDs validated by the grounding layer.
+@available(macOS 26.0, *)
+@Generable(description: "A concise document summary grounded only in the supplied source blocks.")
+private struct GeneratedSummaryPayload {
+    var body: String
+    var pageReferences: [Int]
+}
+#endif

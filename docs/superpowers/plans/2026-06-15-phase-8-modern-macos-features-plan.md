@@ -62,7 +62,7 @@ If at any future date the maintainer chooses to raise the minimum to macOS 15 or
   - Exposes a synchronous `availability: IntelligentExplainer.Availability` enum (`.available`, `.unavailable(reason)`, `.notSupported`) so callers can choose without an `async` hop.
   - Implements `func summary(for: ReaderDocument, length: SummaryLength) async -> String` that calls the model with a carefully constrained prompt.
   - Implements `func explain(table: TableRegion) async -> String` and `func explain(figure: FigureRegion) async -> String`.
-- [ ] Use `@Generable` macros where the output has a fixed shape (e.g. summary has `{ body: String, pageReferences: [Int] }`).
+- [x] Use a Foundation Models `@Generable` response shape for summaries (`body: String`, `pageReferences: [Int]`). Page references are schema-validated hints only; PageLumen continues deriving trusted citations from bounded local page/block IDs.
 
 ### 8.1.2 Wrap `ExplanationEngine.summary`
 - [ ] Update `Sources/PageLumenCore/ExplanationEngine.swift:32-58` so callers can opt in to intelligent summaries. Add a new method `ExplanationEngine.summary(for:length:options:)` where `options` is a `SummaryOptions` struct with `useIntelligence: Bool` and `maxSentences: Int`. When `useIntelligence` is true, the engine delegates to `IntelligentExplainer` (when available) and otherwise returns the existing templated string.

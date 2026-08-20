@@ -19,13 +19,12 @@ states serialize only the capability state, and failed states serialize a
 generic policy message; provider diagnostics are never serialized because
 they could contain prompts or source text.
 
-The current Foundation Models adapter still obtains the generated body through
-its legacy text response. The surrounding result is normalized into this
-structured contract deterministically, including omitted-block and extraction
-warning actions. Replacing the body request with Foundation Models `@Generable`
-output is a subsequent adapter task; it must preserve this contract and must
-validate model-supplied locations against the selected source blocks before
-displaying them.
+The Foundation Models summary request uses a `@Generable` body/page-reference
+shape. The surrounding result is still normalized into this structured
+contract deterministically, including omitted-block and extraction warning
+actions. Page references are schema-validated model hints only; PageLumen
+derives trusted citations from bounded local page/block IDs and does not use
+model locations as navigation targets without local validation.
 
 Fallback behavior is deterministic: unsupported or failed model requests keep
 the local summary, cite the retained source blocks, add an explicit fallback
