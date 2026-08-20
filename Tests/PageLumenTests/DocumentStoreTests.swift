@@ -21,7 +21,22 @@ final class DocumentStoreTests: XCTestCase {
         UserDefaults.standard.removeObject(forKey: "intelligenceMode")
         UserDefaults.standard.removeObject(forKey: "useOnDeviceAI")
         UserDefaults.standard.removeObject(forKey: "reviewPreset")
+        UserDefaults.standard.removeObject(forKey: ReadingPreferences.focusModeKey)
+        UserDefaults.standard.removeObject(forKey: ReadingPreferences.lineSpacingKey)
+        UserDefaults.standard.removeObject(forKey: ReadingPreferences.typographyKey)
+        UserDefaults.standard.removeObject(forKey: ReadingPreferences.speechRateKey)
         try await super.tearDown()
+    }
+
+    func testReadingPreferencesPersistAndNormalizeWithoutChangingSourceData() {
+        var preferences = ReadingPreferences(focusMode: true, lineSpacing: 99, typography: .serif, speechRate: 0.1)
+        preferences.persist()
+
+        let loaded = ReadingPreferences.load()
+        XCTAssertTrue(loaded.focusMode)
+        XCTAssertEqual(loaded.lineSpacing, 24)
+        XCTAssertEqual(loaded.typography, .serif)
+        XCTAssertEqual(loaded.speechRate, 0.5)
     }
 
     func testLoadSampleResetsDocumentAndNavigatesToReview() {

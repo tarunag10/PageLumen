@@ -6,6 +6,7 @@ import UniformTypeIdentifiers
 struct ReviewView: View {
     @Environment(DocumentStore.self) private var store
     @State private var showReadingOrder = true
+    @State private var readingPreferences = ReadingPreferences.load()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -17,9 +18,9 @@ struct ReviewView: View {
                     .frame(minWidth: 420)
 
                 VStack(spacing: 0) {
-                    ReviewHeader(showReadingOrder: $showReadingOrder)
+                    ReviewHeader(showReadingOrder: $showReadingOrder, readingPreferences: $readingPreferences)
                     Divider()
-                    StructuredOutputView()
+                    StructuredOutputView(readingPreferences: $readingPreferences)
                 }
                 .frame(minWidth: 460)
             }
@@ -54,6 +55,7 @@ private struct ProcessingBanner: View {
 private struct ReviewHeader: View {
     @Environment(DocumentStore.self) private var store
     @Binding var showReadingOrder: Bool
+    @Binding var readingPreferences: ReadingPreferences
     @State private var showConfidenceChart = false
     @State private var showReviewQueue = false
     @State private var showEditHistory = false
@@ -82,6 +84,8 @@ private struct ReviewHeader: View {
 
                 Toggle("Show order", isOn: $showReadingOrder)
                     .toggleStyle(.switch)
+
+                ReadingControls(preferences: $readingPreferences)
 
                 Button {
                     store.undo()
@@ -198,6 +202,49 @@ private struct ReviewHeader: View {
             return "\(count) match\(count == 1 ? "" : "es")"
         }
         return "\(store.filteredSelectedPageBlocks.count) block\(store.filteredSelectedPageBlocks.count == 1 ? "" : "s") shown"
+    }
+}
+
+private struct ReadingControls: View {
+    @Binding var preferences: ReadingPreferences
+
+    var body: some View {
+        Menu {
+            Toggle("Focus selected block", isOn: $preferences.focusMode)
+            Picker("Typography", selection: $preferences.typography) {
+                ForEach(ReadingPreferences.Typography.allCases) { choice in
+                    Text(choice.label).tag(choice)
+                }
+            }
+            Picker("Line spacing", selection: lineSpacingBinding) {
+                Text("Compact").tag(0.0)
+                Text("Comfortable").tag(4.0)
+                Text("Spacious").tag(10.0)
+                Text("Extra spacious").tag(16.0)
+            }
+            Picker("Speech speed", selection: speechRateBinding) {
+                Text("0.75×").tag(0.75)
+                Text("1×").tag(1.0)
+                Text("1.25×").tag(1.25)
+                Text("1.5×").tag(1.5)
+            }
+        } label: {
+            Label("Reading", systemImage: "textformat.size")
+        }
+        .help("Adjust focus, typography, spacing, and speech speed")
+        .onChange(of: preferences) { _, newValue in
+            let normalized = newValue.normalized
+            if normalized != newValue { preferences = normalized }
+            normalized.persist()
+        }
+    }
+
+    private var lineSpacingBinding: Binding<Double> {
+        Binding(get: { preferences.lineSpacing }, set: { preferences.lineSpacing = $0 })
+    }
+
+    private var speechRateBinding: Binding<Double> {
+        Binding(get: { preferences.speechRate }, set: { preferences.speechRate = $0 })
     }
 }
 
@@ -436,6 +483,7 @@ private struct EditHistoryPopover: View {
 
 private struct StructuredOutputView: View {
     @Environment(DocumentStore.self) private var store
+    @Binding var readingPreferences: ReadingPreferences
     @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
@@ -453,7 +501,7 @@ private struct StructuredOutputView: View {
                         }
 
                         ForEach(store.filteredSelectedPageBlocks) { block in
-                            EditableBlockRow(block: block)
+                            EditableBlockRow(block: block, readingPreferences: readingPreferences)
                                 .id(block.id)
                         }
 
@@ -500,6 +548,7 @@ private struct StructuredOutputView: View {
 private struct EditableBlockRow: View {
     @Environment(DocumentStore.self) private var store
     let block: TextBlock
+    let readingPreferences: ReadingPreferences
     @State private var draft: String = ""
     @State private var commitTask: Task<Void, Never>?
     @AppStorage("boostContrast") private var boostContrast = false
@@ -557,7 +606,8 @@ private struct EditableBlockRow: View {
             }
 
             TextEditor(text: $draft)
-                .font(block.type == .heading ? .title3.weight(.semibold) : .body)
+                .font(readingPreferences.typography.font(for: block.type))
+                .lineSpacing(CGFloat(readingPreferences.lineSpacing))
                 .foregroundStyle(AccessibleStyle.primaryText)
                 .frame(minHeight: block.type == .paragraph ? 74 : 44)
                 .accessibilityValue(block.text)
@@ -580,6 +630,9 @@ private struct EditableBlockRow: View {
                 .accessibilityHint("Shows the original extracted text without replacing your edited text.")
             }
         }
+        .padding(focusHighlightPadding)
+        .background(focusHighlightColor, in: RoundedRectangle(cornerRadius: 8))
+        .onTapGesture { store.selectedBlockID = block.id }
         .padding(14)
         .accessiblePanel(borderColor: block.confidence < 0.7 ? AccessibleStyle.warning : AccessibleStyle.border)
         .overlay {
@@ -606,6 +659,14 @@ private struct EditableBlockRow: View {
             flushPendingCommit()
         }
     }
+
+    private var isFocused: Bool {
+        readingPreferences.focusMode && store.selectedBlockID == block.id
+    }
+
+    private var focusHighlightPadding: CGFloat { isFocused ? 8 : 0 }
+
+    private var focusHighlightColor: Color { isFocused ? AccessibleStyle.accentTint : .clear }
 
     // Debounce: writing on every keystroke re-derives the page filter and re-runs the summary
     // on the main actor, which is wasteful for fast typists. Wait 250 ms after the last edit.

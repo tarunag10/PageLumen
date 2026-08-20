@@ -479,7 +479,7 @@ participant and physical-device gates remain open.
 **Goal:** Validate with the people PageLumen is intended to help and reduce remediation time.
 
 - [ ] Conduct structured usability sessions with VoiceOver users, low-vision users, dyslexic readers, students, researchers, educators, and legal professionals. Obtain consent; do not retain user documents beyond the agreed research process.
-- [ ] Add reading modes: focus/line highlighting, spacing controls, typography choices, speech word/paragraph highlighting, speed controls, and saved reading preferences.
+- [x] Add a bounded reading-mode slice: focus selected block, line spacing, typography choices, speech speed, and saved reading preferences. Speech word/paragraph highlighting remains a separate host-validation item.
 - [ ] Add an assistive-technology regression checklist: VoiceOver rotor/headings, full keyboard workflow, Switch Control where relevant, large text, contrast/transparency/motion, and pointer/zoom behaviour.
 - [x] Add per-export remediation checklist, unresolved-risk summary, and a clear “manual review still required” explanation. `AccessibilityAudit` exposes deterministic checklist/risk/notice values and Step 4 renders them alongside the export gate.
 - [ ] Add quote capture with page/block citations and a “copy accessible excerpt” command.

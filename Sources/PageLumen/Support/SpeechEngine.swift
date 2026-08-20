@@ -15,7 +15,7 @@ final class SpeechEngine: NSObject, ObservableObject, AVSpeechSynthesizerDelegat
     func speak(_ text: String) {
         stop()
         let utterance = AVSpeechUtterance(string: text)
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.92
+        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * Float(ReadingPreferences.load().speechRate)
         utterance.pitchMultiplier = 1.0
         utterance.voice = selectedVoice()
         synthesizer.speak(utterance)
