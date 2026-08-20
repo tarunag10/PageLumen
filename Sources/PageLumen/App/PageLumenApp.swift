@@ -15,6 +15,7 @@ struct PageLumenApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var store = DocumentStore()
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @AppStorage("appearancePreference") private var appearancePreference = "system"
     @State private var isShowingOnboarding = false
 
     var body: some Scene {
@@ -23,6 +24,7 @@ struct PageLumenApp: App {
                 .environment(store)
                 .frame(minWidth: 1_120, minHeight: 720)
                 .tint(AccessibleStyle.accent)
+                .preferredColorScheme(appearancePreference == "light" ? .light : appearancePreference == "dark" ? .dark : nil)
                 .sheet(isPresented: $isShowingOnboarding) {
                     OnboardingView(isPresented: $isShowingOnboarding)
                         .tint(AccessibleStyle.accent)

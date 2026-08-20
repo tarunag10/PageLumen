@@ -159,7 +159,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 **Files:** `PageLumenApp.swift`, `AccessibleStyle.swift`, view snapshots/tests
 
 - [ ] Remove all forced `.preferredColorScheme(.dark)` calls.
-- [ ] Add an optional Appearance setting (`System`, `Light`, `Dark`) only if it does not override accessibility contrast/transparency requirements.
+- [x] Add an optional Appearance setting (`System`, `Light`, `Dark`) that defaults to System and leaves contrast/transparency controls independent.
 - [ ] Verify system Increase Contrast, Reduce Transparency, Reduce Motion, VoiceOver focus, keyboard-only navigation, large text, and light/dark appearance.
 - [ ] Ensure colours have semantic names/tokens and all status indicators retain a text and symbol equivalent.
 

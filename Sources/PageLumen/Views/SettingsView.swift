@@ -9,6 +9,7 @@ struct SettingsView: View {
     @AppStorage("ocrProfile") private var ocrProfile = "General"
     @AppStorage("languageHint") private var languageHint = "Automatic"
     @AppStorage("boostContrast") private var boostContrast = false
+    @AppStorage("appearancePreference") private var appearancePreference = "system"
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @AppStorage("intelligenceMode") private var intelligenceModeRaw = IntelligenceMode.off.rawValue
     @AppStorage(DocumentRepositorySettings.keepSearchableLocalCopiesKey) private var keepSearchableLocalCopies = false
@@ -80,11 +81,17 @@ struct SettingsView: View {
             }
 
             Section("Display") {
+                Picker("Appearance", selection: $appearancePreference) {
+                    Text("System").tag("system")
+                    Text("Light").tag("light")
+                    Text("Dark").tag("dark")
+                }
+                .accessibilityHint("Choose System to follow macOS appearance and accessibility settings")
                 Toggle("Boost contrast", isOn: $boostContrast)
                     .onChange(of: boostContrast) { _, newValue in
                         AccessibleStyle.boostContrast = newValue
                     }
-                Text("Boosts border and panel contrast for low-vision users.")
+                Text("System follows macOS appearance. Boost contrast sharpens borders and panel contrast for low-vision users.")
                     .font(.callout)
                     .foregroundStyle(AccessibleStyle.secondaryText)
             }
