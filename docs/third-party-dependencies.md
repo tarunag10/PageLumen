@@ -62,7 +62,11 @@ free and checks required OOXML parts, XML parseability, relationship safety,
 and path traversal/dangling-target failures. `DOCXWriterTests` additionally
 writes the generated archive to a temporary file and runs the host's
 independent `/usr/bin/unzip -tqq` package test. This validates ZIP framing and
-CRC/readability independently of PageLumen's package-part parser.
+CRC/readability independently of PageLumen's package-part parser. When
+LibreOffice and `pdftotext` are installed, the same test also converts the
+DOCX with LibreOffice and extracts the resulting PDF text with `pdftotext`,
+checking that the title, heading, table content, and body text survive the
+round trip. This is a textual consumer contract, not visual layout review.
 
 Run the focused contract with:
 
@@ -70,9 +74,10 @@ Run the focused contract with:
 swift test -Xswiftc -gnone --filter DOCXWriterTests
 ```
 
-The unzip check is not a Word, Pages, or LibreOffice rendering test. Those
-desktop-consumer checks remain a release/manual gate and are intentionally not
-claimed by the automated suite. Exact version, MIT license links, ownership,
+The independent round-trip is not a Word or Pages rendering test, and it does
+not replace visual LibreOffice review. Those desktop-consumer checks remain a
+release/manual gate and are intentionally not claimed by the automated suite.
+Exact version, MIT license links, ownership,
 security-review path, and removal procedure are recorded in
 [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md).
 

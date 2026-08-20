@@ -112,7 +112,8 @@ final class DOCXWriterTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: directory) }
 
         let input = directory.appendingPathComponent("PageLumen.docx")
-        try DOCXWriter().data(for: SampleDataFactory.makeDemoDocument(), options: .full)
+        let document = SampleDataFactory.makeDemoDocument()
+        try DOCXWriter().data(for: document, options: .full)
             .write(to: input, options: .atomic)
 
         let process = Process()
@@ -127,6 +128,30 @@ final class DOCXWriterTests: XCTestCase {
         let converted = directory.appendingPathComponent("PageLumen.pdf")
         XCTAssertTrue(FileManager.default.fileExists(atPath: converted.path))
         XCTAssertGreaterThan(try Data(contentsOf: converted).count, 100)
+
+        // Keep the second consumer independent from both PageLumen's OOXML
+        // parser and PDFKit. A successful conversion alone only proves that
+        // LibreOffice produced bytes; extracting text verifies that the
+        // document content survived the external round trip.
+        let textCandidates = ["/opt/homebrew/bin/pdftotext", "/usr/local/bin/pdftotext"]
+        guard let textExecutable = textCandidates.first(where: { FileManager.default.isExecutableFile(atPath: $0) }) else {
+            throw XCTSkip("pdftotext is not installed on this verification host")
+        }
+        let extractedURL = directory.appendingPathComponent("PageLumen.txt")
+        let textProcess = Process()
+        textProcess.executableURL = URL(fileURLWithPath: textExecutable)
+        textProcess.arguments = [converted.path, extractedURL.path]
+        textProcess.standardOutput = Pipe()
+        textProcess.standardError = Pipe()
+        try textProcess.run()
+        textProcess.waitUntilExit()
+
+        XCTAssertEqual(textProcess.terminationStatus, 0, "Independent PDF text consumer rejected the LibreOffice output")
+        let extracted = try String(contentsOf: extractedURL, encoding: .utf8)
+        XCTAssertTrue(extracted.contains(document.title), "Round-tripped output lost the document title")
+        XCTAssertTrue(extracted.contains("IMPORT FLOW"), "Round-tripped output lost the first heading")
+        XCTAssertTrue(extracted.contains("PDF import"), "Round-tripped output lost table content")
+        XCTAssertTrue(extracted.contains("PageLumen turns inaccessible visual documents"), "Round-tripped output lost body text")
     }
 
     func testDOCXPackageValidatorRejectsUnsafeAndDanglingRelationships() {

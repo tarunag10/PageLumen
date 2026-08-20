@@ -368,8 +368,11 @@ Current checkpoint: ZIPFoundation is exactly pinned for the shipping app target;
 and required-part checks in the core target. The focused DOCX suite covers
 archive output, OOXML parts, malformed/missing package failures, unsafe and
 external relationship rejection, independent system-unzip readability,
-escaping, and delegation. Independent Word/Pages/LibreOffice consumer review
-remains an explicit manual gate and is not claimed here.
+escaping, and delegation. When available, LibreOffice conversion followed by
+independent `pdftotext` extraction also checks title, heading, table, and body
+text preservation across the DOCX-to-PDF round trip. Independent Word/Pages
+and visual LibreOffice consumer review remains an explicit manual gate and is
+not claimed here.
 
 **Why now:** It is a contained replacement for a reliability-sensitive custom implementation.
 
