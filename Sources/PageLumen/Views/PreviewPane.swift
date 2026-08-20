@@ -64,6 +64,7 @@ private struct PreviewImage: View {
 }
 
 private struct ReadingOrderOverlay: View {
+    @Environment(DocumentStore.self) private var store
     let page: ReaderPage
     @AppStorage("boostContrast") private var boostContrast = false
 
@@ -71,22 +72,33 @@ private struct ReadingOrderOverlay: View {
         GeometryReader { proxy in
             ForEach(page.blocks) { block in
                 let rect = scaled(block.bounds, in: proxy.size)
-                ZStack(alignment: .topLeading) {
-                    RoundedRectangle(cornerRadius: 5)
-                        .stroke(AccessibleStyle.accentBright, lineWidth: 2)
-                        .background(AccessibleStyle.accent.opacity(0.08))
-                    Text("\(block.readingOrderIndex + 1)")
-                        .font(.caption2.bold())
-                        .padding(5)
-                        .background(AccessibleStyle.accentGradient, in: Circle())
-                        .foregroundStyle(.white)
-                        .offset(x: -8, y: -8)
+                Button {
+                    store.selectedBlockID = block.id
+                    store.selectedPageNumber = block.pageNumber
+                    store.selectedDestination = .review
+                } label: {
+                    ZStack(alignment: .topLeading) {
+                        RoundedRectangle(cornerRadius: 5)
+                            .stroke(
+                                store.selectedBlockID == block.id ? AccessibleStyle.focusBorder : AccessibleStyle.accentBright,
+                                lineWidth: store.selectedBlockID == block.id ? 3 : 2
+                            )
+                            .background(AccessibleStyle.accent.opacity(0.08))
+                        Text("\(block.readingOrderIndex + 1)")
+                            .font(.caption2.bold())
+                            .padding(5)
+                            .background(AccessibleStyle.accentGradient, in: Circle())
+                            .foregroundStyle(.white)
+                            .offset(x: -8, y: -8)
+                    }
                 }
+                .buttonStyle(.plain)
                 .frame(width: max(rect.width, 24), height: max(rect.height, 20))
                 .position(x: rect.midX, y: rect.midY)
                 .accessibilityElement()
-                .accessibilityLabel("Block \(block.readingOrderIndex + 1)")
+                .accessibilityLabel("Block \(block.readingOrderIndex + 1), page \(block.pageNumber)")
                 .accessibilityValue(block.text.prefix(80))
+                .accessibilityHint("Select this source block in the editable review text.")
             }
         }
         .accessibilityElement(children: .contain)
