@@ -1,11 +1,16 @@
 import XCTest
 @testable import PageLumen
 @testable import PageLumenCore
+#if canImport(ScreenCaptureKit)
+import ScreenCaptureKit
+#endif
 
 final class ScreenshotCaptureServiceTests: XCTestCase {
     func testArgumentBuilderForRegion() {
         let service = ScreenshotCaptureService()
-        _ = service
+        let output = URL(fileURLWithPath: "/tmp/region.png")
+        XCTAssertEqual(service.legacyArguments(for: .selectedRegion, output: output), ["-i", output.path])
+        XCTAssertEqual(service.legacyArguments(for: .window, output: output), ["-w", output.path])
     }
 
     func testCaptureThrowsWhenOutputDirectoryIsUnwritable() async {
@@ -61,6 +66,32 @@ final class ScreenshotCaptureServiceTests: XCTestCase {
             .noShareableContent
         )
     }
+
+    #if canImport(ScreenCaptureKit)
+    func testScreenCaptureKitNoWindowAndNoDisplayErrorsMapToNoShareableContent() {
+        XCTAssertEqual(
+            ScreenshotCaptureError.modernCaptureError(
+                NSError(domain: SCStreamErrorDomain, code: SCStreamError.Code.noWindowList.rawValue)
+            ),
+            .noShareableContent
+        )
+        XCTAssertEqual(
+            ScreenshotCaptureError.modernCaptureError(
+                NSError(domain: SCStreamErrorDomain, code: SCStreamError.Code.noDisplayList.rawValue)
+            ),
+            .noShareableContent
+        )
+    }
+
+    func testScreenCaptureKitPermissionErrorMapsToPermissionDenied() {
+        XCTAssertEqual(
+            ScreenshotCaptureError.modernCaptureError(
+                NSError(domain: SCStreamErrorDomain, code: SCStreamError.Code.userDeclined.rawValue)
+            ),
+            .permissionDenied
+        )
+    }
+    #endif
 
     func testScreenshotCaptureModeFilePrefixes() {
         XCTAssertEqual(ScreenshotCaptureMode.selectedRegion.filePrefix, "PageLumen-Selection")

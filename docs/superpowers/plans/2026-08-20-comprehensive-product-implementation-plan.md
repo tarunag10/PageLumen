@@ -150,7 +150,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [x] Retain a narrowly scoped legacy region picker only if a supported native alternative cannot serve macOS 14; document why and make it visible in the UI.
 - [x] Provide a pre-permission explanatory screen, a System Settings deep-link/help path after denial, cancellation, and stale temporary-file cleanup on app launch. Manual permission-denial recovery remains a participant gate.
 - [x] Ensure temporary captures are removed after successful processing unless the person explicitly saves them, and clean stale PageLumen capture files from the temporary directory at service startup. The cleanup is prefix-scoped, age-bounded, and regression-tested without touching unrelated files.
-- [ ] Add tests for error mapping, no selected window, cancellation, temp cleanup, and command argument construction. Error mapping now covers ScreenCaptureKit user-declined and no-window/no-display/no-source codes, alongside cancellation, cleanup, and deterministic legacy arguments; real no-selected-window and macOS 14/current-release participant validation remain open.
+- [ ] Add tests for error mapping, no selected window, cancellation, temp cleanup, and command argument construction. `ScreenshotCaptureServiceTests` now has 10 passing tests covering ScreenCaptureKit permission/no-shareable-content mappings, cancellation, cleanup, and exact legacy arguments; real picker no-selection and macOS 14/current-release participant validation remain open.
 
 **Acceptance:** Capture never selects a random window. Permission denial or dismissal leaves no imported document and gives a clear next action.
 
