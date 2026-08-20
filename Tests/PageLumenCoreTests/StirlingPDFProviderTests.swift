@@ -92,6 +92,57 @@ final class StirlingPDFProviderTests: XCTestCase {
         XCTAssertEqual(optedIn.state, .available(StirlingPDFCapabilities(status: "UP")))
     }
 
+    func testEndpointCapabilityStateSurfacesAdvancedRemoteWarningWithoutContactingServer() {
+        XCTAssertEqual(
+            StirlingPDFEndpoint(baseURL: URL(string: "http://127.0.0.1:8080")!).capabilityState,
+            .loopback
+        )
+        let remote = StirlingPDFEndpoint(baseURL: URL(string: "https://example.com")!)
+        XCTAssertEqual(remote.capabilityState, .remoteHTTPSRequiresAdvancedOptIn)
+        XCTAssertTrue(remote.capabilityState.requiresAdvancedWarning)
+        XCTAssertTrue(remote.capabilityState.userMessage.contains("retention"))
+        XCTAssertEqual(
+            StirlingPDFEndpoint(baseURL: URL(string: "https://example.com")!, allowRemoteHTTPS: true).capabilityState,
+            .remoteHTTPSAdvancedOptIn
+        )
+        XCTAssertEqual(
+            StirlingPDFEndpoint(baseURL: URL(string: "http://example.com")!).capabilityState,
+            .remoteHTTPBlocked
+        )
+    }
+
+    @MainActor
+    func testAPIKeyOrRemoteUploadRequiresPrivacyOffAndPerOperationConfirmation() async throws {
+        let input = try XCTUnwrap(Data(contentsOf: Fixtures.tinyPDF(text: "guard")))
+        let transport = StubTransport { request in
+            XCTFail("guard must reject before transport")
+            return (input, makeResponse(for: request, statusCode: 200, contentType: "application/pdf"))
+        }
+        let compressor = StirlingPDFCompressor(transport: transport)
+        let keyed = StirlingPDFEndpoint(baseURL: URL(string: "http://localhost")!, apiKey: "secret")
+
+        await XCTAssertThrowsErrorAsync(try await compressor.compress(
+            data: input, endpoint: keyed,
+            authorization: StirlingPDFOperationAuthorization(privacyModeEnabled: true, operationConfirmed: true)
+        )) { error in
+            XCTAssertEqual(error as? StirlingPDFCompressionError, .uploadNotAuthorized(.privacyModeEnabled))
+        }
+        await XCTAssertThrowsErrorAsync(try await compressor.compress(
+            data: input, endpoint: keyed,
+            authorization: StirlingPDFOperationAuthorization(privacyModeEnabled: false, operationConfirmed: false)
+        )) { error in
+            XCTAssertEqual(error as? StirlingPDFCompressionError, .uploadNotAuthorized(.confirmationRequired))
+        }
+
+        let remote = StirlingPDFEndpoint(baseURL: URL(string: "https://example.com")!, allowRemoteHTTPS: true)
+        await XCTAssertThrowsErrorAsync(try await compressor.compress(
+            data: input, endpoint: remote,
+            authorization: StirlingPDFOperationAuthorization(privacyModeEnabled: true, operationConfirmed: true)
+        )) { error in
+            XCTAssertEqual(error as? StirlingPDFCompressionError, .uploadNotAuthorized(.privacyModeEnabled))
+        }
+    }
+
     func testProbeRejectsCredentialsAndUnsupportedSchemes() async {
         let probe = StirlingPDFCapabilityProbe(transport: StubTransport { request in
             (Data(), makeResponse(for: request, statusCode: 200))
@@ -120,7 +171,8 @@ final class StirlingPDFProviderTests: XCTestCase {
         let result = try await StirlingPDFCompressor(transport: transport).compress(
             data: input,
             filename: "../../private.pdf",
-            endpoint: StirlingPDFEndpoint(baseURL: URL(string: "http://localhost:8080")!, apiKey: "secret")
+            endpoint: StirlingPDFEndpoint(baseURL: URL(string: "http://localhost:8080")!, apiKey: "secret"),
+            authorization: confirmedAuthorization
         )
         XCTAssertEqual(result.data, input)
         XCTAssertEqual(result.httpStatusCode, 200)
@@ -132,14 +184,14 @@ final class StirlingPDFProviderTests: XCTestCase {
         let auth = StirlingPDFCompressor(transport: StubTransport { request in
             (Data(), makeResponse(for: request, statusCode: 403))
         })
-        await XCTAssertThrowsErrorAsync(try await auth.compress(data: input, endpoint: localEndpoint())) { error in
+        await XCTAssertThrowsErrorAsync(try await auth.compress(data: input, endpoint: localEndpoint(), authorization: confirmedAuthorization)) { error in
             XCTAssertEqual(error as? StirlingPDFCompressionError, .authenticationRequired(statusCode: 403))
         }
 
         let failed = StirlingPDFCompressor(transport: StubTransport { request in
             (Data(), makeResponse(for: request, statusCode: 422))
         })
-        await XCTAssertThrowsErrorAsync(try await failed.compress(data: input, endpoint: localEndpoint())) { error in
+        await XCTAssertThrowsErrorAsync(try await failed.compress(data: input, endpoint: localEndpoint(), authorization: confirmedAuthorization)) { error in
             XCTAssertEqual(error as? StirlingPDFCompressionError, .requestFailed(statusCode: 422))
         }
     }
@@ -148,14 +200,14 @@ final class StirlingPDFProviderTests: XCTestCase {
     func testCompressMapsCancellationAndMalformedOutput() async throws {
         let input = try XCTUnwrap(Data(contentsOf: Fixtures.tinyPDF(text: "input")))
         let cancelled = StirlingPDFCompressor(transport: StubTransport { _ in throw CancellationError() })
-        await XCTAssertThrowsErrorAsync(try await cancelled.compress(data: input, endpoint: localEndpoint())) { error in
+        await XCTAssertThrowsErrorAsync(try await cancelled.compress(data: input, endpoint: localEndpoint(), authorization: confirmedAuthorization)) { error in
             XCTAssertEqual(error as? StirlingPDFCompressionError, .cancelled)
         }
 
         let malformed = StirlingPDFCompressor(transport: StubTransport { request in
             (Data("not a PDF".utf8), makeResponse(for: request, statusCode: 200, contentType: "application/pdf"))
         })
-        await XCTAssertThrowsErrorAsync(try await malformed.compress(data: input, endpoint: localEndpoint())) { error in
+        await XCTAssertThrowsErrorAsync(try await malformed.compress(data: input, endpoint: localEndpoint(), authorization: confirmedAuthorization)) { error in
             XCTAssertEqual(error as? StirlingPDFCompressionError, .outputIsNotPDF)
         }
     }
@@ -169,7 +221,8 @@ final class StirlingPDFProviderTests: XCTestCase {
         })
         await XCTAssertThrowsErrorAsync(try await compressor.compress(
             data: input,
-            endpoint: StirlingPDFEndpoint(baseURL: URL(string: "http://example.com")!)
+            endpoint: StirlingPDFEndpoint(baseURL: URL(string: "http://example.com")!),
+            authorization: confirmedAuthorization
         )) { error in
             XCTAssertEqual(error as? StirlingPDFCompressionError, .invalidEndpoint(.remoteHTTPNotAllowed))
         }
@@ -203,7 +256,8 @@ final class StirlingPDFProviderTests: XCTestCase {
         }
         let result = try await StirlingPDFMerger(transport: transport).merge(
             inputs: [(first, "one.pdf"), (second, "nested/two.pdf")],
-            endpoint: StirlingPDFEndpoint(baseURL: URL(string: "http://localhost:8080")!, apiKey: "secret")
+            endpoint: StirlingPDFEndpoint(baseURL: URL(string: "http://localhost:8080")!, apiKey: "secret"),
+            authorization: confirmedAuthorization
         )
         XCTAssertEqual(result.data, first)
         XCTAssertEqual(result.httpStatusCode, 200)
@@ -216,22 +270,22 @@ final class StirlingPDFProviderTests: XCTestCase {
             XCTFail("transport must not be called for invalid merge input")
             return (input, makeResponse(for: request, statusCode: 200, contentType: "application/pdf"))
         })
-        await XCTAssertThrowsErrorAsync(try await merger.merge(inputs: [(input, "only.pdf")], endpoint: localEndpoint())) { error in
+        await XCTAssertThrowsErrorAsync(try await merger.merge(inputs: [(input, "only.pdf")], endpoint: localEndpoint(), authorization: confirmedAuthorization)) { error in
             XCTAssertEqual(error as? StirlingPDFMergeError, .tooFewInputs)
         }
         await XCTAssertThrowsErrorAsync(try await merger.merge(
-            inputs: [(input, "one.pdf"), (input, "two.pdf")], endpoint: localEndpoint(), maximumTotalInputBytes: 1
+            inputs: [(input, "one.pdf"), (input, "two.pdf")], endpoint: localEndpoint(), authorization: confirmedAuthorization, maximumTotalInputBytes: 1
         )) { error in
             XCTAssertEqual(error as? StirlingPDFMergeError, .inputTooLarge(limit: 1))
         }
         await XCTAssertThrowsErrorAsync(try await merger.merge(
-            inputs: Array(repeating: (input, "copy.pdf"), count: 3), endpoint: localEndpoint(), maximumInputCount: 2
+            inputs: Array(repeating: (input, "copy.pdf"), count: 3), endpoint: localEndpoint(), authorization: confirmedAuthorization, maximumInputCount: 2
         )) { error in
             XCTAssertEqual(error as? StirlingPDFMergeError, .tooManyInputs(limit: 2))
         }
         let cancelled = StirlingPDFMerger(transport: StubTransport { _ in throw CancellationError() })
         await XCTAssertThrowsErrorAsync(try await cancelled.merge(
-            inputs: [(input, "one.pdf"), (input, "two.pdf")], endpoint: localEndpoint()
+            inputs: [(input, "one.pdf"), (input, "two.pdf")], endpoint: localEndpoint(), authorization: confirmedAuthorization
         )) { error in
             XCTAssertEqual(error as? StirlingPDFMergeError, .cancelled)
         }
@@ -244,7 +298,7 @@ final class StirlingPDFProviderTests: XCTestCase {
             (Data(), makeResponse(for: request, statusCode: 401))
         })
         await XCTAssertThrowsErrorAsync(try await auth.merge(
-            inputs: [(input, "one.pdf"), (input, "two.pdf")], endpoint: localEndpoint()
+            inputs: [(input, "one.pdf"), (input, "two.pdf")], endpoint: localEndpoint(), authorization: confirmedAuthorization
         )) { error in
             XCTAssertEqual(error as? StirlingPDFMergeError, .authenticationRequired(statusCode: 401))
         }
@@ -252,7 +306,7 @@ final class StirlingPDFProviderTests: XCTestCase {
             (Data("bad".utf8), makeResponse(for: request, statusCode: 200, contentType: "application/pdf"))
         })
         await XCTAssertThrowsErrorAsync(try await malformed.merge(
-            inputs: [(input, "one.pdf"), (input, "two.pdf")], endpoint: localEndpoint()
+            inputs: [(input, "one.pdf"), (input, "two.pdf")], endpoint: localEndpoint(), authorization: confirmedAuthorization
         )) { error in
             XCTAssertEqual(error as? StirlingPDFMergeError, .outputIsNotPDF)
         }
@@ -260,6 +314,10 @@ final class StirlingPDFProviderTests: XCTestCase {
 
     private func localEndpoint() -> StirlingPDFEndpoint {
         StirlingPDFEndpoint(baseURL: URL(string: "http://127.0.0.1:8080")!)
+    }
+
+    private var confirmedAuthorization: StirlingPDFOperationAuthorization {
+        StirlingPDFOperationAuthorization(privacyModeEnabled: false, operationConfirmed: true)
     }
 
 }

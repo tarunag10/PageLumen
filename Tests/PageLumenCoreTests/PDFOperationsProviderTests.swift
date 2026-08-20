@@ -37,6 +37,7 @@ final class PDFOperationsProviderTests: XCTestCase {
         }
         let provider = StirlingPDFOperationsProvider(
             endpoint: StirlingPDFEndpoint(baseURL: URL(string: "http://127.0.0.1:8080")!, apiKey: "secret"),
+            authorization: StirlingPDFOperationAuthorization(privacyModeEnabled: false, operationConfirmed: true),
             transport: transport
         )
         XCTAssertEqual(provider.supportedOperations, [.compress, .merge])
@@ -57,6 +58,7 @@ final class PDFOperationsProviderTests: XCTestCase {
         }
         _ = StirlingPDFOperationsProvider(
             endpoint: StirlingPDFEndpoint(baseURL: URL(string: "http://localhost")!),
+            authorization: StirlingPDFOperationAuthorization(privacyModeEnabled: false, operationConfirmed: true),
             transport: transport
         )
     }

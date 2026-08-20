@@ -25,7 +25,12 @@ third-party dependency:
 - compression and merge are opt-in operations with bounded request and
   response sizes, cancellation, local PDF validation, and atomic output;
 - loopback HTTP is the default allowed endpoint; remote HTTP is rejected;
-  remote HTTPS requires an explicit advanced opt-in and warning;
+  remote HTTPS requires an explicit advanced opt-in and warning. The core
+  endpoint capability state exposes this distinction without contacting the
+  service;
+- every compression or merge upload requires a per-operation authorization.
+  Privacy mode fails closed, and an API-key or any remote endpoint cannot
+  upload without both privacy mode disabled and affirmative confirmation;
 - API keys are secrets, stored through the macOS Keychain boundary when the
   app shell persists them, and are never part of a URL, document provenance,
   export, log, fixture, or error message;
@@ -102,10 +107,13 @@ advanced, separately consented configuration, not a normal network path.
   invalidate any cached capability result.
 
 The current core package provides the typed `StirlingPDFCredentialStore` and
-`KeychainStirlingPDFCredentialStore` boundary. A user-facing settings flow
-still needs to connect that boundary to explicit consent, capability probing,
-per-operation confirmation, and recovery messaging before this integration is
-presented as a finished product feature.
+`KeychainStirlingPDFCredentialStore` boundary. Compression and merge require
+`StirlingPDFOperationAuthorization`; this value is deliberately small and
+contains no source content or secret. The app shell must create it only after
+showing the endpoint, operation, server-retention limitation, and confirmation
+control. A user-facing settings flow still needs to connect the Keychain
+boundary to capability probing and recovery messaging before this integration
+is presented as a finished product feature.
 
 ## Security owner and response process
 
@@ -154,4 +162,3 @@ blocked until all of the following are attached to the release review:
 - user-facing consent, endpoint, privacy, and failure UI;
 - tests for offline/privacy-mode fail-closed behaviour and credential removal;
 - a documented update owner, advisory response SLA, and removal commit path.
-

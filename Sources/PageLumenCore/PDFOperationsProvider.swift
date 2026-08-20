@@ -77,14 +77,17 @@ public struct StirlingPDFOperationsProvider: PDFOperationsProvider, Sendable {
     public let supportedOperations: Set<PDFOperationKind> = [.compress, .merge]
 
     private let endpoint: StirlingPDFEndpoint
+    private let authorization: StirlingPDFOperationAuthorization
     private let compressor: StirlingPDFCompressor
     private let merger: StirlingPDFMerger
 
     public init(
         endpoint: StirlingPDFEndpoint,
+        authorization: StirlingPDFOperationAuthorization,
         transport: any StirlingPDFHTTPTransport = URLSessionStirlingPDFHTTPTransport()
     ) {
         self.endpoint = endpoint
+        self.authorization = authorization
         self.compressor = StirlingPDFCompressor(transport: transport)
         self.merger = StirlingPDFMerger(transport: transport)
     }
@@ -99,12 +102,13 @@ public struct StirlingPDFOperationsProvider: PDFOperationsProvider, Sendable {
             let result = try await compressor.compress(
                 data: request.documents[0].data,
                 filename: request.documents[0].filename,
-                endpoint: endpoint
+                endpoint: endpoint,
+                authorization: authorization
             )
             return PDFOperationResult(operation: .compress, providerID: providerID, data: result.data)
         case .merge:
             guard request.documents.count >= 2 else { throw PDFOperationsProviderError.invalidRequest }
-            let result = try await merger.merge(inputs: request.documents, endpoint: endpoint)
+            let result = try await merger.merge(inputs: request.documents, endpoint: endpoint, authorization: authorization)
             return PDFOperationResult(operation: .merge, providerID: providerID, data: result.data)
         case .validate:
             throw PDFOperationsProviderError.unsupportedOperation(.validate)

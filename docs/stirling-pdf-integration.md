@@ -26,8 +26,9 @@ Java/Spring/React/Tauri implementation.
    person enters and verifies a local base URL.
 4. Store the URL and API key in Keychain; never put either in `UserDefaults`,
    logs, exports, crash reports, or source control.
-5. Require an explicit per-operation confirmation that the selected PDF will
-   be sent to the configured local service. Privacy mode disables this path.
+5. Require an explicit per-operation authorization at the core upload boundary.
+   Privacy mode disables this path, including loopback instances configured
+   with an API key.
 6. Show the provider, endpoint, local/external status, operation, progress, and
    output destination in the UI before execution.
 7. Write results to a caller-selected destination atomically and retain no
@@ -58,12 +59,13 @@ without binding a port or sending document data.
 
 `StirlingPDFEndpoint` accepts loopback HTTP (`localhost`, `127.0.0.1`, or
 `::1`) and rejects remote HTTP by default. Remote HTTPS is also rejected until
-the caller explicitly sets `allowRemoteHTTPS`, which is the point where the
-future Settings warning and confirmation must be attached. URLs containing
-credentials, query strings, or fragments are rejected. Stage A keeps an API
-key in memory only and sends it as `X-API-KEY`; it does not persist, log, or
-export the key. Keychain storage is required before any user-facing provider
-configuration ships.
+the caller explicitly sets `allowRemoteHTTPS`. `capabilityState` exposes
+loopback, blocked remote HTTP, and advanced remote HTTPS states, plus
+privacy-safe warning text for Settings. URLs containing credentials, query
+strings, or fragments are rejected. Stage A keeps an API key in memory only
+and sends it as `X-API-KEY`; it does not persist, log, or export the key.
+Keychain storage is required before any user-facing provider configuration
+ships.
 
 The probe returns distinct states for availability, authentication failure,
 timeout, cancellation, TLS failure, unavailable services, malformed status

@@ -209,7 +209,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [x] Add `ProvenanceRecord` or typed fields rather than expanding unstructured metadata dictionaries. `BlockProvenance` is now Codable, backward-compatible, and carried by OCR/embedded-text blocks and explicit text/type edits.
 - [ ] Record source (`embeddedPDF`, Vision, user edit, Apple intelligence), page, bounds, confidence, timestamp, and parent source when a block is altered. Embedded/PDF/Vision, text/type edits, and table/figure description edits are wired; AI-generated summaries now retain privacy-safe engine/timestamp/citation metadata, while AI block-level lineage remains open.
 - [x] Replace scattered warning generation with a `ReviewFinding` model: `id`, severity, category, page/block/table/figure reference, explanation, resolved state, and typed provenance. `ReviewFindingProvenance` records source, page, bounds, parent block, and timestamp without copying source text; findings now carry explicit accept/reject decisions and exported decision state.
-- [ ] Prioritise findings: unreadable page, missing structure, low confidence, conflicting extraction sources, unresolved table headers, missing image description, and unreviewed AI contribution.
+- [x] Prioritise findings: unreadable page, missing structure, low confidence, conflicting extraction sources, unresolved table headers, missing image description, and unreviewed AI contribution. `ReviewFindingCategory` provides a stable persisted category and deterministic queue ordering; see `docs/review-findings.md`.
 - [x] Persist resolution state and include it in exports/audit reports without exposing source text when anonymisation is selected. Block decisions are stored as metadata, JSON review findings include `decision`, and rejected suggestions remain excluded from the active queue while source text is unchanged.
 
 **Acceptance:** Every correction and AI suggestion can be traced to a source region or clearly marked as inference.
@@ -433,8 +433,13 @@ repeatable pipelines. See [`docs/stirling-pdf-integration.md`](../../stirling-pd
   validation provider as the default and a separately enabled Stirling
   compress/merge adapter. Focused `PDFOperationsProviderTests` pass (4/4);
   Vision-backed extraction remains in the existing native processing path.
-- [ ] Require an explicit local base URL, Keychain-held API key, capability
+- [x] Require an explicit local base URL, Keychain-held API key, capability
   probe, privacy-mode check, and per-operation confirmation before upload.
+  `StirlingPDFEndpoint.capabilityState` exposes loopback, blocked remote HTTP,
+  and advanced remote HTTPS warning states; `StirlingPDFOperationAuthorization`
+  is required by compress/merge and fails closed before transport when privacy
+  mode is enabled or confirmation is absent. App-shell Settings wiring and the
+  physical privacy/confirmation participant gate remain open.
 - [x] Start with a cancellable compress operation; validate the returned PDF
   before offering replacement, and write output atomically. Stage B is covered
   by `StirlingPDFCompressor`, `StirlingPDFAtomicOutput`, and the focused
@@ -445,8 +450,9 @@ repeatable pipelines. See [`docs/stirling-pdf-integration.md`](../../stirling-pd
   Stirling provider tests pass). Rearrange and typed pipelines remain separate
   follow-up work.
 - [x] Keep remote endpoints disabled by default; the core endpoint validator
-  rejects remote HTTP and requires explicit opt-in for remote HTTPS. The
-  user-facing warning/consent flow remains open.
+  rejects remote HTTP and requires explicit opt-in for remote HTTPS. The core
+  capability state supplies privacy-safe advanced warning text; the user-facing
+  Settings warning/consent flow and physical participant gate remain open.
 - [x] Record the current license, security, endpoint, source-content retention,
   credential, owner, and removal decisions in
   [`docs/stirling-pdf-security-review.md`](../../stirling-pdf-security-review.md).

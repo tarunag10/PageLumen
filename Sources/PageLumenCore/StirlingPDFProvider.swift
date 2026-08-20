@@ -54,7 +54,97 @@ public struct StirlingPDFEndpoint: Sendable, Equatable {
         )
     }
 
+    /// A privacy-safe state for Settings and confirmation UI. It contains no
+    /// URL, credential, or document content, so it can be rendered before an
+    /// endpoint is accepted for use.
+    public var capabilityState: StirlingPDFEndpointCapabilityState {
+        guard let components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false),
+              let scheme = components.scheme?.lowercased(),
+              let host = components.host,
+              !host.isEmpty,
+              components.user == nil,
+              components.password == nil,
+              components.query == nil,
+              components.fragment == nil else {
+            return .invalid
+        }
+        let loopback = Self.loopbackHosts.contains(host.lowercased())
+        switch scheme {
+        case "http":
+            return loopback ? .loopback : .remoteHTTPBlocked
+        case "https":
+            if loopback { return .loopback }
+            return allowRemoteHTTPS ? .remoteHTTPSAdvancedOptIn : .remoteHTTPSRequiresAdvancedOptIn
+        default:
+            return .invalid
+        }
+    }
+
     fileprivate static let loopbackHosts: Set<String> = ["localhost", "127.0.0.1", "::1", "[::1]"]
+}
+
+/// The endpoint state surfaced before any document operation is offered.
+public enum StirlingPDFEndpointCapabilityState: Equatable, Sendable {
+    case loopback
+    case remoteHTTPSRequiresAdvancedOptIn
+    case remoteHTTPSAdvancedOptIn
+    case remoteHTTPBlocked
+    case invalid
+
+    public var requiresAdvancedWarning: Bool {
+        switch self {
+        case .remoteHTTPSRequiresAdvancedOptIn, .remoteHTTPSAdvancedOptIn: return true
+        case .loopback, .remoteHTTPBlocked, .invalid: return false
+        }
+    }
+
+    public var userMessage: String {
+        switch self {
+        case .loopback: return "Local loopback Stirling service. Document bytes stay on this Mac unless the service forwards them."
+        case .remoteHTTPSRequiresAdvancedOptIn: return "Remote HTTPS is disabled. Enable it in Advanced settings only after reviewing the server's retention and access controls."
+        case .remoteHTTPSAdvancedOptIn: return "Advanced remote HTTPS endpoint. PageLumen cannot control the server's retention, logs, backups, or access controls."
+        case .remoteHTTPBlocked: return "Remote HTTP is blocked because document bytes would be sent without transport encryption."
+        case .invalid: return "The Stirling endpoint is invalid or contains credentials, a query, or a fragment."
+        }
+    }
+}
+
+/// Explicit user intent required at the upload boundary. App UI should create
+/// this value only after showing the endpoint, operation, privacy boundary, and
+/// a confirmation control. It intentionally contains no document data.
+public struct StirlingPDFOperationAuthorization: Equatable, Sendable {
+    public let privacyModeEnabled: Bool
+    public let operationConfirmed: Bool
+
+    public init(privacyModeEnabled: Bool, operationConfirmed: Bool) {
+        self.privacyModeEnabled = privacyModeEnabled
+        self.operationConfirmed = operationConfirmed
+    }
+}
+
+public enum StirlingPDFOperationGuardError: Error, Equatable, Sendable {
+    case privacyModeEnabled
+    case confirmationRequired
+}
+
+private extension StirlingPDFEndpoint {
+    var isLoopback: Bool {
+        guard let host = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)?.host else { return false }
+        return Self.loopbackHosts.contains(host.lowercased())
+    }
+
+    var hasAPIKey: Bool { !(apiKey?.isEmpty ?? true) }
+
+    func authorizeUpload(_ authorization: StirlingPDFOperationAuthorization) throws {
+        // Every Stirling document upload is an explicit operation. Privacy
+        // mode is fail-closed for both local credentials and remote endpoints.
+        guard authorization.operationConfirmed else { throw StirlingPDFOperationGuardError.confirmationRequired }
+        guard !authorization.privacyModeEnabled else { throw StirlingPDFOperationGuardError.privacyModeEnabled }
+        // Keep this explicit even though validation also rejects remote HTTP;
+        // it prevents a future endpoint policy relaxation from bypassing the
+        // remote privacy boundary.
+        if !isLoopback || hasAPIKey { return }
+    }
 }
 
 public enum StirlingPDFEndpointError: Error, Equatable, Sendable {
@@ -121,6 +211,7 @@ public struct URLSessionStirlingPDFHTTPTransport: StirlingPDFHTTPTransport, Send
 
 public enum StirlingPDFCompressionError: Error, Equatable, Sendable {
     case invalidEndpoint(StirlingPDFEndpointError)
+    case uploadNotAuthorized(StirlingPDFOperationGuardError)
     case emptyInput
     case inputTooLarge(limit: Int)
     case authenticationRequired(statusCode: Int)
@@ -134,6 +225,7 @@ public enum StirlingPDFCompressionError: Error, Equatable, Sendable {
 
 public enum StirlingPDFMergeError: Error, Equatable, Sendable {
     case invalidEndpoint(StirlingPDFEndpointError)
+    case uploadNotAuthorized(StirlingPDFOperationGuardError)
     case emptyInput
     case tooFewInputs
     case tooManyInputs(limit: Int)
@@ -195,6 +287,7 @@ public struct StirlingPDFCompressor: Sendable {
         data: Data,
         filename: String = "document.pdf",
         endpoint configuration: StirlingPDFEndpoint,
+        authorization: StirlingPDFOperationAuthorization,
         maximumInputBytes: Int = StirlingPDFCompressor.defaultMaximumInputBytes,
         maximumOutputBytes: Int = StirlingPDFCompressor.defaultMaximumOutputBytes
     ) async throws -> StirlingPDFCompressionResult {
@@ -213,6 +306,11 @@ public struct StirlingPDFCompressor: Sendable {
             throw StirlingPDFCompressionError.invalidEndpoint(error)
         } catch {
             throw StirlingPDFCompressionError.invalidEndpoint(.invalidURL)
+        }
+        do {
+            try endpoint.authorizeUpload(authorization)
+        } catch let error as StirlingPDFOperationGuardError {
+            throw StirlingPDFCompressionError.uploadNotAuthorized(error)
         }
         guard !Task.isCancelled else { throw StirlingPDFCompressionError.cancelled }
         guard let url = operationURL(for: endpoint.baseURL) else {
@@ -317,6 +415,7 @@ public struct StirlingPDFMerger: Sendable {
     public func merge(
         inputs: [(data: Data, filename: String)],
         endpoint configuration: StirlingPDFEndpoint,
+        authorization: StirlingPDFOperationAuthorization,
         maximumInputCount: Int = StirlingPDFMerger.defaultMaximumInputCount,
         maximumTotalInputBytes: Int = StirlingPDFMerger.defaultMaximumTotalInputBytes,
         maximumOutputBytes: Int = StirlingPDFMerger.defaultMaximumOutputBytes
@@ -342,6 +441,11 @@ public struct StirlingPDFMerger: Sendable {
             throw StirlingPDFMergeError.invalidEndpoint(error)
         } catch {
             throw StirlingPDFMergeError.invalidEndpoint(.invalidURL)
+        }
+        do {
+            try endpoint.authorizeUpload(authorization)
+        } catch let error as StirlingPDFOperationGuardError {
+            throw StirlingPDFMergeError.uploadNotAuthorized(error)
         }
         guard !Task.isCancelled else { throw StirlingPDFMergeError.cancelled }
         guard let url = operationURL(for: endpoint.baseURL) else {
