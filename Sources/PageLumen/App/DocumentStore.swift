@@ -85,7 +85,43 @@ final class DocumentStore {
     }
 
     var useOnDeviceAI: Bool {
-        UserDefaults.standard.bool(forKey: "useOnDeviceAI")
+        intelligenceMode == .appleFoundationModels && !isIntelligenceOptedOutForCurrentDocument
+    }
+
+    var intelligenceMode: IntelligenceMode {
+        if let raw = UserDefaults.standard.string(forKey: "intelligenceMode"),
+           let mode = IntelligenceMode(rawValue: raw) {
+            return mode
+        }
+        // Migrate the earlier boolean preference without silently enabling a
+        // new mode for people who never opted into Apple Intelligence.
+        return UserDefaults.standard.bool(forKey: "useOnDeviceAI") ? .appleFoundationModels : .off
+    }
+
+    var isIntelligenceOptedOutForCurrentDocument: Bool {
+        UserDefaults.standard.bool(forKey: intelligenceOptOutKey(for: document.id))
+    }
+
+    func setIntelligenceMode(_ mode: IntelligenceMode) {
+        UserDefaults.standard.set(mode.rawValue, forKey: "intelligenceMode")
+        UserDefaults.standard.set(mode == .appleFoundationModels, forKey: "useOnDeviceAI")
+        regenerateSummary()
+        statusMessage = mode == .off
+            ? "Apple Intelligence disabled; using deterministic summaries"
+            : "(mode.displayName) selected; regenerating the current summary when available"
+    }
+
+    func setIntelligenceOptOutForCurrentDocument(_ optedOut: Bool) {
+        let key = intelligenceOptOutKey(for: document.id)
+        if optedOut {
+            UserDefaults.standard.set(true, forKey: key)
+        } else {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+        regenerateSummary()
+        statusMessage = optedOut
+            ? "Apple Intelligence disabled for this document"
+            : "This document may use the selected Apple Intelligence mode"
     }
 
     var privacyMode: Bool {
@@ -119,6 +155,10 @@ final class DocumentStore {
 
     private var currentOCRProfile: OCRProfile {
         OCRProfile(settingsValue: UserDefaults.standard.string(forKey: "ocrProfile") ?? OCRProfile.general.rawValue)
+    }
+
+    private func intelligenceOptOutKey(for id: UUID) -> String {
+        "intelligence.optOut.\(id.uuidString.lowercased())"
     }
 
     init(

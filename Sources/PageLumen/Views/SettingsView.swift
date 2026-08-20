@@ -10,7 +10,7 @@ struct SettingsView: View {
     @AppStorage("languageHint") private var languageHint = "Automatic"
     @AppStorage("boostContrast") private var boostContrast = false
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
-    @AppStorage("useOnDeviceAI") private var useOnDeviceAI = false
+    @AppStorage("intelligenceMode") private var intelligenceModeRaw = IntelligenceMode.off.rawValue
     @AppStorage(DocumentRepositorySettings.keepSearchableLocalCopiesKey) private var keepSearchableLocalCopies = false
     @State private var isShowingForgetConfirmation = false
 
@@ -126,14 +126,29 @@ struct SettingsView: View {
             }
 
             Section("On-device AI") {
-                Toggle("Use Apple Intelligence for summaries", isOn: $useOnDeviceAI)
-                    .onChange(of: useOnDeviceAI) { _, enabled in
-                        store.regenerateSummary()
-                        store.statusMessage = enabled
-                            ? "Apple Intelligence enabled; regenerating the current summary when available"
-                            : "Apple Intelligence disabled; using deterministic summaries"
+                Picker("Intelligence mode", selection: $intelligenceModeRaw) {
+                    ForEach(IntelligenceMode.allCases) { mode in
+                        Text(mode.displayName).tag(mode.rawValue)
                     }
-                    .accessibilityHint("Regenerates the current summary with the selected on-device setting")
+                }
+                .onChange(of: intelligenceModeRaw) { _, raw in
+                    if let mode = IntelligenceMode(rawValue: raw) {
+                        store.setIntelligenceMode(mode)
+                    }
+                }
+                .accessibilityHint("Choose whether PageLumen may use Apple Intelligence for the current summary")
+
+                Toggle(
+                    "Do not use intelligence for this document",
+                    isOn: Binding(
+                        get: { store.isIntelligenceOptedOutForCurrentDocument },
+                        set: { store.setIntelligenceOptOutForCurrentDocument($0) }
+                    )
+                )
+                .disabled(store.intelligenceMode == .off)
+                Text("Apple Intelligence is opt-in and receives only bounded selected document text. This document-level control overrides the global mode and is retained locally by document identifier.")
+                    .font(.callout)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
                 let availability = IntelligentExplainer().availability
                 switch availability {
                 case .available:
@@ -149,6 +164,11 @@ struct SettingsView: View {
                 Text("Apple Intelligence is optional. It receives only the selected document text and must not be treated as a source of truth without checking the cited page.")
                     .font(.callout)
                     .foregroundStyle(AccessibleStyle.secondaryText)
+            }
+            .onAppear {
+                if UserDefaults.standard.object(forKey: "intelligenceMode") == nil {
+                    intelligenceModeRaw = store.intelligenceMode.rawValue
+                }
             }
 
             Section("Export Defaults") {

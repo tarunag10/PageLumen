@@ -18,6 +18,8 @@ final class DocumentStoreTests: XCTestCase {
         UserDefaults.standard.removeObject(forKey: "privacyMode")
         UserDefaults.standard.removeObject(forKey: DocumentRepositorySettings.keepSearchableLocalCopiesKey)
         UserDefaults.standard.removeObject(forKey: DocumentRepositorySettings.lastClearedAtKey)
+        UserDefaults.standard.removeObject(forKey: "intelligenceMode")
+        UserDefaults.standard.removeObject(forKey: "useOnDeviceAI")
         try await super.tearDown()
     }
 
@@ -53,6 +55,25 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertFalse(short.isEmpty)
         XCTAssertFalse(detailed.isEmpty)
         XCTAssertNotEqual(short, detailed)
+    }
+
+    func testIntelligenceModeMigratesLegacyConsentAndSupportsDocumentOptOut() {
+        UserDefaults.standard.removeObject(forKey: "intelligenceMode")
+        UserDefaults.standard.set(true, forKey: "useOnDeviceAI")
+        let store = DocumentStore(persisting: InMemoryPersisting())
+
+        XCTAssertEqual(store.intelligenceMode, .appleFoundationModels)
+        XCTAssertTrue(store.useOnDeviceAI)
+
+        store.setIntelligenceOptOutForCurrentDocument(true)
+        XCTAssertTrue(store.isIntelligenceOptedOutForCurrentDocument)
+        XCTAssertFalse(store.useOnDeviceAI)
+
+        store.setIntelligenceOptOutForCurrentDocument(false)
+        XCTAssertTrue(store.useOnDeviceAI)
+        store.setIntelligenceMode(.off)
+        XCTAssertEqual(store.intelligenceMode, .off)
+        XCTAssertFalse(store.useOnDeviceAI)
     }
 
     func testInjectedPersistenceReportsAvailableLibrary() {

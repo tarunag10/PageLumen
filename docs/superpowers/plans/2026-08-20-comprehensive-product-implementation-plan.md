@@ -303,7 +303,7 @@ Perform a one-sprint spike comparing the current SwiftData implementation and GR
 
 ### 4.1 Intelligence policy and UX
 
-- [ ] Add an `IntelligenceMode` setting: `Off`, `Apple Foundation Models`, and future `Downloaded local model`. Default to Off until user research demonstrates a safe default; remember consent per feature.
+- [x] Add an `IntelligenceMode` setting: `Off`, `Apple Foundation Models`, and future `Downloaded local model`. It defaults to Off, migrates the legacy opt-in boolean, and supports a locally retained per-document opt-out.
 - [ ] Show availability, expected privacy boundary, device requirement, input scope, and failure state before execution.
 - [ ] Never make a generative result appear indistinguishable from extracted source text.
 - [ ] Provide “Copy with citations,” “Insert as draft,” “Replace selected description after review,” and “Discard” actions; no unattended edits.
