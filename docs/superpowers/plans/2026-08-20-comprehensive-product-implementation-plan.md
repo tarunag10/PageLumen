@@ -414,8 +414,11 @@ repeatable pipelines. See [`docs/stirling-pdf-integration.md`](../../stirling-pd
   before offering replacement, and write output atomically. Stage B is covered
   by `StirlingPDFCompressor`, `StirlingPDFAtomicOutput`, and the focused
   `StirlingPDFProviderTests` suite (10/10 passed).
-- [ ] Add merge/rearrange and typed, bounded pipelines only after Stage B passes
-  fake-server, offline, cancellation, and malformed-response gates.
+- [x] Add the first bounded merge operation after Stage B: repeated
+  `fileInput` multipart inputs, strict count/total-size limits, cancellation,
+  typed errors, PDFKit validation, and focused fake-transport tests (13/13
+  Stirling provider tests pass). Rearrange and typed pipelines remain separate
+  follow-up work.
 - [ ] Keep remote endpoints disabled by default; require HTTPS and an explicit
   advanced warning for non-local hosts.
 - [ ] Complete license, security, endpoint, source-content retention, and

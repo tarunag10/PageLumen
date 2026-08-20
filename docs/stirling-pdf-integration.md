@@ -96,8 +96,22 @@ malformed output, endpoint rejection, and atomic output validation.
 
 ### Stage C — multi-input and pipelines
 
-Add merge/rearrange and then pipeline execution. Every pipeline must have a
-typed, versioned schema, a visible step list, bounded step count, a cancellation
+The first Stage C boundary is `StirlingPDFMerger` in
+`Sources/PageLumenCore/StirlingPDFProvider.swift`. It targets the documented
+`POST /api/v1/general/merge-pdfs` endpoint and sends each source as a repeated
+`fileInput` multipart field. It is still opt-in and does not construct a
+provider in the default app runtime.
+
+The operation requires at least two PDFs, caps the input count at 20 and the
+combined input size at 200 MiB by default, supports cancellation, maps
+authentication/HTTP/transport failures to typed errors, validates the returned
+bytes with PDFKit, and can reuse `StirlingPDFAtomicOutput` for an atomic
+caller-selected destination. Fake transport tests cover request shape,
+filename sanitisation, API-key non-leakage, count/size limits, cancellation,
+authentication, and malformed output.
+
+Next, add rearrange and pipeline execution. Every pipeline must have a typed,
+versioned schema, a visible step list, bounded step count, a cancellation
 policy, and a dry-run/preview summary. Never accept arbitrary server-side
 workflow JSON from an untrusted source without displaying it first.
 

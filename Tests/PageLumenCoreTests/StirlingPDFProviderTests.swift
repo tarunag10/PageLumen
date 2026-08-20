@@ -155,6 +155,81 @@ final class StirlingPDFProviderTests: XCTestCase {
         try? FileManager.default.removeItem(at: destination)
     }
 
+    @MainActor
+    func testMergeUsesRepeatedMultipartInputsAndValidatesPDF() async throws {
+        let first = try XCTUnwrap(Data(contentsOf: Fixtures.tinyPDF(text: "one")))
+        let second = try XCTUnwrap(Data(contentsOf: Fixtures.tinyPDF(text: "two")))
+        let transport = StubTransport { request in
+            XCTAssertEqual(request.httpMethod, "POST")
+            XCTAssertEqual(request.url?.path, "/api/v1/general/merge-pdfs")
+            XCTAssertEqual(request.value(forHTTPHeaderField: "X-API-KEY"), "secret")
+            let body = try XCTUnwrap(request.httpBody)
+            let bodyText = String(decoding: body, as: UTF8.self)
+            XCTAssertEqual(bodyText.components(separatedBy: "name=\"fileInput\"").count - 1, 2)
+            XCTAssertTrue(bodyText.contains("filename=\"one.pdf\""))
+            XCTAssertTrue(bodyText.contains("filename=\"two.pdf\""))
+            XCTAssertFalse(bodyText.contains("secret"))
+            XCTAssertNotNil(body.range(of: first))
+            XCTAssertNotNil(body.range(of: second))
+            return (first, makeResponse(for: request, statusCode: 200, contentType: "application/pdf"))
+        }
+        let result = try await StirlingPDFMerger(transport: transport).merge(
+            inputs: [(first, "one.pdf"), (second, "nested/two.pdf")],
+            endpoint: StirlingPDFEndpoint(baseURL: URL(string: "http://localhost:8080")!, apiKey: "secret")
+        )
+        XCTAssertEqual(result.data, first)
+        XCTAssertEqual(result.httpStatusCode, 200)
+    }
+
+    @MainActor
+    func testMergeEnforcesCountSizeAndCancellationBoundaries() async throws {
+        let input = try XCTUnwrap(Data(contentsOf: Fixtures.tinyPDF(text: "input")))
+        let merger = StirlingPDFMerger(transport: StubTransport { request in
+            XCTFail("transport must not be called for invalid merge input")
+            return (input, makeResponse(for: request, statusCode: 200, contentType: "application/pdf"))
+        })
+        await XCTAssertThrowsErrorAsync(try await merger.merge(inputs: [(input, "only.pdf")], endpoint: localEndpoint())) { error in
+            XCTAssertEqual(error as? StirlingPDFMergeError, .tooFewInputs)
+        }
+        await XCTAssertThrowsErrorAsync(try await merger.merge(
+            inputs: [(input, "one.pdf"), (input, "two.pdf")], endpoint: localEndpoint(), maximumTotalInputBytes: 1
+        )) { error in
+            XCTAssertEqual(error as? StirlingPDFMergeError, .inputTooLarge(limit: 1))
+        }
+        await XCTAssertThrowsErrorAsync(try await merger.merge(
+            inputs: Array(repeating: (input, "copy.pdf"), count: 3), endpoint: localEndpoint(), maximumInputCount: 2
+        )) { error in
+            XCTAssertEqual(error as? StirlingPDFMergeError, .tooManyInputs(limit: 2))
+        }
+        let cancelled = StirlingPDFMerger(transport: StubTransport { _ in throw CancellationError() })
+        await XCTAssertThrowsErrorAsync(try await cancelled.merge(
+            inputs: [(input, "one.pdf"), (input, "two.pdf")], endpoint: localEndpoint()
+        )) { error in
+            XCTAssertEqual(error as? StirlingPDFMergeError, .cancelled)
+        }
+    }
+
+    @MainActor
+    func testMergeMapsAuthenticationAndMalformedOutput() async throws {
+        let input = try XCTUnwrap(Data(contentsOf: Fixtures.tinyPDF(text: "input")))
+        let auth = StirlingPDFMerger(transport: StubTransport { request in
+            (Data(), makeResponse(for: request, statusCode: 401))
+        })
+        await XCTAssertThrowsErrorAsync(try await auth.merge(
+            inputs: [(input, "one.pdf"), (input, "two.pdf")], endpoint: localEndpoint()
+        )) { error in
+            XCTAssertEqual(error as? StirlingPDFMergeError, .authenticationRequired(statusCode: 401))
+        }
+        let malformed = StirlingPDFMerger(transport: StubTransport { request in
+            (Data("bad".utf8), makeResponse(for: request, statusCode: 200, contentType: "application/pdf"))
+        })
+        await XCTAssertThrowsErrorAsync(try await malformed.merge(
+            inputs: [(input, "one.pdf"), (input, "two.pdf")], endpoint: localEndpoint()
+        )) { error in
+            XCTAssertEqual(error as? StirlingPDFMergeError, .outputIsNotPDF)
+        }
+    }
+
     private func localEndpoint() -> StirlingPDFEndpoint {
         StirlingPDFEndpoint(baseURL: URL(string: "http://127.0.0.1:8080")!)
     }

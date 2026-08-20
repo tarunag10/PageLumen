@@ -131,6 +131,30 @@ public enum StirlingPDFCompressionError: Error, Equatable, Sendable {
     case transportFailure
 }
 
+public enum StirlingPDFMergeError: Error, Equatable, Sendable {
+    case invalidEndpoint(StirlingPDFEndpointError)
+    case emptyInput
+    case tooFewInputs
+    case tooManyInputs(limit: Int)
+    case inputTooLarge(limit: Int)
+    case authenticationRequired(statusCode: Int)
+    case requestFailed(statusCode: Int)
+    case responseTooLarge(limit: Int)
+    case outputIsNotPDF
+    case cancelled
+    case transportFailure
+}
+
+public struct StirlingPDFMergeResult: Sendable {
+    public let data: Data
+    public let httpStatusCode: Int
+
+    public init(data: Data, httpStatusCode: Int) {
+        self.data = data
+        self.httpStatusCode = httpStatusCode
+    }
+}
+
 /// A validated result returned by Stirling's compress endpoint. The bytes are
 /// checked with PDFKit before they leave this boundary, so callers can safely
 /// preview them before choosing a destination.
@@ -262,6 +286,127 @@ public enum StirlingPDFAtomicOutput {
             throw StirlingPDFCompressionError.outputIsNotPDF
         }
         try data.write(to: destination, options: .atomic)
+    }
+}
+
+/// The first multi-input Stage C operation. Inputs are sent as repeated
+/// `fileInput` multipart fields to Stirling's documented merge endpoint.
+/// Limits are deliberately conservative because this boundary is opt-in and
+/// may cross a user-managed network, even when the server is local.
+public struct StirlingPDFMerger: Sendable {
+    public static let defaultMergePath = "api/v1/general/merge-pdfs"
+    public static let defaultMaximumInputCount = 20
+    public static let defaultMaximumTotalInputBytes = 200 * 1024 * 1024
+    public static let defaultMaximumOutputBytes = 200 * 1024 * 1024
+
+    private let transport: any StirlingPDFHTTPTransport
+    private let timeout: TimeInterval
+    private let mergePath: String
+
+    public init(
+        transport: any StirlingPDFHTTPTransport = URLSessionStirlingPDFHTTPTransport(),
+        timeout: TimeInterval = 120,
+        mergePath: String = StirlingPDFMerger.defaultMergePath
+    ) {
+        self.transport = transport
+        self.timeout = timeout
+        self.mergePath = mergePath
+    }
+
+    public func merge(
+        inputs: [(data: Data, filename: String)],
+        endpoint configuration: StirlingPDFEndpoint,
+        maximumInputCount: Int = StirlingPDFMerger.defaultMaximumInputCount,
+        maximumTotalInputBytes: Int = StirlingPDFMerger.defaultMaximumTotalInputBytes,
+        maximumOutputBytes: Int = StirlingPDFMerger.defaultMaximumOutputBytes
+    ) async throws -> StirlingPDFMergeResult {
+        guard !inputs.isEmpty else { throw StirlingPDFMergeError.emptyInput }
+        guard inputs.count >= 2 else { throw StirlingPDFMergeError.tooFewInputs }
+        guard inputs.count <= maximumInputCount else {
+            throw StirlingPDFMergeError.tooManyInputs(limit: maximumInputCount)
+        }
+        let totalBytes = inputs.reduce(into: 0) { $0 += $1.data.count }
+        guard totalBytes > 0 else { throw StirlingPDFMergeError.emptyInput }
+        guard totalBytes <= maximumTotalInputBytes else {
+            throw StirlingPDFMergeError.inputTooLarge(limit: maximumTotalInputBytes)
+        }
+        guard maximumOutputBytes > 0 else {
+            throw StirlingPDFMergeError.responseTooLarge(limit: maximumOutputBytes)
+        }
+
+        let endpoint: StirlingPDFEndpoint
+        do {
+            endpoint = try configuration.validated()
+        } catch let error as StirlingPDFEndpointError {
+            throw StirlingPDFMergeError.invalidEndpoint(error)
+        } catch {
+            throw StirlingPDFMergeError.invalidEndpoint(.invalidURL)
+        }
+        guard !Task.isCancelled else { throw StirlingPDFMergeError.cancelled }
+        guard let url = operationURL(for: endpoint.baseURL) else {
+            throw StirlingPDFMergeError.invalidEndpoint(.invalidURL)
+        }
+
+        let boundary = "PageLumen-\(UUID().uuidString)"
+        var body = Data()
+        for input in inputs {
+            body.append(Data("--\(boundary)\r\n".utf8))
+            body.append(Data("Content-Disposition: form-data; name=\"fileInput\"; filename=\"\(safeFilename(input.filename))\"\r\n".utf8))
+            body.append(Data("Content-Type: application/pdf\r\n\r\n".utf8))
+            body.append(input.data)
+            body.append(Data("\r\n".utf8))
+        }
+        body.append(Data("--\(boundary)--\r\n".utf8))
+
+        var request = URLRequest(url: url, timeoutInterval: timeout)
+        request.httpMethod = "POST"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/pdf", forHTTPHeaderField: "Accept")
+        if let apiKey = endpoint.apiKey, !apiKey.isEmpty {
+            request.setValue(apiKey, forHTTPHeaderField: "X-API-KEY")
+        }
+        request.httpBody = body
+
+        do {
+            let (output, response) = try await transport.data(for: request)
+            guard output.count <= maximumOutputBytes else {
+                throw StirlingPDFMergeError.responseTooLarge(limit: maximumOutputBytes)
+            }
+            switch response.statusCode {
+            case 401, 403:
+                throw StirlingPDFMergeError.authenticationRequired(statusCode: response.statusCode)
+            case 200..<300:
+                guard !output.isEmpty, PDFDocument(data: output) != nil else {
+                    throw StirlingPDFMergeError.outputIsNotPDF
+                }
+                return StirlingPDFMergeResult(data: output, httpStatusCode: response.statusCode)
+            default:
+                throw StirlingPDFMergeError.requestFailed(statusCode: response.statusCode)
+            }
+        } catch let error as StirlingPDFMergeError {
+            throw error
+        } catch is CancellationError {
+            throw StirlingPDFMergeError.cancelled
+        } catch let error as URLError where error.code == .cancelled {
+            throw StirlingPDFMergeError.cancelled
+        } catch {
+            throw StirlingPDFMergeError.transportFailure
+        }
+    }
+
+    private func operationURL(for baseURL: URL) -> URL? {
+        let path = mergePath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard !path.isEmpty else { return nil }
+        return baseURL.appendingPathComponent(path)
+    }
+
+    private func safeFilename(_ filename: String) -> String {
+        let name = URL(fileURLWithPath: filename).lastPathComponent
+        let sanitized = name
+            .filter { !$0.isNewline && !$0.isWhitespace || $0 == " " }
+            .map { $0 == "\"" ? "_" : String($0) }
+            .joined()
+        return sanitized.isEmpty ? "document.pdf" : sanitized
     }
 }
 
