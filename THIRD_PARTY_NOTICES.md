@@ -4,7 +4,7 @@ PageLumen currently resolves these Swift Package Manager dependencies:
 
 | Package | Pinned requirement | License | Product use |
 | --- | --- | --- | --- |
-| [ZIPFoundation](https://github.com/weichsel/ZIPFoundation) | `from: 0.9.20` (resolved `0.9.20`) | MIT | DOCX Office Open XML archive creation and package framing |
+| [ZIPFoundation](https://github.com/weichsel/ZIPFoundation) | `exact: 0.9.20` (tag/revision `22787ffb59de99e5dc1fbfe80b19c97a904ad48d`) | MIT | DOCX Office Open XML archive creation and package framing |
 | [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) | `from: 1.17.0` (resolved `1.19.4`) | MIT | Test-target-only golden output and UI regression infrastructure |
 | [swift-markdown](https://github.com/swiftlang/swift-markdown) | `exact: 0.8.0` (resolved `0.8.0`) | Apache-2.0 with Runtime Library Exception | Production Markdown export contract validation and test-target AST assertions |
 
@@ -19,6 +19,23 @@ uses `ZIPFoundation` through `DOCXWriter`, SnapshotTesting remains test-only,
 and swift-markdown is isolated to `MarkdownExportContract`. Before a release, review upstream
 security advisories and confirm the resolved version and license text against
 the package checkout.
+
+## ZIPFoundation notice and removal record
+
+The PageLumen build consumes the unmodified ZIPFoundation `0.9.20` release at
+revision `22787ffb59de99e5dc1fbfe80b19c97a904ad48d`. Its upstream MIT notice
+and license text are available in the [release source](https://github.com/weichsel/ZIPFoundation/tree/0.9.20)
+and [LICENSE](https://github.com/weichsel/ZIPFoundation/blob/0.9.20/LICENSE).
+The package is used only by the `PageLumen` app target through
+`ZIPFoundationDOCXArchiveWriter`; no document bytes are sent to the package or
+retained outside the requested local DOCX output. The package is not copied or
+modified in this repository.
+
+To remove or replace ZIPFoundation, restore a writer conforming to
+`DOCXArchiveWriting`, run the DOCX package and independent-consumer suites,
+remove the app-target product and lock entry, then remove this notice after
+review. A release must not loosen the exact version requirement without
+updating this record, `Package.resolved`, and the security/advisory review.
 
 ## External services (not bundled)
 

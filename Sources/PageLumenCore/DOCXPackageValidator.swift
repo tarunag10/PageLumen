@@ -12,6 +12,9 @@ public struct DOCXPackageValidation: Equatable, Sendable {
         case invalidRootRelationships
         case invalidDocumentRelationships
         case invalidDocumentPart
+        case unsafePartPath
+        case externalRelationship
+        case danglingRelationship
     }
 
     public let issues: [IssueCode]
@@ -28,8 +31,11 @@ public enum DOCXPackageValidator {
 
     public static func validate(parts: [String: Data]) -> DOCXPackageValidation {
         var issues: [DOCXPackageValidation.IssueCode] = []
+        if parts.keys.contains(where: { !isSafePartPath($0) }) {
+            issues.append(.unsafePartPath)
+        }
         guard requiredParts.allSatisfy({ parts[$0] != nil }) else {
-            return DOCXPackageValidation(issues: [.missingRequiredPart])
+            return DOCXPackageValidation(issues: issues + [.missingRequiredPart])
         }
 
         let contentTypes = parts["[Content_Types].xml"]!
@@ -60,10 +66,46 @@ public enum DOCXPackageValidator {
         if !documentRelationshipsXML.contains("<Relationships") {
             issues.append(.invalidDocumentRelationships)
         }
+        if hasExternalRelationship(in: rootRelationshipsXML) ||
+            hasExternalRelationship(in: documentRelationshipsXML) {
+            issues.append(.externalRelationship)
+        }
+        if hasDanglingInternalRelationship(in: rootRelationshipsXML, parts: parts) ||
+            hasDanglingInternalRelationship(in: documentRelationshipsXML, parts: parts) {
+            issues.append(.danglingRelationship)
+        }
         if !documentXML.contains("<w:document") || !documentXML.contains("<w:body>") ||
             !documentXML.contains("</w:body>") || !documentXML.contains("</w:document>") {
             issues.append(.invalidDocumentPart)
         }
         return DOCXPackageValidation(issues: issues)
+    }
+
+    private static func isSafePartPath(_ path: String) -> Bool {
+        guard !path.isEmpty, !path.hasPrefix("/"), !path.contains("\\") else { return false }
+        return path.split(separator: "/", omittingEmptySubsequences: false)
+            .allSatisfy { !$0.isEmpty && $0 != "." && $0 != ".." }
+    }
+
+    private static func hasExternalRelationship(in xml: String) -> Bool {
+        xml.contains("TargetMode=\"External\"") ||
+            xml.range(of: "Target=\"(?:https?|file):", options: .regularExpression) != nil
+    }
+
+    private static func hasDanglingInternalRelationship(in xml: String, parts: [String: Data]) -> Bool {
+        let pattern = #"<Relationship\b[^>]*Target="([^"]+)"[^>]*/?>"#
+        guard let expression = try? NSRegularExpression(pattern: pattern) else { return false }
+        let range = NSRange(xml.startIndex..<xml.endIndex, in: xml)
+        for match in expression.matches(in: xml, range: range) {
+            guard let targetRange = Range(match.range(at: 1), in: xml) else { continue }
+            let target = String(xml[targetRange])
+            if target.hasPrefix("http://") || target.hasPrefix("https://") || target.hasPrefix("file:") {
+                continue
+            }
+            let normalized = target.hasPrefix("/") ? String(target.dropFirst()) : target
+            if normalized == "word/document.xml" { continue }
+            if parts[normalized] == nil { return true }
+        }
+        return false
     }
 }

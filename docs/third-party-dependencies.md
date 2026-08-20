@@ -53,6 +53,29 @@ The focused suite covers six deterministic outputs. A missing reference is
 expected to fail the recording run; rerun the same focused command without
 `SNAPSHOT_TESTING_RECORD` and require the committed references to pass.
 
+## ZIPFoundation and independent DOCX consumer checks
+
+ZIPFoundation is pinned to exact release `0.9.20` (revision
+`22787ffb59de99e5dc1fbfe80b19c97a904ad48d`) and is used only by the app's
+`ZIPFoundationDOCXArchiveWriter`. `DOCXPackageValidator` remains dependency
+free and checks required OOXML parts, XML parseability, relationship safety,
+and path traversal/dangling-target failures. `DOCXWriterTests` additionally
+writes the generated archive to a temporary file and runs the host's
+independent `/usr/bin/unzip -tqq` package test. This validates ZIP framing and
+CRC/readability independently of PageLumen's package-part parser.
+
+Run the focused contract with:
+
+```sh
+swift test -Xswiftc -gnone --filter DOCXWriterTests
+```
+
+The unzip check is not a Word, Pages, or LibreOffice rendering test. Those
+desktop-consumer checks remain a release/manual gate and are intentionally not
+claimed by the automated suite. Exact version, MIT license links, ownership,
+security-review path, and removal procedure are recorded in
+[`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md).
+
 ## Adoption and removal rules
 
 Each dependency must have a bounded user outcome, a pinned resolved version, a

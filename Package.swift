@@ -12,7 +12,9 @@ let package = Package(
         .executable(name: "PageLumen", targets: ["PageLumen"])
     ],
     dependencies: [
-        .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.20"),
+        // DOCX archive framing is pinned; update only with a reviewed release,
+        // notice update, and DOCX consumer-contract verification.
+        .package(url: "https://github.com/weichsel/ZIPFoundation.git", exact: "0.9.20"),
         .package(url: "https://github.com/pointfreeco/swift-snapshot-testing.git", from: "1.17.0"),
         // Test-only Markdown AST validation. Keep this exact so parser behavior
         // cannot change without an intentional dependency review.

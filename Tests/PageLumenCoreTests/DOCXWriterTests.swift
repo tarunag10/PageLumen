@@ -81,6 +81,47 @@ final class DOCXWriterTests: XCTestCase {
         XCTAssertEqual(validation.issues, [.invalidXML])
     }
 
+    func testDOCXOutputPassesIndependentSystemUnzipConsumer() throws {
+        let data = DOCXWriter().data(for: SampleDataFactory.makeDemoDocument(), options: .full)
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pagelumen-docx-consumer-\(UUID().uuidString).docx")
+        defer { try? FileManager.default.removeItem(at: url) }
+        try data.write(to: url, options: .atomic)
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
+        process.arguments = ["-tqq", url.path]
+        process.standardOutput = Pipe()
+        process.standardError = Pipe()
+        try process.run()
+        process.waitUntilExit()
+
+        XCTAssertEqual(process.terminationStatus, 0,
+                       "Independent unzip consumer rejected the generated DOCX")
+    }
+
+    func testDOCXPackageValidatorRejectsUnsafeAndDanglingRelationships() {
+        let valid = """
+        <?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+          <Relationship Id="rId1" Type="officeDocument" Target="word/document.xml"/>
+          <Relationship Id="rId2" Type="image" Target="missing/image.png"/>
+        </Relationships>
+        """
+        let external = valid.replacingOccurrences(of: "Target=\"missing/image.png\"", with: "Target=\"https://example.invalid/a.png\" TargetMode=\"External\"")
+        let parts: [String: Data] = [
+            "[Content_Types].xml": Data("<Types><Default Extension=\"rels\"/><Default Extension=\"xml\"/><Override PartName=\"/word/document.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml\"/></Types>".utf8),
+            "_rels/.rels": Data(valid.utf8),
+            "word/_rels/document.xml.rels": Data(external.utf8),
+            "word/document.xml": Data("<w:document xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:body></w:body></w:document>".utf8),
+            "../outside.xml": Data()
+        ]
+
+        let validation = DOCXPackageValidator.validate(parts: parts)
+
+        XCTAssertTrue(validation.issues.contains(.unsafePartPath))
+        XCTAssertTrue(validation.issues.contains(.externalRelationship))
+    }
+
     func testDOCXTablesUseWordprocessingMLTableCells() {
         let document = SampleDataFactory.makeDemoDocument()
         let data = DOCXWriter().data(for: document, options: .full)
