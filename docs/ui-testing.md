@@ -121,3 +121,10 @@ A direct `test-without-building` run of
 worker materialization (`Supported platforms for the buildables in the current
 scheme is empty`); no UI assertion is counted as passed. The deterministic
 bundle remains ready for a GUI-session/participant run.
+
+A fresh `xcodebuild ... -only-testing:PageLumenUITests test` attempt on 20
+August 2026 again reached `Testing started` and then stalled while waiting for
+the local macOS test worker to materialize. It was interrupted after 58 seconds;
+the result bundle is
+`~/Library/Developer/Xcode/DerivedData/PageLumen-hbeprxkxvdpbnyeekgojupdmzjpn/Logs/Test/Test-PageLumen-2026.08.20_19-43-14-+0530.xcresult`.
+This is infrastructure evidence only; no UI assertion is counted as passed.
