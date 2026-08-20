@@ -86,6 +86,10 @@ visible, while the transient onboarding sheet and test-runner warning were
 dismissed through normal macOS controls. The bottom Dock was visible in that
 capture, so it is visual evidence only and not a polished marketing screenshot.
 
+The primary Continue action now forces a readable title-and-icon treatment with
+a 104-point minimum width; it must not collapse to an unlabeled arrow at the
+minimum supported workspace width.
+
 ---
 
 # Current runtime slice

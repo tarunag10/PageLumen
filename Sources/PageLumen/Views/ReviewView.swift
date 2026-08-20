@@ -92,6 +92,8 @@ private struct ReviewHeader: View {
                     Label("Continue", systemImage: "arrow.right")
                 }
                 .buttonStyle(.borderedProminent)
+                .labelStyle(.titleAndIcon)
+                .frame(minWidth: 104)
                 .disabled(!store.canNavigate(to: .summaryExport))
                 .accessibilityIdentifier("review.continue")
                 .help(store.isProcessing ? "Finish processing before exporting" : "Open summary and export options")
