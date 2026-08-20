@@ -126,8 +126,8 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [x] Change the convenience initializer to `throws`; remove `fatalError`.
 - [x] Introduce `PersistenceStatus` (`available`, `degraded(reason)`) surfaced in Settings, not as a launch blocker. An explicit `unavailable` case remains unnecessary while the in-memory fallback is always retained.
 - [x] If SwiftData cannot initialize, use `FilePersisting` in a safe app-support subdirectory and retain the active in-memory document while surfacing degraded status. Read-only/no-space fallback tests remain open.
-- [ ] Version the SwiftData schema before adding new fields; the required migration/recovery contract is documented in `docs/persistence-migrations.md`, but the first concrete `VersionedSchema` migration and physical macOS fixture run remain open.
-- [ ] Add corruption, read-only-directory, no-space, migration, and fallback tests using temporary directories/configurations.
+- [x] Version the SwiftData schema before adding new fields; `PageLumenSchemaV1`/`PageLumenSchemaV2` and `PageLumenMigrationPlan` now make the additive storage-revision migration explicit, with an on-disk V1-to-V2 fixture test. A physical release-build migration run remains open.
+- [ ] Add corruption, read-only-directory, no-space, migration, and fallback tests using temporary directories/configurations. The temporary-directory V1 migration and existing corruption/fallback coverage now pass; read-only and no-space simulation remain open.
 - [x] Add JSON-store corruption recovery: preserve the damaged file under a
   recovery name, surface a degraded persistence status, and continue with an
   in-memory document. Read-only, no-space, and migration cases remain open.

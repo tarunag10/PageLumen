@@ -92,4 +92,68 @@ final class SwiftDataPersistingTests: XCTestCase {
         let missing = try persisting.load(id: UUID())
         XCTAssertNil(missing)
     }
+
+    func testVersionedSchemaDeclaresAdditiveMigrationPlan() throws {
+        XCTAssertEqual(PageLumenSchemaV1.versionIdentifier, Schema.Version(1, 0, 0))
+        XCTAssertEqual(PageLumenSchemaV2.versionIdentifier, Schema.Version(2, 0, 0))
+        XCTAssertEqual(PageLumenMigrationPlan.schemas.count, 2)
+        XCTAssertEqual(PageLumenMigrationPlan.stages.count, 1)
+
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(
+            for: PersistedDocument.self,
+            migrationPlan: PageLumenMigrationPlan.self,
+            configurations: configuration
+        )
+        let context = ModelContext(container)
+        let persisted = PersistedDocument(
+            id: UUID(),
+            title: "Migration fixture",
+            createdAt: Date(),
+            lastOpened: Date(),
+            pageCount: 1,
+            sourceType: SourceType.pdf.rawValue,
+            jsonData: Data("{}".utf8)
+        )
+        context.insert(persisted)
+        try context.save()
+        XCTAssertEqual(persisted.storageRevision, 2)
+    }
+
+    func testV1StoreMigratesAndPreservesRecents() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("PageLumenMigration-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let storeURL = directory.appendingPathComponent("recents.store")
+        let configuration = ModelConfiguration(url: storeURL)
+
+        do {
+            let oldContainer = try ModelContainer(
+                for: PageLumenSchemaV1.PersistedDocument.self,
+                configurations: configuration
+            )
+            let context = ModelContext(oldContainer)
+            context.insert(PageLumenSchemaV1.PersistedDocument(
+                id: UUID(),
+                title: "Legacy recent",
+                createdAt: Date(timeIntervalSince1970: 1),
+                lastOpened: Date(timeIntervalSince1970: 2),
+                pageCount: 3,
+                sourceType: SourceType.pdf.rawValue,
+                jsonData: Data("{}".utf8)
+            ))
+            try context.save()
+        }
+
+        let migrated = try ModelContainer(
+            for: PersistedDocument.self,
+            migrationPlan: PageLumenMigrationPlan.self,
+            configurations: configuration
+        )
+        let context = ModelContext(migrated)
+        let records = try context.fetch(FetchDescriptor<PersistedDocument>())
+        XCTAssertEqual(records.count, 1)
+        XCTAssertEqual(records.first?.title, "Legacy recent")
+        XCTAssertNil(records.first?.storageRevision)
+    }
 }

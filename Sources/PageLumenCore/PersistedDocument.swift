@@ -11,6 +11,7 @@ public final class PersistedDocument {
     public var pageCount: Int
     public var sourceType: String
     public var jsonData: Data
+    public var storageRevision: Int?
 
     public init(
         id: UUID,
@@ -19,7 +20,8 @@ public final class PersistedDocument {
         lastOpened: Date,
         pageCount: Int,
         sourceType: String,
-        jsonData: Data
+        jsonData: Data,
+        storageRevision: Int = 2
     ) {
         self.id = id
         self.title = title
@@ -28,5 +30,6 @@ public final class PersistedDocument {
         self.pageCount = pageCount
         self.sourceType = sourceType
         self.jsonData = jsonData
+        self.storageRevision = storageRevision
     }
 }

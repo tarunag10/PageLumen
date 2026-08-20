@@ -28,6 +28,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.PageLumenCore
         DEFINES_MODULE: true
+    dependencies:
+      - package: Markdown
     info:
       path: generated/PageLumenCore-Info.plist
       properties:

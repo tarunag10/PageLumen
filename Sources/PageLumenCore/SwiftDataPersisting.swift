@@ -17,6 +17,7 @@ public final class SwiftDataPersisting: DocumentPersisting, @unchecked Sendable 
         let config = ModelConfiguration(url: storeURL)
         self.modelContainer = try ModelContainer(
             for: PersistedDocument.self,
+            migrationPlan: PageLumenMigrationPlan.self,
             configurations: config
         )
     }
@@ -24,6 +25,7 @@ public final class SwiftDataPersisting: DocumentPersisting, @unchecked Sendable 
     public init(configuration: ModelConfiguration) throws {
         self.modelContainer = try ModelContainer(
             for: PersistedDocument.self,
+            migrationPlan: PageLumenMigrationPlan.self,
             configurations: configuration
         )
         self.storageDirectory = nil
@@ -40,8 +42,9 @@ public final class SwiftDataPersisting: DocumentPersisting, @unchecked Sendable 
             existing.title = document.title
             existing.lastOpened = Date()
             existing.pageCount = document.pageCount
-            existing.sourceType = document.sourceType.rawValue
-            existing.jsonData = jsonData
+                existing.sourceType = document.sourceType.rawValue
+                existing.jsonData = jsonData
+            existing.storageRevision = 2
         } else {
             let new = PersistedDocument(
                 id: document.id,
@@ -50,7 +53,8 @@ public final class SwiftDataPersisting: DocumentPersisting, @unchecked Sendable 
                 lastOpened: Date(),
                 pageCount: document.pageCount,
                 sourceType: document.sourceType.rawValue,
-                jsonData: jsonData
+                jsonData: jsonData,
+                storageRevision: 2
             )
             context.insert(new)
         }
