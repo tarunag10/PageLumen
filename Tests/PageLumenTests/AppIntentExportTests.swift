@@ -37,6 +37,47 @@ final class AppIntentExportTests: XCTestCase {
         XCTAssertTrue(PageLumenIntentBridge.findingEntities(in: repository).isEmpty)
     }
 
+    func testRevokedRepositoryAccessFailsClosedWithoutExportingEntitiesOrSummary() {
+        let repository = RevokedRepositoryStub()
+
+        XCTAssertTrue(PageLumenIntentBridge.entities(from: repository).isEmpty)
+        XCTAssertTrue(PageLumenIntentBridge.findingEntities(in: repository).isEmpty)
+        XCTAssertNil(PageLumenCoreSummaryBridge.currentSummary(from: repository))
+    }
+
+    func testDisabledIntelligenceLeavesDeterministicLocalSummaryAvailable() {
+        let key = "intelligenceMode"
+        let previous = UserDefaults.standard.object(forKey: key)
+        defer {
+            if let previous {
+                UserDefaults.standard.set(previous, forKey: key)
+            } else {
+                UserDefaults.standard.removeObject(forKey: key)
+            }
+        }
+        UserDefaults.standard.set(IntelligenceMode.off.rawValue, forKey: key)
+
+        let document = ReaderDocument(title: "Summary", sourceType: .sample, pages: [], summary: "Local summary")
+        let metadata = DocumentMetadata(
+            id: document.id,
+            title: document.title,
+            sourceType: document.sourceType,
+            sourceURL: nil,
+            createdAt: document.createdAt,
+            language: nil,
+            processingStatus: .complete,
+            pageCount: 0,
+            unresolvedFindingCount: 0
+        )
+
+        XCTAssertEqual(
+            PageLumenCoreSummaryBridge.currentSummary(
+                from: IntentRepositoryStub(metadata: [metadata], document: document)
+            ),
+            "Local summary"
+        )
+    }
+
     func testFindingEntitiesRemainAvailableWhenIntelligenceIsDisabled() {
         let key = "intelligenceMode"
         let previous = UserDefaults.standard.object(forKey: key)
@@ -212,5 +253,14 @@ private final class IntentRepositoryStub: DocumentRepository, @unchecked Sendabl
         lastSearchLimit = limit
         return Array(searchResults.prefix(limit))
     }
+}
+
+private final class RevokedRepositoryStub: DocumentRepository, @unchecked Sendable {
+    private enum AccessError: Error { case permissionRevoked }
+
+    func recentMetadata() throws -> [DocumentMetadata] { throw AccessError.permissionRevoked }
+    func metadata(id: UUID) throws -> DocumentMetadata? { throw AccessError.permissionRevoked }
+    func document(id: UUID) throws -> ReaderDocument? { throw AccessError.permissionRevoked }
+    func search(query: String, limit: Int) throws -> [LibrarySearchResult] { throw AccessError.permissionRevoked }
 }
 #endif
