@@ -143,11 +143,18 @@ final class DocumentStore {
             includeHeadersAndFooters: UserDefaults.standard.object(forKey: "includeHeadersAndFooters") as? Bool ?? true,
             includeProvenance: UserDefaults.standard.object(forKey: "includeProvenance") as? Bool ?? true
         )
-        if let stored = try? self.persisting.recentDocuments(), let first = stored.first {
-            self.recentDocuments = stored
-            self.document = first
-            self.selectedDestination = .review
-        } else {
+        do {
+            let stored = try self.persisting.recentDocuments()
+            if let first = stored.first {
+                self.recentDocuments = stored
+                self.document = first
+                self.selectedDestination = .review
+            } else {
+                self.document = DocumentStore.makeInitialDocument()
+                self.recentDocuments = [self.document]
+            }
+        } catch {
+            self.persistenceStatus = .degraded("Local recents were damaged; a recoverable backup was kept")
             self.document = DocumentStore.makeInitialDocument()
             self.recentDocuments = [self.document]
         }

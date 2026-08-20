@@ -128,6 +128,9 @@ Each milestone should ship in independently revertible pull requests. A feature 
 - [ ] If SwiftData cannot initialize, use `FilePersisting` in a safe app-support subdirectory. If that also fails, run without recents and retain the active in-memory document.
 - [ ] Version the SwiftData schema before adding new fields; write a migration/recovery strategy before the first schema-changing release.
 - [ ] Add corruption, read-only-directory, no-space, migration, and fallback tests using temporary directories/configurations.
+- [x] Add JSON-store corruption recovery: preserve the damaged file under a
+  recovery name, surface a degraded persistence status, and continue with an
+  in-memory document. Read-only, no-space, and migration cases remain open.
 - [ ] Add `lastClearedAt` and a clear statement of what “Forget all” deletes; do not imply it deletes original user-selected source files.
 
 **Acceptance:** A deliberately invalid SwiftData location launches, imports, reviews, and exports a document; Settings reports degraded recents storage.

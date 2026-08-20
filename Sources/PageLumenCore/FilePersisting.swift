@@ -1,5 +1,9 @@
 import Foundation
 
+public enum FilePersistingError: Error, Equatable, Sendable {
+    case corruptStore
+}
+
 public final class FilePersisting: DocumentPersisting, @unchecked Sendable {
     public static let recentDocumentsLimit = 12
 
@@ -76,7 +80,14 @@ public final class FilePersisting: DocumentPersisting, @unchecked Sendable {
         do {
             return try decoder.decode([ReaderDocument].self, from: data)
         } catch {
-            return []
+            // Preserve the bytes for recovery instead of silently converting a
+            // damaged local library into an empty one. The next save can create
+            // a fresh store while the renamed backup remains user-recoverable.
+            let backup = fileURL
+                .deletingLastPathComponent()
+                .appendingPathComponent("\(fileURL.lastPathComponent).corrupt-\(UUID().uuidString)")
+            try? FileManager.default.moveItem(at: fileURL, to: backup)
+            throw FilePersistingError.corruptStore
         }
     }
 

@@ -90,6 +90,21 @@ final class DocumentPersistingTests: XCTestCase {
         XCTAssertEqual(try persisting.storageSizeInBytes(), 0)
     }
 
+    func testCorruptStoreIsBackedUpAndSurfacesTypedError() throws {
+        let url = tempDirectory.appendingPathComponent("recent.json")
+        try Data("not valid JSON".utf8).write(to: url)
+        let persisting = FilePersisting(fileURL: url)
+
+        XCTAssertThrowsError(try persisting.recentDocuments()) { error in
+            XCTAssertEqual(error as? FilePersistingError, .corruptStore)
+        }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
+        let backups = try FileManager.default.contentsOfDirectory(at: tempDirectory, includingPropertiesForKeys: nil)
+            .filter { $0.lastPathComponent.hasPrefix("recent.json.corrupt-") }
+        XCTAssertEqual(backups.count, 1)
+        XCTAssertEqual(try FilePersisting(fileURL: url).recentDocuments(), [])
+    }
+
     func testStorageSizeReportsOnlyTheLocalLibraryFile() throws {
         let url = tempDirectory.appendingPathComponent("recent.json")
         let persisting = FilePersisting(fileURL: url)
