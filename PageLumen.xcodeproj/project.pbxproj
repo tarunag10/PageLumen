@@ -10,6 +10,7 @@
 		01D582EFBC3861DFF9EAAC7D /* StatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 555134BE2841CFA4E241DA08 /* StatusBadge.swift */; };
 		023D60E9CBEE337F9B238A9A /* AISummaryProvenance.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7A38541BCB59C2ADA7FAEEC /* AISummaryProvenance.swift */; };
 		04F0BDE9F33A56CDF36CFD5A /* StirlingPDFCredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A39009613CF9727BBFDB0EDC /* StirlingPDFCredentialStore.swift */; };
+		096E78501D3562F74FD9AAE7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 7A69411B6149DE4C24479123 /* PrivacyInfo.xcprivacy */; };
 		0D65495EDF87C45A2DEDAC49 /* StirlingPDFProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E2726B74EFC602BCEE4058 /* StirlingPDFProviderTests.swift */; };
 		11418F72C6F5531C23F66F88 /* DOCXPackageValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E58971D5CE68DA35B9FFBE1 /* DOCXPackageValidator.swift */; };
 		11D7A3980A372A2CC66232C8 /* PageLumenTipsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD8ED3106C32AB31EEEB719 /* PageLumenTipsTests.swift */; };
@@ -78,7 +79,6 @@
 		980DA7777ADB7F1A59BDFF78 /* testDemoMarkdownExportSnapshot.demo-markdown.txt in Resources */ = {isa = PBXBuildFile; fileRef = 92832413AD44B5374333958E /* testDemoMarkdownExportSnapshot.demo-markdown.txt */; };
 		994F831FCCAAD4AFF874B8C4 /* TranslationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68E1FFE567A7A567DD135156 /* TranslationServiceTests.swift */; };
 		9BB2D8018274A4572D046759 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DE6C1C05D94652978F76FE97 /* Assets.xcassets */; };
-		A1B2C3D4E5F60718293A4B5C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5061728394A5B6C /* PrivacyInfo.xcprivacy */; };
 		9E1C89AA72F6A23C2B9E054C /* ProcessingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88A5FDF976892C5555C0B0BE /* ProcessingView.swift */; };
 		9E5DF85CC5F6CC24DDF61BF6 /* QuoteCaptureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06C96C1A82E586B01C41B2ED /* QuoteCaptureTests.swift */; };
 		9EC6A5AC0110A915BC4F3DB5 /* testRepresentativeLegalMarkdownExportSnapshot.legal-markdown.txt in Resources */ = {isa = PBXBuildFile; fileRef = 09E905685D2E0F9BD2D9C120 /* testRepresentativeLegalMarkdownExportSnapshot.legal-markdown.txt */; };
@@ -312,6 +312,7 @@
 		753EAF90C88F5A65CA28521E /* DocumentProcessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentProcessorTests.swift; sourceTree = "<group>"; };
 		76E976492C1C191015CFB289 /* QuoteCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteCapture.swift; sourceTree = "<group>"; };
 		783C4D8A6907DA2618F02551 /* testRepresentativeFormsAndTablesTaggedHTMLSnapshot.receipt-tagged-html.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "testRepresentativeFormsAndTablesTaggedHTMLSnapshot.receipt-tagged-html.txt"; sourceTree = "<group>"; };
+		7A69411B6149DE4C24479123 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		7B1C3F3CF365A97DC8EE00D0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		7C98EC0673308A4B4EA560D4 /* ScreenshotCaptureService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotCaptureService.swift; sourceTree = "<group>"; };
 		7CF0D6BAA80A9B0D6BB5F195 /* SwiftDataPersisting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataPersisting.swift; sourceTree = "<group>"; };
@@ -358,7 +359,6 @@
 		D7B8E38055F0DB96ACA3C18D /* AudioExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioExportService.swift; sourceTree = "<group>"; };
 		DCDA2E6EF46E0BCE1DECEC3A /* DocumentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentStore.swift; sourceTree = "<group>"; };
 		DE6C1C05D94652978F76FE97 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		B1C2D3E4F5061728394A5B6C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Config/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		DE971D1419147D1D8061BCB2 /* PageLumenQuickLookPreviewExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PageLumenQuickLookPreviewExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		DEEC4CA5A45CE5965F401DC5 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		DFCBF3FB1A08324BB3E81267 /* AISummaryProvenanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISummaryProvenanceTests.swift; sourceTree = "<group>"; };
@@ -534,7 +534,7 @@
 			isa = PBXGroup;
 			children = (
 				DE6C1C05D94652978F76FE97 /* Assets.xcassets */,
-				B1C2D3E4F5061728394A5B6C /* PrivacyInfo.xcprivacy */,
+				69BEDD6B1B3B446DE905A2E2 /* Config */,
 				17D58F0CD1DDFD9485A68E04 /* Sources */,
 				130ABC4F89F29A140825FBEB /* Tests */,
 				A33572BA4217C31FDE5EADE1 /* Products */,
@@ -557,6 +557,14 @@
 				55B42590A5D84158AF11A7FE /* Views */,
 			);
 			path = PageLumen;
+			sourceTree = "<group>";
+		};
+		69BEDD6B1B3B446DE905A2E2 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				7A69411B6149DE4C24479123 /* PrivacyInfo.xcprivacy */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 		9EEBE22A1658E54AA4267AFD /* PageLumenQuickLookPreviewExtension */ = {
@@ -941,7 +949,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9BB2D8018274A4572D046759 /* Assets.xcassets in Resources */,
-				A1B2C3D4E5F60718293A4B5C /* PrivacyInfo.xcprivacy in Resources */,
+				096E78501D3562F74FD9AAE7 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

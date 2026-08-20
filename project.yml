@@ -43,7 +43,8 @@ targets:
     sources:
       - path: Sources/PageLumen
       - path: Assets.xcassets
-    resources:
+      # XcodeGen classifies .xcprivacy as a resource when declared as a source.
+      # Keeping it here makes regeneration retain the app-level privacy manifest.
       - path: Config/PrivacyInfo.xcprivacy
     dependencies:
       - target: PageLumenCore
