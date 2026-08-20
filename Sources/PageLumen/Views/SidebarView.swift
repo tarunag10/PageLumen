@@ -279,7 +279,7 @@ private struct SidebarHeader: View {
                     .fill(AccessibleStyle.accentGradient)
                 Image(systemName: "doc.text.magnifyingglass")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(AccessibleStyle.onAccent)
             }
             .frame(width: 30, height: 30)
             .overlay {

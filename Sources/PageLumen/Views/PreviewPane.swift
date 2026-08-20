@@ -88,7 +88,7 @@ private struct ReadingOrderOverlay: View {
                             .font(.caption2.bold())
                             .padding(5)
                             .background(AccessibleStyle.accentGradient, in: Circle())
-                            .foregroundStyle(.white)
+                            .foregroundStyle(AccessibleStyle.onAccent)
                             .offset(x: -8, y: -8)
                     }
                 }

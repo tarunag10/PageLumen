@@ -250,7 +250,7 @@ private struct InfoTile: View {
                     .fill(AccessibleStyle.accentGradient)
                 Text(number)
                     .font(.callout.weight(.bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(AccessibleStyle.onAccent)
             }
             .frame(width: stepCircleSize, height: stepCircleSize)
             .shadow(color: AccessibleStyle.accent.opacity(0.4), radius: 5, y: 2)

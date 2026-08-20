@@ -29,6 +29,8 @@ enum AccessibleStyle {
     static let accentBright = Color(red: 0.49, green: 0.627, blue: 1.0)
     /// Soft accent used for tinted fills behind icons and chips.
     static let accentTint = Color(red: 0.345, green: 0.514, blue: 1.0).opacity(0.18)
+    /// Foreground content placed on the accent gradient.
+    static let onAccent = Color.white
 
     // MARK: - Surface Palette (Dark-First)
 
