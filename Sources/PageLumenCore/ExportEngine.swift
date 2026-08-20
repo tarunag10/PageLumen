@@ -39,6 +39,45 @@ public enum ExportValidationStatus: String, Codable, Equatable, Sendable {
     case unavailable
 }
 
+public enum ExportValidationFindingSeverity: String, Codable, Equatable, Sendable {
+    case info
+    case warning
+    case blocker
+}
+
+/// Structured validation data for clients that should not parse display text.
+/// The legacy `findings` strings remain on `ExportValidationResult` for
+/// compatibility with the current UI and integrations.
+public struct ExportValidationFinding: Codable, Equatable, Sendable, Identifiable {
+    public var id: String
+    public var code: String
+    public var severity: ExportValidationFindingSeverity
+    public var pageNumber: Int?
+    public var blockID: UUID?
+    public var message: String
+    public var recommendation: String
+
+    public init(
+        id: String? = nil,
+        code: String,
+        severity: ExportValidationFindingSeverity,
+        pageNumber: Int? = nil,
+        blockID: UUID? = nil,
+        message: String,
+        recommendation: String
+    ) {
+        self.code = code
+        self.severity = severity
+        self.pageNumber = pageNumber
+        self.blockID = blockID
+        self.message = message
+        self.recommendation = recommendation
+        let page = pageNumber.map(String.init) ?? "document"
+        let block = blockID?.uuidString ?? ""
+        self.id = id ?? [code, page, block].joined(separator: ":")
+    }
+}
+
 /// The capabilities and evidence behind an export format. Keeping this contract
 /// in the core model prevents UI copy and export behaviour from drifting apart.
 public struct ExportCapability: Codable, Equatable, Sendable {
@@ -74,15 +113,40 @@ public struct ExportValidationResult: Codable, Equatable, Sendable {
     public var status: ExportValidationStatus
     public var capability: ExportCapability
     public var findings: [String]
+    public var structuredFindings: [ExportValidationFinding]
 
-    public init(format: ExportFormat, status: ExportValidationStatus, capability: ExportCapability, findings: [String]) {
+    public init(
+        format: ExportFormat,
+        status: ExportValidationStatus,
+        capability: ExportCapability,
+        findings: [String],
+        structuredFindings: [ExportValidationFinding] = []
+    ) {
         self.format = format
         self.status = status
         self.capability = capability
         self.findings = findings
+        self.structuredFindings = structuredFindings
     }
 
     public var canExport: Bool { status != .unavailable }
+
+    /// Deterministic human-readable validation output for logs and UI.
+    public var report: String {
+        var lines = ["\(format.rawValue) export validation", "Status: \(status.rawValue)"]
+        if structuredFindings.isEmpty {
+            lines.append("No machine-readable findings.")
+        } else {
+            for finding in structuredFindings {
+                let location = finding.pageNumber.map { "Page \($0): " } ?? ""
+                lines.append("- [\(finding.severity.rawValue)] \(finding.code): \(location)\(finding.message)")
+                if !finding.recommendation.isEmpty {
+                    lines.append("  Recommendation: \(finding.recommendation)")
+                }
+            }
+        }
+        return lines.joined(separator: "\n")
+    }
 }
 
 public enum AccessibilityFindingKind: String, Codable, Equatable, Sendable {
@@ -282,15 +346,31 @@ public struct ExportEngine: Sendable {
     public func validate(document: ReaderDocument, format: ExportFormat, options: ExportOptions) -> ExportValidationResult {
         let capability = capability(for: format)
         guard capability.status != .unavailable else {
-            return ExportValidationResult(format: format, status: .unavailable, capability: capability, findings: capability.validationNotes)
+            return ExportValidationResult(
+                format: format,
+                status: .unavailable,
+                capability: capability,
+                findings: capability.validationNotes,
+                structuredFindings: capabilityFindings(for: format, capability: capability)
+            )
         }
 
         var findings = capability.validationNotes
+        var structuredFindings = capabilityFindings(for: format, capability: capability)
         if format == .taggedHTML || format == .html || format == .pdf || format == .docx {
             let audit = AccessibilityAuditor().audit(document: document, options: options)
             findings.append(contentsOf: audit.findings.map { finding in
                 let page = finding.pageNumber.map { "Page \($0): " } ?? ""
                 return "[\(finding.severity.rawValue)] \(page)\(finding.message)"
+            })
+            structuredFindings.append(contentsOf: audit.findings.map { finding in
+                ExportValidationFinding(
+                    code: finding.kind.rawValue,
+                    severity: exportSeverity(for: finding.severity),
+                    pageNumber: finding.pageNumber,
+                    message: finding.message,
+                    recommendation: finding.recommendation
+                )
             })
             // A blocker is a hard stop for accessibility-sensitive formats. The
             // caller must resolve the finding before an artifact can be written;
@@ -299,10 +379,48 @@ public struct ExportEngine: Sendable {
             findings.append(contentsOf: unresolvedBlockers.map { finding in
                 "[Needs fix] Page \(finding.pageNumber): \(finding.title) — \(finding.detail)"
             })
+            structuredFindings.append(contentsOf: unresolvedBlockers.map { finding in
+                ExportValidationFinding(
+                    code: finding.kind.rawValue,
+                    severity: .blocker,
+                    pageNumber: finding.pageNumber,
+                    blockID: finding.blockID,
+                    message: "\(finding.title) — \(finding.detail)",
+                    recommendation: "Resolve this review finding before exporting this format."
+                )
+            })
             let status: ExportValidationStatus = audit.isReadyForTaggedExport && unresolvedBlockers.isEmpty ? capability.status : .unavailable
-            return ExportValidationResult(format: format, status: status, capability: capability, findings: findings)
+            return ExportValidationResult(format: format, status: status, capability: capability, findings: findings, structuredFindings: structuredFindings)
         }
-        return ExportValidationResult(format: format, status: capability.status, capability: capability, findings: findings)
+        return ExportValidationResult(format: format, status: capability.status, capability: capability, findings: findings, structuredFindings: structuredFindings)
+    }
+
+    private func capabilityFindings(for format: ExportFormat, capability: ExportCapability) -> [ExportValidationFinding] {
+        capability.validationNotes.enumerated().map { index, note in
+            ExportValidationFinding(
+                id: "capability-\(format.rawValue.lowercased().replacingOccurrences(of: " ", with: "-"))-\(index)",
+                code: capability.status == .unavailable ? "format.unavailable" : "format.capability",
+                severity: exportSeverity(for: capability.status),
+                message: note,
+                recommendation: capability.status == .reviewRequired ? "Complete the stated validation or human review before publishing this output." : ""
+            )
+        }
+    }
+
+    private func exportSeverity(for status: ExportValidationStatus) -> ExportValidationFindingSeverity {
+        switch status {
+        case .ready: return .info
+        case .reviewRequired: return .warning
+        case .unavailable: return .blocker
+        }
+    }
+
+    private func exportSeverity(for severity: AccessibilitySeverity) -> ExportValidationFindingSeverity {
+        switch severity {
+        case .passed: return .info
+        case .warning: return .warning
+        case .blocker: return .blocker
+        }
     }
 
     public func markdown(for document: ReaderDocument, options: ExportOptions) -> String {

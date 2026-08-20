@@ -60,6 +60,38 @@ final class ExportEngineTests: XCTestCase {
         XCTAssertEqual(validation.format, .pdf)
         XCTAssertTrue(validation.canExport)
         XCTAssertFalse(validation.findings.isEmpty)
+        XCTAssertFalse(validation.structuredFindings.isEmpty)
+        XCTAssertTrue(validation.structuredFindings.contains { $0.code == "format.capability" && $0.severity == .warning })
+        XCTAssertTrue(validation.report.contains("Readable PDF export validation"))
+    }
+
+    func testExportValidationFindingsExposeLocationAndRecommendation() throws {
+        let document = ReaderDocument(
+            title: "Needs review",
+            sourceType: .sample,
+            pages: [ReaderPage(
+                pageNumber: 3,
+                size: PageSize(width: 612, height: 792),
+                blocks: [TextBlock(
+                    pageNumber: 3,
+                    type: .heading,
+                    text: "   ",
+                    bounds: BoundingBox(x: 72, y: 72, width: 300, height: 24),
+                    confidence: 0.95
+                )]
+            )]
+        )
+
+        let validation = ExportEngine().validate(document: document, format: .taggedHTML, options: .full)
+        let emptyHeading = try XCTUnwrap(validation.structuredFindings.first { $0.code == "emptyHeading" })
+
+        XCTAssertEqual(emptyHeading.severity, .blocker)
+        XCTAssertEqual(emptyHeading.pageNumber, 3)
+        XCTAssertNil(emptyHeading.blockID)
+        XCTAssertFalse(emptyHeading.message.isEmpty)
+        XCTAssertFalse(emptyHeading.recommendation.isEmpty)
+        XCTAssertTrue(validation.report.contains("[blocker] emptyHeading: Page 3:"))
+        XCTAssertTrue(validation.report.contains("Recommendation:"))
     }
 
     func testTranslationExportIsUnavailableUntilProviderProducesTranslation() {
@@ -71,6 +103,9 @@ final class ExportEngineTests: XCTestCase {
 
         XCTAssertEqual(validation.status, .unavailable)
         XCTAssertFalse(validation.canExport)
+        XCTAssertEqual(validation.findings, validation.capability.validationNotes)
+        XCTAssertEqual(validation.structuredFindings.count, validation.findings.count)
+        XCTAssertTrue(validation.structuredFindings.allSatisfy { $0.code == "format.unavailable" && $0.severity == .blocker })
     }
 
     func testAccessibilitySensitiveExportBlocksUnresolvedReviewFindings() {
