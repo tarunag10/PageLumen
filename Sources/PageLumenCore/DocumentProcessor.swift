@@ -32,6 +32,10 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         static let maxPDFPages = 100
         static let maxPagePixels: UInt64 = 50_000_000
         static let maxPagePixelsAsCGFloat: CGFloat = CGFloat(maxPagePixels)
+        /// OCR input cap for standalone images. The original image remains
+        /// the source geometry; this only bounds the transient Vision bitmap.
+        static let maxOCRImagePixels: CGFloat = 16_000_000
+        static let maxOCRImageDimension: CGFloat = 4_096
         static let maxPDFPageArea: CGFloat = 80_000_000
         /// OCR target is two pixels per PDF point (roughly 144 DPI), reduced
         /// further for unusually large pages by the pixel budget.
@@ -303,6 +307,7 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         try validateImageBudget(cgImage)
 
         let pageSize = CGSize(width: cgImage.width, height: cgImage.height)
+        let ocrImage = boundedOCRImage(cgImage)
         var document = ReaderDocument(
             title: title,
             sourceType: sourceType,
@@ -323,11 +328,11 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
 
         let blocks: [TextBlock]
         if #available(macOS 26.0, *),
-           let structuredBlocks = try? await recognizeStructured(in: cgImage, pageNumber: 1, pageSize: pageSize),
+           let structuredBlocks = try? await recognizeStructured(in: ocrImage, pageNumber: 1, pageSize: pageSize),
            !structuredBlocks.isEmpty {
             blocks = structuredBlocks
         } else {
-            blocks = try await recognizeText(in: cgImage, pageNumber: 1, pageSize: pageSize)
+            blocks = try await recognizeText(in: ocrImage, pageNumber: 1, pageSize: pageSize)
         }
         document.pages[0].ocrStatus = .complete
         document.pages[0].blocks = blocks
@@ -519,6 +524,30 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         if pixels > ImportBudget.maxPagePixels {
             throw DocumentProcessorError.documentTooLarge
         }
+    }
+
+    private func boundedOCRImage(_ image: CGImage) -> CGImage {
+        let width = CGFloat(image.width)
+        let height = CGFloat(image.height)
+        let pixelScale = sqrt(ImportBudget.maxOCRImagePixels / max(1, width * height))
+        let dimensionScale = ImportBudget.maxOCRImageDimension / max(width, height)
+        let scale = min(1, pixelScale, dimensionScale)
+        guard scale < 1 else { return image }
+
+        let targetWidth = max(1, Int((width * scale).rounded(.down)))
+        let targetHeight = max(1, Int((height * scale).rounded(.down)))
+        guard let context = CGContext(
+            data: nil,
+            width: targetWidth,
+            height: targetHeight,
+            bitsPerComponent: image.bitsPerComponent,
+            bytesPerRow: 0,
+            space: image.colorSpace ?? CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: image.bitmapInfo.rawValue
+        ) else { return image }
+        context.interpolationQuality = .high
+        context.draw(image, in: CGRect(x: 0, y: 0, width: CGFloat(targetWidth), height: CGFloat(targetHeight)))
+        return context.makeImage() ?? image
     }
 
     private func render(pdfPage: PDFPage) -> NSImage? {
