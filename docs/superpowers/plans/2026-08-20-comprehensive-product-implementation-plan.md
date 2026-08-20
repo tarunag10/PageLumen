@@ -525,7 +525,7 @@ participant and physical-device gates remain open.
 
 - [x] Add CI jobs for package tests, Xcode build, lint, fixture corpus, and release-manifest validation. `.github/workflows/ci.yml` now runs separate package-test, unsigned Xcode-build, quality, fixture-corpus, and release-manifest jobs with read-only contents permissions and no signing secrets. `script/validate_fixture_corpus.sh`, `script/validate_release_manifest.sh`, and `docs/release-manifest-v1.json` provide deterministic source-level contracts. Signed archive, notarization, and external distribution evidence remain separate manual/release-owner gates.
 - [x] Before release, create a signed archive, validate entitlements and sandbox behaviour, and export the distribution artifact. Local archive/ZIP/DMG evidence is recorded for 2026-08-20; notarization, upload, review, and live-store states remain explicitly unclaimed and separately gated.
-- [ ] Do not call a local archive, notarized DMG, upload, TestFlight processing, or App Review submission a live-store release; report each state separately.
+- [x] Do not call a local archive, notarized DMG, upload, TestFlight processing, or App Review submission a live-store release; `docs/release-evidence-2026-08-20.md` records each state separately and makes no live-store claim.
 - [ ] Run a final physical-Mac smoke test: PDF, image, clipboard, selected capture, window capture, translation, review queue, each export, deletion/retention controls, VoiceOver, light/dark appearance, and offline behaviour.
 
 **Exit gate for Phase 7:** A versioned release checklist includes command output/artifact identifiers, privacy answers, manual accessibility results, rollback plan, and accurate external-state wording.
@@ -591,7 +591,7 @@ A milestone is complete only when all applicable conditions below hold:
 - [ ] Accessibility review covers keyboard, VoiceOver, appearance, contrast, text size, motion, and transparency.
 - [ ] New dependencies have a decision record, license notice, pinned version, and removal plan.
 - [ ] Performance and corpus baselines show no unapproved regression.
-- [ ] A release gate records actual archive/upload/review state without conflating local and external proof.
+- [x] A release gate records actual archive/upload/review state without conflating local and external proof. `docs/release-checklist.md` and the dated release-evidence record separate local artifacts from unperformed Apple-hosted states.
 
 ## 9. Immediate Next Action
 

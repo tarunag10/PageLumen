@@ -30,8 +30,19 @@ the app-level privacy manifest is included in the signed archive.
 
 Notarization was not submitted: `APPLE_ID`, `APPLE_TEAM_ID`, and
 `APPLE_APP_PASSWORD` are absent, and uploading a private application artifact
-requires explicit authorization. No notarization, stapling, App Store review,
-or live-store claim is made.
+requires explicit authorization.
+
+The external release states are intentionally recorded separately:
+
+| State | Evidence/status |
+| --- | --- |
+| Local archive, ZIP, DMG | Completed and validated above |
+| Notarization/stapling | Not submitted; no notarization ticket exists |
+| Upload/processing | Not performed; no Apple-hosted artifact exists |
+| App Store/TestFlight review | Not submitted; no review state exists |
+| Live store availability | Not released or claimed |
+
+No notarization, stapling, App Store review, or live-store claim is made.
 
 VoiceOver, Switch Control, participant usability, large-text,
 contrast/transparency, reduced-motion, physical-Mac smoke, and App Review

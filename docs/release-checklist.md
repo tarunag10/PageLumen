@@ -31,5 +31,5 @@ App Store review or live availability.
 - [ ] `docs/privacy.md` and App Store privacy answers match the build.
 - [ ] Third-party notices and resolved versions are reviewed.
 - [x] Signing identity, entitlements, archive path, checksums, and version/build recorded in `docs/release-evidence-2026-08-20.md`.
-- [ ] Upload, processing, review, and live-store states are recorded separately.
+- [x] Upload, processing, review, and live-store states are recorded separately in `docs/release-evidence-2026-08-20.md`; each unperformed state is explicitly reported as such.
 - [ ] Rollback version and user communication are prepared.
