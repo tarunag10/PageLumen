@@ -50,7 +50,7 @@ struct ContentView: View {
         )) { prompt in
             Alert(
                 title: Text("Large import needs a choice"),
-                message: Text("PageLumen estimates (prompt.estimate.summary). Choose a bounded option; peak memory still needs validation on a physical Mac."),
+                message: Text("PageLumen estimates \(prompt.estimate.summary). Choose a bounded option; peak memory still needs validation on a physical Mac."),
                 primaryButton: .default(Text("Balanced quality")) {
                     store.chooseBalancedProcessing()
                 },
