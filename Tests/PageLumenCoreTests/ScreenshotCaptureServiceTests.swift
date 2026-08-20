@@ -55,6 +55,13 @@ final class ScreenshotCaptureServiceTests: XCTestCase {
         )
     }
 
+    func testModernNoShareableContentErrorRemainsStable() {
+        XCTAssertEqual(
+            ScreenshotCaptureError.modernCaptureError(ScreenshotCaptureError.noShareableContent, isCancelled: false),
+            .noShareableContent
+        )
+    }
+
     func testScreenshotCaptureModeFilePrefixes() {
         XCTAssertEqual(ScreenshotCaptureMode.selectedRegion.filePrefix, "PageLumen-Selection")
         XCTAssertEqual(ScreenshotCaptureMode.window.filePrefix, "PageLumen-Window")

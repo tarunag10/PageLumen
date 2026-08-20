@@ -60,6 +60,22 @@ enum ScreenshotCaptureError: LocalizedError, Equatable {
         if isCancelled || error is CancellationError {
             return .cancelled
         }
+        if let captureError = error as? Self {
+            return captureError
+        }
+        #if canImport(ScreenCaptureKit)
+        let nsError = error as NSError
+        if nsError.domain == SCStreamErrorDomain {
+            switch nsError.code {
+            case SCStreamError.Code.userDeclined.rawValue:
+                return .permissionDenied
+            case SCStreamError.Code.noWindowList.rawValue, SCStreamError.Code.noDisplayList.rawValue, SCStreamError.Code.noCaptureSource.rawValue:
+                return .noShareableContent
+            default:
+                break
+            }
+        }
+        #endif
         return .modernCaptureFailed(error.localizedDescription)
     }
 
