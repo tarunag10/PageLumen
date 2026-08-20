@@ -57,6 +57,7 @@ struct SummaryExportView: View {
                         Label(speech.isSpeaking ? "Stop" : "Play", systemImage: speech.isSpeaking ? "stop.fill" : "play.fill")
                     }
                     .buttonStyle(.bordered)
+                    .accessibilityIdentifier("export.playSummary")
 
                     Button {
                         speech.isSpeaking ? speech.stop() : speech.speak(store.fullExtractedText())
@@ -66,6 +67,7 @@ struct SummaryExportView: View {
                             systemImage: speech.isSpeaking ? "stop.fill" : "text.bubble"
                         )
                     }
+                    .accessibilityIdentifier("export.readFullText")
                     .help(speech.isSpeaking ? "Stop reading aloud" : "Read the full extracted text aloud")
 
                     Button {
@@ -73,6 +75,7 @@ struct SummaryExportView: View {
                     } label: {
                         Label("Copy with Citations", systemImage: "quote.opening")
                     }
+                    .accessibilityIdentifier("export.copyCitations")
                     .help("Copy a generated draft labelled with page and block citations")
 
                     Button {
@@ -80,6 +83,7 @@ struct SummaryExportView: View {
                     } label: {
                         Label("Prepare Draft", systemImage: "wand.and.stars")
                     }
+                    .accessibilityIdentifier("export.prepareDraft")
                     .help("Prepare a cited draft for explicit review before applying it")
 
                     Spacer()

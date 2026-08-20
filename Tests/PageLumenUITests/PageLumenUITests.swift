@@ -87,6 +87,19 @@ final class PageLumenUITests: XCTestCase {
             )
         }
 
+        let listeningActions = [
+            "export.playSummary",
+            "export.readFullText",
+            "export.copyCitations",
+            "export.prepareDraft"
+        ]
+        for identifier in listeningActions {
+            XCTAssertTrue(
+                fixtureApp.buttons[identifier].exists,
+                "Missing export action: \(identifier)"
+            )
+        }
+
         XCTAssertTrue(fixtureApp.staticTexts["Export preview"].exists)
         XCTAssertFalse(fixtureApp.sheets.firstMatch.exists, "Control-surface coverage must not open a save panel")
     }
