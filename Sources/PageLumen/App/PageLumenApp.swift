@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
+            guard PageLumenSystemWorkflowContract.supportsDocumentURL(url) else { continue }
             NotificationCenter.default.post(
                 name: .pageLumenOpenDocumentRequest,
                 object: nil,

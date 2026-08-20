@@ -70,6 +70,20 @@ targets:
         NSPrincipalClass: NSApplication
         NSScreenCaptureUsageDescription: "PageLumen captures a selected screen region or window so it can be made readable and searchable on this Mac."
         NSHumanReadableCopyright: ""
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: "PDF document"
+            CFBundleTypeRole: "Editor"
+            LSHandlerRank: "Owner"
+            LSItemContentTypes:
+              - "com.adobe.pdf"
+          - CFBundleTypeName: "Image document"
+            CFBundleTypeRole: "Editor"
+            LSHandlerRank: "Owner"
+            LSItemContentTypes:
+              - "public.png"
+              - "public.jpeg"
+              - "public.tiff"
+              - "public.heic"
   PageLumenCoreTests:
     type: bundle.unit-test
     platform: macOS

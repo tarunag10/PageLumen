@@ -83,6 +83,7 @@
 		CBC1BD0E7FAFEB750D94E4FA /* IntelligentExplainerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB8D8009AB88571A29CE5C53 /* IntelligentExplainerTests.swift */; };
 		CDD48FC500972BF6B68A8B15 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 0F9AC76C23CFBB2756E0860C /* ZIPFoundation */; };
 		D1CC83CD8B4C2C0D6505952E /* BatchImportQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 672E6D23DE829F90478ECDFC /* BatchImportQueueTests.swift */; };
+		D34C86F1150132AF19D23F54 /* SystemWorkflowContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B303F05E7556DA2EBE9039B /* SystemWorkflowContractTests.swift */; };
 		D44054CFE4B2F78762D187BC /* DocumentStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7FC574618FEADA955CF48E5 /* DocumentStoreTests.swift */; };
 		D570A6FCC33E2175A1409D5B /* PersistedDocumentSchema.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFD4CAE7BE7F9F93A1491036 /* PersistedDocumentSchema.swift */; };
 		D598D2065D90E8F63AA3244C /* AudioExportServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E18D53C06D5FC4A3E740772 /* AudioExportServiceTests.swift */; };
@@ -100,6 +101,7 @@
 		EAE34F1A9F93DAA403215E81 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = A65F5EF5F246399265123B4B /* SnapshotTesting */; };
 		ECC4328F40B23404AE5729AA /* DocumentEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10425478B42934D73AD06316 /* DocumentEditingTests.swift */; };
 		F47F64BC249E936280B1AB0F /* DocumentComparisonTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06110C3339DFA38795DCB525 /* DocumentComparisonTests.swift */; };
+		F6D479CB3AB7A6866908FBDE /* SystemWorkflowContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5403E522B90596704FED0AC2 /* SystemWorkflowContract.swift */; };
 		FAB195C7F3501F88A2E1A1B8 /* ScreenshotCaptureErrorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5E295A473B6B35D602BBC8B /* ScreenshotCaptureErrorTests.swift */; };
 		FD46CBE946493DA910F2911D /* ExportEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 886CD365A83A6800A57934BF /* ExportEngineTests.swift */; };
 /* End PBXBuildFile section */
@@ -199,6 +201,7 @@
 		2F2CE934D395E376E741021A /* ReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewView.swift; sourceTree = "<group>"; };
 		2FBBBD0641D444BB6CB3CE4E /* BatchImportQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchImportQueue.swift; sourceTree = "<group>"; };
 		3AAD2F542CDB20DB572FD697 /* ExplanationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplanationEngine.swift; sourceTree = "<group>"; };
+		3B303F05E7556DA2EBE9039B /* SystemWorkflowContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemWorkflowContractTests.swift; sourceTree = "<group>"; };
 		3BE206365E46217CFE2A7CD7 /* StirlingPDFProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StirlingPDFProvider.swift; sourceTree = "<group>"; };
 		3E18D53C06D5FC4A3E740772 /* AudioExportServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioExportServiceTests.swift; sourceTree = "<group>"; };
 		45F990D4F459CA9087296DDC /* testDemoTaggedHTMLExportSnapshot.demo-tagged-html.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "testDemoTaggedHTMLExportSnapshot.demo-tagged-html.txt"; sourceTree = "<group>"; };
@@ -206,6 +209,7 @@
 		4D4A7DCB07A9B2ACD32B05F1 /* MarkdownExportContract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownExportContract.swift; sourceTree = "<group>"; };
 		4E58971D5CE68DA35B9FFBE1 /* DOCXPackageValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DOCXPackageValidator.swift; sourceTree = "<group>"; };
 		51ED10D17EEF3D8A5A4C74B0 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		5403E522B90596704FED0AC2 /* SystemWorkflowContract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemWorkflowContract.swift; sourceTree = "<group>"; };
 		543E401D8D1A3EDD97BEF98B /* WatchFolder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchFolder.swift; sourceTree = "<group>"; };
 		555134BE2841CFA4E241DA08 /* StatusBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBadge.swift; sourceTree = "<group>"; };
 		592B7703C035A313BDDEEB61 /* TranslationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationService.swift; sourceTree = "<group>"; };
@@ -346,6 +350,7 @@
 				3BE206365E46217CFE2A7CD7 /* StirlingPDFProvider.swift */,
 				9F5E5E9D8CFD724FD3DF855A /* SummaryEvaluation.swift */,
 				7CF0D6BAA80A9B0D6BB5F195 /* SwiftDataPersisting.swift */,
+				5403E522B90596704FED0AC2 /* SystemWorkflowContract.swift */,
 				543E401D8D1A3EDD97BEF98B /* WatchFolder.swift */,
 			);
 			path = PageLumenCore;
@@ -466,6 +471,7 @@
 				E6BAC94216AB318648C32ADF /* ScreenshotCaptureServiceTests.swift */,
 				D2E2726B74EFC602BCEE4058 /* StirlingPDFProviderTests.swift */,
 				1122FAA9155AEFC4782A225F /* SwiftDataPersistingTests.swift */,
+				3B303F05E7556DA2EBE9039B /* SystemWorkflowContractTests.swift */,
 				4BD2D97CEC70ADA8758D781B /* WatchFolderTests.swift */,
 				A1D5CF321FF0B90A7F03279E /* __Snapshots__ */,
 			);
@@ -717,6 +723,7 @@
 				B5AB21D2BF5E68475264C623 /* ScreenshotCaptureServiceTests.swift in Sources */,
 				0D65495EDF87C45A2DEDAC49 /* StirlingPDFProviderTests.swift in Sources */,
 				279655DA7AAB073AF474A8C6 /* SwiftDataPersistingTests.swift in Sources */,
+				D34C86F1150132AF19D23F54 /* SystemWorkflowContractTests.swift in Sources */,
 				6B8E79EED29DB51E6C9D5EC8 /* WatchFolderTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -750,6 +757,7 @@
 				B7E4567FA883A438C6D65A80 /* StirlingPDFProvider.swift in Sources */,
 				BFE0D930DE9DE5573220EA4C /* SummaryEvaluation.swift in Sources */,
 				D7A1C2E155B592DF384BE693 /* SwiftDataPersisting.swift in Sources */,
+				F6D479CB3AB7A6866908FBDE /* SystemWorkflowContract.swift in Sources */,
 				9552444629A0DDE1575AAB6A /* WatchFolder.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
