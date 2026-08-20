@@ -2,7 +2,7 @@
 
 This record separates local artifact evidence from Apple-hosted distribution
 state. It was refreshed after a successful signed universal archive and local
-ZIP/DMG packaging run on 2026-08-20.
+ZIP/DMG packaging run from the current source on 2026-08-20.
 
 ## Local artifact
 
@@ -17,16 +17,16 @@ ZIP/DMG packaging run on 2026-08-20.
 - `script/validate_release.sh`: passed bundle, strict deep signature, privacy-manifest, and checksum gates
 - Current-source unsigned Release configuration build: `xcodebuild -project PageLumen.xcodeproj -scheme PageLumen -configuration Release -sdk macosx CODE_SIGNING_ALLOWED=NO build` passed on 2026-08-20. This confirms the checked-out source compiles in Release; it does not replace the signed archive evidence above.
 - Full package regression: `swift test -Xswiftc -gnone` passed 332 tests with 2 documented translation-model skips; focused export, model-comparison, and UI build gates were also rerun after this record's original archive.
-- CodeDirectory CDHash: `5bf6c2825145f0764595deff48e03d564f39d79c`
+- CodeDirectory CDHash: `6ab8c034116918cb02350c6b8522f54fb95087b6`
 - Privacy manifest: `Contents/Resources/PrivacyInfo.xcprivacy`, valid, non-tracking, and declares the UserDefaults accessed-API reason
 - Gatekeeper: rejected as `Unnotarized Developer ID` (expected before notarization)
 
 ## Distribution artifacts
 
 - ZIP: `dist/PageLumen.zip`
-  - SHA-256: `150acbe7cdcbd69d87a46cf29c46fddc028e2e4f2f9e378cc6b1500fed1e43db`
+  - SHA-256: `fadc9438adf8768feab37d083b7e5e8fe68b7fe3e26d0b54162957f60b9d7f4a`
 - DMG: `dist/PageLumen.dmg`
-  - SHA-256: `7abc438bbb8cbec43511df0538514b39c22dcd00deb809095295a962ae06b08a`
+  - SHA-256: `355223a1daafd07d402f0e71bb3ce1631f693c738a2e1b7aeac50930b7e894b5`
 
 ## Notarization and manual gates
 
