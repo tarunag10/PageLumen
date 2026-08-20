@@ -58,6 +58,16 @@ jobs:
       - name: Validate release evidence contract
         run: ./script/validate_release_manifest.sh
 
+  privacy-matrix:
+    name: Privacy matrix validation
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate privacy matrix and manifest alignment
+        run: ./script/validate_privacy_matrix.sh
+
   build:
     name: Xcode build
     runs-on: macos-latest
