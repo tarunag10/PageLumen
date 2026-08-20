@@ -449,6 +449,10 @@ privacy complexity to a native macOS reader.
 
 ## Phase 6 — Accessibility Depth and User Workflows (M3)
 
+The current code-backed interaction audit is recorded in
+[`docs/ui-ux-audit-2026-08-20.md`](../../ui-ux-audit-2026-08-20.md); its manual
+participant and physical-device gates remain open.
+
 **Goal:** Validate with the people PageLumen is intended to help and reduce remediation time.
 
 - [ ] Conduct structured usability sessions with VoiceOver users, low-vision users, dyslexic readers, students, researchers, educators, and legal professionals. Obtain consent; do not retain user documents beyond the agreed research process.
