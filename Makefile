@@ -1,4 +1,4 @@
-.PHONY: help test build release lint quality fixtures release-manifest privacy-matrix coverage release-preflight clean
+.PHONY: help test build release lint quality fixtures ai-evaluation release-manifest privacy-matrix coverage release-preflight clean
 
 APP_NAME := PageLumen
 SCHEME := PageLumen
@@ -11,6 +11,7 @@ help:
 	@echo "  make lint      - run swift test + release build"
 	@echo "  make quality   - run local privacy, artifact, and whitespace gates"
 	@echo "  make fixtures  - validate the versioned fixture and AI evaluation manifests"
+	@echo "  make ai-evaluation - validate the fail-closed AI evaluation report contract"
 	@echo "  make release-manifest - validate the unsigned CI/release evidence contract"
 	@echo "  make coverage  - run tests with LLVM coverage and write a risk report"
 	@echo "  make release-preflight - check local archive/signing prerequisites"
@@ -37,6 +38,9 @@ offline-dependencies:
 
 fixtures:
 	./script/validate_fixture_corpus.sh
+
+ai-evaluation:
+	./script/validate_ai_evaluation.sh
 
 release-manifest:
 	./script/validate_release_manifest.sh
