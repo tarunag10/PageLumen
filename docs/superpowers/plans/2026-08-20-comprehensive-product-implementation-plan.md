@@ -216,7 +216,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 ### 1.4 Create the review workspace
 
-- [ ] Add a filterable Review Queue with keyboard shortcuts for next/previous finding, accept/reject suggestion, mark reviewed, and open original source region. The queue popover now lists all unresolved findings, filters All/Blockers/Warnings, opens each source region, and offers separate accept/reject actions without changing source text; page-warning correction and original-region highlighting remain open.
+- [x] Add a filterable Review Queue with keyboard shortcuts for next/previous finding, accept/reject suggestion, mark reviewed, and open original source region. The queue popover lists unresolved findings, filters All/Blockers/Warnings, opens each source region, offers separate accept/reject actions without changing source text, and page-warning correction is highlighted in the original preview region.
 - [x] Add Cmd-Shift-A/X actions for accepting or rejecting the currently selected review finding; commands preserve source-block selection and fall back to a selected-page warning.
 - [x] Synchronise preview, extracted text, and issue list selection; support page-level deep links. `ReviewSelectionPayload` and `DocumentStore.applyReviewSelection` now validate document/page/block identifiers and centralise preview, extracted-text, queue, and page-only selection; participant validation remains open.
 - [x] Support table-grid editing with explicit column-header and row-header assignment. Review now provides validated cell editing plus explicit header row/column assignment, with semantic HTML/JSON preservation.
@@ -497,7 +497,7 @@ participant and physical-device gates remain open.
 - [x] Add an assistive-technology regression checklist: `docs/accessibility-regression-checklist.md` separates automated evidence from required manual VoiceOver, full keyboard, Switch Control, large-text, contrast/transparency/motion, and pointer/zoom passes.
 - [x] Add per-export remediation checklist, unresolved-risk summary, and a clear “manual review still required” explanation. `AccessibilityAudit` exposes deterministic checklist/risk/notice values and Step 4 renders them alongside the export gate.
 - [x] Add quote capture with page/block citations and a “copy accessible excerpt” command. `DocumentQuote` normalizes the excerpt and adds page/reading-order block citation; every editable review block exposes the copy action and focused Codable/citation tests pass.
-- [ ] Add document comparison for source vs OCR and user-selected document revisions; never use AI comparison without provenance/citation output.
+- [ ] Add document comparison for source vs OCR and user-selected document revisions; never use AI comparison without provenance/citation output. `DocumentComparison` provides deterministic stable-block diffs, and Review exposes a non-AI Compare Edits popover for retained original OCR; user-selected revision browsing remains open.
 
 **Exit gate for Phase 6:** Participant evidence identifies improved time-to-correct and successful task completion; critical accessibility issues are triaged before release.
 
