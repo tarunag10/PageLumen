@@ -92,6 +92,35 @@ final class DocumentProcessorTests: XCTestCase {
         XCTAssertEqual(document.outline.map(\.level), [1, 2])
     }
 
+    @MainActor
+    func testPDFLinkAnnotationsAreRetainedWithBoundsAndURL() async throws {
+        let source = try makePDF(containing: "Link target")
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("pdf")
+        defer { try? FileManager.default.removeItem(at: source); try? FileManager.default.removeItem(at: url) }
+        guard let pdf = PDFDocument(url: source), let page = pdf.page(at: 0) else {
+            XCTFail("Could not open generated PDF")
+            return
+        }
+        let annotation = PDFAnnotation(
+            bounds: CGRect(x: 40, y: 60, width: 140, height: 24),
+            forType: .link,
+            withProperties: nil
+        )
+        annotation.url = URL(string: "https://example.com/page")
+        annotation.contents = "Read more"
+        page.addAnnotation(annotation)
+        XCTAssertTrue(pdf.write(to: url))
+
+        let document = try await DocumentProcessor().process(url: url)
+        let link = try XCTUnwrap(document.pages[0].links.first)
+
+        XCTAssertEqual(link.label, "Read more")
+        XCTAssertEqual(link.url?.absoluteString, "https://example.com/page")
+        XCTAssertEqual(link.bounds, BoundingBox(x: 40, y: 60, width: 140, height: 24))
+    }
+
     func testUnsupportedFileThrowsReadableError() async {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)

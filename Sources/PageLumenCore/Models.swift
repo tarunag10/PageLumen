@@ -201,6 +201,31 @@ public struct FigureRegion: Identifiable, Codable, Equatable, Sendable {
     }
 }
 
+public struct ReaderLink: Identifiable, Codable, Equatable, Sendable {
+    public var id: UUID
+    public var pageNumber: Int
+    public var bounds: BoundingBox
+    public var label: String?
+    public var url: URL?
+    public var targetPageNumber: Int?
+
+    public init(
+        id: UUID = UUID(),
+        pageNumber: Int,
+        bounds: BoundingBox,
+        label: String? = nil,
+        url: URL? = nil,
+        targetPageNumber: Int? = nil
+    ) {
+        self.id = id
+        self.pageNumber = pageNumber
+        self.bounds = bounds
+        self.label = label
+        self.url = url
+        self.targetPageNumber = targetPageNumber
+    }
+}
+
 public struct ReaderPage: Identifiable, Codable, Equatable, Sendable {
     public var id: UUID
     public var pageNumber: Int
@@ -214,6 +239,7 @@ public struct ReaderPage: Identifiable, Codable, Equatable, Sendable {
     public var warning: String?
     /// Human-facing PDF page label (for example, "iv" or "A-1").
     public var pageLabel: String?
+    public var links: [ReaderLink]
 
     public init(
         id: UUID = UUID(),
@@ -226,7 +252,8 @@ public struct ReaderPage: Identifiable, Codable, Equatable, Sendable {
         tables: [TableRegion] = [],
         figures: [FigureRegion] = [],
         warning: String? = nil,
-        pageLabel: String? = nil
+        pageLabel: String? = nil,
+        links: [ReaderLink] = []
     ) {
         self.id = id
         self.pageNumber = pageNumber
@@ -239,10 +266,11 @@ public struct ReaderPage: Identifiable, Codable, Equatable, Sendable {
         self.figures = figures
         self.warning = warning
         self.pageLabel = pageLabel
+        self.links = links
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, pageNumber, size, thumbnailData, ocrStatus, layoutType, blocks, tables, figures, warning, pageLabel
+        case id, pageNumber, size, thumbnailData, ocrStatus, layoutType, blocks, tables, figures, warning, pageLabel, links
     }
 
     public init(from decoder: Decoder) throws {
@@ -258,6 +286,7 @@ public struct ReaderPage: Identifiable, Codable, Equatable, Sendable {
         figures = try values.decode([FigureRegion].self, forKey: .figures)
         warning = try values.decodeIfPresent(String.self, forKey: .warning)
         pageLabel = try values.decodeIfPresent(String.self, forKey: .pageLabel)
+        links = try values.decodeIfPresent([ReaderLink].self, forKey: .links) ?? []
     }
 }
 

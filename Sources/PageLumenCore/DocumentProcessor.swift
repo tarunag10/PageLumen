@@ -103,7 +103,8 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
                     thumbnailData: thumbnailData(for: pdfPage),
                     ocrStatus: .pending,
                     blocks: [],
-                    pageLabel: pdfPage.label
+                    pageLabel: pdfPage.label,
+                    links: pdfLinks(for: pdfPage, in: pdf, pageNumber: index + 1)
                 )
             },
             outline: pdfOutline(pdf),
@@ -184,6 +185,22 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
 
         append(root, level: 1)
         return items
+    }
+
+    private func pdfLinks(for page: PDFPage, in pdf: PDFDocument, pageNumber: Int) -> [ReaderLink] {
+        page.annotations.compactMap { annotation in
+            let url = annotation.url
+            let targetPageNumber: Int? = annotation.destination?.page.map { pdf.index(for: $0) + 1 }
+            guard url != nil || targetPageNumber != nil else { return nil }
+            let bounds = annotation.bounds
+            return ReaderLink(
+                pageNumber: pageNumber,
+                bounds: BoundingBox(x: bounds.origin.x, y: bounds.origin.y, width: bounds.width, height: bounds.height),
+                label: annotation.contents,
+                url: url,
+                targetPageNumber: targetPageNumber
+            )
+        }
     }
 
     private struct PageInput: Sendable {
