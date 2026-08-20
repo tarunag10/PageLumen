@@ -3,9 +3,10 @@ import PDFKit
 
 /// Connection settings for an optional, user-managed Stirling-PDF instance.
 ///
-/// The API key is intentionally supplied as an in-memory value. Stage A does
-/// not persist credentials; the app-shell integration will move it to
-/// Keychain before any operation that uploads document content is introduced.
+/// The API key is intentionally supplied as an in-memory value at the request
+/// boundary. The app shell must retrieve it from the Keychain credential store
+/// and must never persist it in this endpoint value, UserDefaults, provenance,
+/// logs, or exports.
 public struct StirlingPDFEndpoint: Sendable, Equatable {
     public var baseURL: URL
     public var apiKey: String?

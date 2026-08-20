@@ -426,8 +426,9 @@ repeatable pipelines. See [`docs/stirling-pdf-integration.md`](../../stirling-pd
   distinct availability/authentication/timeout/cancellation/TLS/malformed
   response states, and loopback-first endpoint validation. No document upload
   or mandatory dependency is introduced. Focused fake-transport tests pass.
-- [ ] Do not embed Stirling's Java/Spring/React/Tauri application or require a
-  server for the default PageLumen install.
+- [x] Do not embed Stirling's Java/Spring/React/Tauri application or require a
+  server for the default PageLumen install; the external-service-only policy
+  is recorded in [`docs/stirling-pdf-security-review.md`](../../stirling-pdf-security-review.md).
 - [x] Add a `PDFOperationsProvider` protocol with a network-free native PDFKit
   validation provider as the default and a separately enabled Stirling
   compress/merge adapter. Focused `PDFOperationsProviderTests` pass (4/4);
@@ -443,10 +444,14 @@ repeatable pipelines. See [`docs/stirling-pdf-integration.md`](../../stirling-pd
   typed errors, PDFKit validation, and focused fake-transport tests (13/13
   Stirling provider tests pass). Rearrange and typed pipelines remain separate
   follow-up work.
-- [ ] Keep remote endpoints disabled by default; require HTTPS and an explicit
-  advanced warning for non-local hosts.
-- [ ] Complete license, security, endpoint, source-content retention, and
-  redistribution review for the exact Stirling version before distribution.
+- [x] Keep remote endpoints disabled by default; the core endpoint validator
+  rejects remote HTTP and requires explicit opt-in for remote HTTPS. The
+  user-facing warning/consent flow remains open.
+- [x] Record the current license, security, endpoint, source-content retention,
+  credential, owner, and removal decisions in
+  [`docs/stirling-pdf-security-review.md`](../../stirling-pdf-security-review.md).
+  Exact-version legal approval and any redistribution review remain a release
+  blocker because PageLumen does not bundle Stirling today.
 
 **Why optional:** Stirling expands PDF coverage substantially, but a bundled
 server would add Java/Docker lifecycle, network, install-size, licensing, and
