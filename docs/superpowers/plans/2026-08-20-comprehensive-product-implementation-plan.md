@@ -453,7 +453,7 @@ repeatable pipelines. See [`docs/stirling-pdf-integration.md`](../../stirling-pd
 - [x] Start with a cancellable compress operation; validate the returned PDF
   before offering replacement, and write output atomically. Stage B is covered
   by `StirlingPDFCompressor`, `StirlingPDFAtomicOutput`, and the focused
-  `StirlingPDFProviderTests` suite (17/17 passed). The export screen now offers
+  `StirlingPDFProviderTests` suite (18/18 passed). The export screen now offers
   a separately saved, explicitly confirmed compressed copy when the provider
   is enabled; source replacement is never implicit. The export surface exposes
   progress and cancellation for the asynchronous provider task.

@@ -49,6 +49,24 @@ final class StirlingPDFProviderTests: XCTestCase {
         XCTAssertEqual(result.state, .available(StirlingPDFCapabilities(version: "0.40.0", operations: ["compress", "merge"], status: "UP")))
     }
 
+    func testURLSessionTransportUsesMetadataOnlyProbeRequest() async {
+        ProbeURLProtocol.handler = { request in
+            XCTAssertEqual(request.httpMethod, "GET")
+            XCTAssertNil(request.httpBody)
+            XCTAssertEqual(request.url?.path, "/api/v1/info/status")
+            return (Data(#"{"status":"UP","version":"0.40.0"}"#.utf8), 200, "application/json")
+        }
+        defer { ProbeURLProtocol.handler = nil }
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [ProbeURLProtocol.self]
+        let transport = URLSessionStirlingPDFHTTPTransport(session: URLSession(configuration: configuration))
+        let result = await StirlingPDFCapabilityProbe(transport: transport).probe(endpoint: localEndpoint())
+
+        XCTAssertEqual(result.httpStatusCode, 200)
+        XCTAssertEqual(result.state, .available(StirlingPDFCapabilities(version: "0.40.0", status: "UP")))
+    }
+
     func testProbeDistinguishesAuthenticationFailure() async {
         let transport = StubTransport { request in
             (Data(), makeResponse(for: request, statusCode: 401))
@@ -348,4 +366,30 @@ private struct StubTransport: StirlingPDFHTTPTransport {
     func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         try await handler(request)
     }
+}
+
+private final class ProbeURLProtocol: URLProtocol, @unchecked Sendable {
+    nonisolated(unsafe) static var handler: ((URLRequest) -> (Data, Int, String))?
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+    override func startLoading() {
+        guard let handler = Self.handler, let url = request.url else {
+            client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
+            return
+        }
+        let (data, statusCode, contentType) = handler(request)
+        let response = HTTPURLResponse(
+            url: url,
+            statusCode: statusCode,
+            httpVersion: nil,
+            headerFields: ["Content-Type": contentType]
+        )!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: data)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading() {}
 }
