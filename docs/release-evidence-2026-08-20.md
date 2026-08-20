@@ -1,8 +1,8 @@
 # Release evidence — 2026-08-20
 
 This record separates local artifact evidence from Apple-hosted distribution
-state. It was refreshed after correcting the Xcode project resource phase so
-the app-level privacy manifest is included in the signed archive.
+state. It was refreshed after a successful signed universal archive and local
+ZIP/DMG packaging run on 2026-08-20.
 
 ## Local artifact
 
@@ -15,22 +15,22 @@ the app-level privacy manifest is included in the signed archive.
 - Runtime: hardened runtime enabled; sandbox and user-selected file entitlements present
 - `script/package_release.sh`: succeeded
 - `script/validate_release.sh`: passed bundle, strict deep signature, privacy-manifest, and checksum gates
-- CodeDirectory CDHash: `40dcbc871bdad318082782f66df2970bf53eec4a`
+- CodeDirectory CDHash: `5bf6c2825145f0764595deff48e03d564f39d79c`
 - Privacy manifest: `Contents/Resources/PrivacyInfo.xcprivacy`, valid, non-tracking, and declares the UserDefaults accessed-API reason
 - Gatekeeper: rejected as `Unnotarized Developer ID` (expected before notarization)
 
 ## Distribution artifacts
 
 - ZIP: `dist/PageLumen.zip`
-  - SHA-256: `b103e54825d034154d506cea5fea0854b4a6dfb48e2f68a0b124345abb990796`
+  - SHA-256: `150acbe7cdcbd69d87a46cf29c46fddc028e2e4f2f9e378cc6b1500fed1e43db`
 - DMG: `dist/PageLumen.dmg`
-  - SHA-256: `c31263f1684ced4b126cf75b9ba950a68fd102f2c95b508cd4387661926fb0b1`
+  - SHA-256: `7abc438bbb8cbec43511df0538514b39c22dcd00deb809095295a962ae06b08a`
 
 ## Notarization and manual gates
 
-Notarization was not submitted: `APPLE_ID`, `APPLE_TEAM_ID`, and
-`APPLE_APP_PASSWORD` are absent, and uploading a private application artifact
-requires explicit authorization.
+Notarization was not submitted: no Apple notarytool credentials are configured
+in this environment, and uploading a private application artifact requires
+explicit authorization.
 
 The external release states are intentionally recorded separately:
 
