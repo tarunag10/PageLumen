@@ -43,6 +43,7 @@
 		484629EACB8D181F8C11F6C7 /* MarkdownContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD368DF1D25E58B885FC699 /* MarkdownContractTests.swift */; };
 		4EEFFD310568017D015251D4 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0993F9EF955B4BE8A1529A /* SidebarView.swift */; };
 		518670599F44B2B5E8CFB4BE /* ConfidenceChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C8DEC1BA144706A824E037D /* ConfidenceChartView.swift */; };
+		558CB0881684595F0DAB50E2 /* ThumbnailProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6015A15D694DAFCB913F0C5F /* ThumbnailProvider.swift */; };
 		57AAA1DED75EACFB2781E2FA /* ProcessingBudgetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E318F7BB4CB8F333F1A5C16 /* ProcessingBudgetTests.swift */; };
 		5F3DFBD7102B40AB54F9D8A8 /* PageLumenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 9E4B58A0FC934C9DC62F3754 /* PageLumenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		601F1428D9CD3BB69ADC2CD7 /* ReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F2CE934D395E376E741021A /* ReviewView.swift */; };
@@ -68,6 +69,7 @@
 		9229D02CF746CDCEF09FCCD0 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = FB754BCE5405A063F876F568 /* ZIPFoundation */; };
 		925D49B3592958D424690066 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51ED10D17EEF3D8A5A4C74B0 /* Models.swift */; };
 		9552444629A0DDE1575AAB6A /* WatchFolder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 543E401D8D1A3EDD97BEF98B /* WatchFolder.swift */; };
+		9642F5B4149848D2A8A72D0E /* PageLumenQuickLookExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C57385F1233E3807E072B399 /* PageLumenQuickLookExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		9788D2F145A6636F59C3C29A /* IntelligenceContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0159F39C9D6F22A50399E8F3 /* IntelligenceContext.swift */; };
 		980DA7777ADB7F1A59BDFF78 /* testDemoMarkdownExportSnapshot.demo-markdown.txt in Resources */ = {isa = PBXBuildFile; fileRef = 92832413AD44B5374333958E /* testDemoMarkdownExportSnapshot.demo-markdown.txt */; };
 		994F831FCCAAD4AFF874B8C4 /* TranslationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68E1FFE567A7A567DD135156 /* TranslationServiceTests.swift */; };
@@ -132,6 +134,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 5C2657DF8BFEC120F22D2211;
 			remoteInfo = PageLumen;
+		};
+		26417231E9481469F636CD59 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CF4AE81689A39DBC166AFBB2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BB099FD9D0501F9391310E52;
+			remoteInfo = PageLumenQuickLookExtension;
 		};
 		280D6B492ACFC2A9BCB2A465 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -218,6 +227,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				BAD4A4480B85EF2FB7EC1AC1 /* PageLumenShareExtension.appex in Embed Foundation Extensions */,
+				9642F5B4149848D2A8A72D0E /* PageLumenQuickLookExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -265,6 +275,7 @@
 		543E401D8D1A3EDD97BEF98B /* WatchFolder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchFolder.swift; sourceTree = "<group>"; };
 		555134BE2841CFA4E241DA08 /* StatusBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBadge.swift; sourceTree = "<group>"; };
 		592B7703C035A313BDDEEB61 /* TranslationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationService.swift; sourceTree = "<group>"; };
+		6015A15D694DAFCB913F0C5F /* ThumbnailProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailProvider.swift; sourceTree = "<group>"; };
 		672E6D23DE829F90478ECDFC /* BatchImportQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchImportQueueTests.swift; sourceTree = "<group>"; };
 		68E1FFE567A7A567DD135156 /* TranslationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationServiceTests.swift; sourceTree = "<group>"; };
 		698302D733C8FC04BEF74C41 /* LocalLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLibrary.swift; sourceTree = "<group>"; };
@@ -308,6 +319,7 @@
 		C0FB31681A1F9D103897D7C5 /* PDFOperationsProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFOperationsProvider.swift; sourceTree = "<group>"; };
 		C332D1614C12B5930D5DF63C /* AppIntentExportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIntentExportTests.swift; sourceTree = "<group>"; };
 		C3DAC8E53053B077F92A007C /* PageLumenUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PageLumenUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C57385F1233E3807E072B399 /* PageLumenQuickLookExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PageLumenQuickLookExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C5C82C9B5CCBD7D4A6968E44 /* HTMLExportContract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTMLExportContract.swift; sourceTree = "<group>"; };
 		C65BABD59FFBD2C7A825B919 /* PersistedDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistedDocument.swift; sourceTree = "<group>"; };
 		CB8D8009AB88571A29CE5C53 /* IntelligentExplainerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligentExplainerTests.swift; sourceTree = "<group>"; };
@@ -441,6 +453,7 @@
 			children = (
 				680CE959C44FA58C3E38BEC1 /* PageLumen */,
 				134642FDB2D5C6AA8A321742 /* PageLumenCore */,
+				B838DD4AC952FED5CE27D2CE /* PageLumenQuickLookExtension */,
 				0D960C78226335007A42F669 /* PageLumenShareExtension */,
 			);
 			path = Sources;
@@ -528,6 +541,7 @@
 				71EFCA7649331DDBB9F8204A /* PageLumen.app */,
 				9E4B58A0FC934C9DC62F3754 /* PageLumenCore.framework */,
 				EBC3669176703A82D1F69F41 /* PageLumenCoreTests.xctest */,
+				C57385F1233E3807E072B399 /* PageLumenQuickLookExtension.appex */,
 				A63B95682C8E4C1D0B88C19B /* PageLumenShareExtension.appex */,
 				7E8ABA7756F913A74F3BF5C1 /* PageLumenTests.xctest */,
 				C3DAC8E53053B077F92A007C /* PageLumenUITests.xctest */,
@@ -589,6 +603,14 @@
 				592B7703C035A313BDDEEB61 /* TranslationService.swift */,
 			);
 			path = Support;
+			sourceTree = "<group>";
+		};
+		B838DD4AC952FED5CE27D2CE /* PageLumenQuickLookExtension */ = {
+			isa = PBXGroup;
+			children = (
+				6015A15D694DAFCB913F0C5F /* ThumbnailProvider.swift */,
+			);
+			path = PageLumenQuickLookExtension;
 			sourceTree = "<group>";
 		};
 		C008ABED82064265DA12AE89 /* ExportSnapshotTests */ = {
@@ -669,6 +691,7 @@
 			dependencies = (
 				2080F569F63D0C8967BCA477 /* PBXTargetDependency */,
 				12AEB261FB5DB1F1C5E54B24 /* PBXTargetDependency */,
+				B80BF6B725BC5212B70A9B86 /* PBXTargetDependency */,
 			);
 			name = PageLumen;
 			packageProductDependencies = (
@@ -693,6 +716,23 @@
 			);
 			productName = PageLumenShareExtension;
 			productReference = A63B95682C8E4C1D0B88C19B /* PageLumenShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		BB099FD9D0501F9391310E52 /* PageLumenQuickLookExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D5E871EACE4C3086FA4F1030 /* Build configuration list for PBXNativeTarget "PageLumenQuickLookExtension" */;
+			buildPhases = (
+				D9FAF14051C9F5967CFB28DC /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PageLumenQuickLookExtension;
+			packageProductDependencies = (
+			);
+			productName = PageLumenQuickLookExtension;
+			productReference = C57385F1233E3807E072B399 /* PageLumenQuickLookExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 		CB07E6CEE42E7BFCE6E15440 /* PageLumenUITests */ = {
@@ -753,6 +793,9 @@
 					962E31A5C1A7EFDCD654E46A = {
 						ProvisioningStyle = Automatic;
 					};
+					BB099FD9D0501F9391310E52 = {
+						ProvisioningStyle = Automatic;
+					};
 					CB07E6CEE42E7BFCE6E15440 = {
 						ProvisioningStyle = Automatic;
 						TestTargetID = 5C2657DF8BFEC120F22D2211;
@@ -784,6 +827,7 @@
 				5C2657DF8BFEC120F22D2211 /* PageLumen */,
 				E37F3AD401E59074552853CC /* PageLumenCore */,
 				114285C5C49B46E4CFD7E932 /* PageLumenCoreTests */,
+				BB099FD9D0501F9391310E52 /* PageLumenQuickLookExtension */,
 				962E31A5C1A7EFDCD654E46A /* PageLumenShareExtension */,
 				5AE4C091EA58619DC977AC19 /* PageLumenTests */,
 				CB07E6CEE42E7BFCE6E15440 /* PageLumenUITests */,
@@ -946,6 +990,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D9FAF14051C9F5967CFB28DC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				558CB0881684595F0DAB50E2 /* ThumbnailProvider.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F53E94945415AE2D20DA1DC3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -992,6 +1044,11 @@
 			target = E37F3AD401E59074552853CC /* PageLumenCore */;
 			targetProxy = 280D6B492ACFC2A9BCB2A465 /* PBXContainerItemProxy */;
 		};
+		B80BF6B725BC5212B70A9B86 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BB099FD9D0501F9391310E52 /* PageLumenQuickLookExtension */;
+			targetProxy = 26417231E9481469F636CD59 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -1012,6 +1069,24 @@
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
+		};
+		1DD08A74604CB3645BF448DD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = "generated/PageLumenQuickLookExtension-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.pagelumen.PageLumen.quicklook;
+				PRODUCT_NAME = PageLumenQuickLookExtension;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
 		};
 		34354AA94CDD151A7BA98E0B /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -1302,6 +1377,24 @@
 			};
 			name = Release;
 		};
+		D8803FB964B1BC800A4C3686 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = "generated/PageLumenQuickLookExtension-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.pagelumen.PageLumen.quicklook;
+				PRODUCT_NAME = PageLumenQuickLookExtension;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
 		EDF56E52FAC0572F03A44446 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1404,6 +1497,15 @@
 			buildConfigurations = (
 				47D5DF15B9A8010972323F93 /* Debug */,
 				AE92D59B092398808FEC5892 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D5E871EACE4C3086FA4F1030 /* Build configuration list for PBXNativeTarget "PageLumenQuickLookExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D8803FB964B1BC800A4C3686 /* Debug */,
+				1DD08A74604CB3645BF448DD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

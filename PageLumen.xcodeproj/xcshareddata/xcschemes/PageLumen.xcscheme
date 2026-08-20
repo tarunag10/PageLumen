@@ -111,6 +111,17 @@
                ReferencedContainer = "container:PageLumen.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "BB099FD9D0501F9391310E52"
+               BuildableName = "PageLumenQuickLookExtension.appex"
+               BlueprintName = "PageLumenQuickLookExtension"
+               ReferencedContainer = "container:PageLumen.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <CommandLineArguments>
       </CommandLineArguments>

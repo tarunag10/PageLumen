@@ -9,10 +9,10 @@ final class SystemWorkflowContractTests: XCTestCase {
         XCTAssertFalse(PageLumenSystemWorkflowContract.supportsDocumentURL(URL(fileURLWithPath: "/tmp/no-extension")))
     }
 
-    func testOnlyFinderOpenFileIsDeclaredPackagedUntilExtensionsAreValidated() {
-        XCTAssertTrue(PageLumenSystemWorkflowContract.PackagedCapability.finderOpenFile.isPackagedInCurrentTarget)
-        for capability in PageLumenSystemWorkflowContract.PackagedCapability.allCases where capability != .finderOpenFile {
-            XCTAssertFalse(capability.isPackagedInCurrentTarget, "Unexpectedly claims (capability.rawValue) is packaged")
+    func testPackagedCapabilitiesMatchCurrentTargets() {
+        let packaged: Set<PageLumenSystemWorkflowContract.PackagedCapability> = [.finderOpenFile, .shareExtension, .quickLookThumbnail]
+        for capability in PageLumenSystemWorkflowContract.PackagedCapability.allCases {
+            XCTAssertEqual(capability.isPackagedInCurrentTarget, packaged.contains(capability), "Unexpected packaging claim for \(capability.rawValue)")
         }
     }
 

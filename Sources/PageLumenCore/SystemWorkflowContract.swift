@@ -101,7 +101,12 @@ public enum PageLumenSystemWorkflowContract {
         case quickLookThumbnail
 
         public var isPackagedInCurrentTarget: Bool {
-            self == .finderOpenFile
+            switch self {
+            case .finderOpenFile, .shareExtension, .quickLookThumbnail:
+                return true
+            case .finderQuickAction, .quickLookPreview:
+                return false
+            }
         }
     }
 }
