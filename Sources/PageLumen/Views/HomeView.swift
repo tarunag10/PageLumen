@@ -5,6 +5,7 @@ import SwiftUI
 
 struct HomeView: View {
     @Environment(DocumentStore.self) private var store
+    let uiTestingImportMode: HomeUITestingMode?
     @State private var isTargeted = false
     @State private var showCapturePermissionHelp = false
     @State private var pendingCaptureMode: ScreenshotCaptureMode = .selectedRegion
@@ -115,6 +116,29 @@ struct HomeView: View {
                     Label("Try Demo", systemImage: "play.circle")
                 }
                 .accessibilityIdentifier("home.tryDemo")
+            }
+
+            if uiTestingImportMode == .importFixture {
+                Button("Import Test Fixture") {
+                    store.loadSample()
+                }
+                .accessibilityIdentifier("home.uiTestImportFixture")
+                .accessibilityHint("Load the bounded test document and continue to Review.")
+            } else if uiTestingImportMode == .permissionDenied {
+                Label("Import permission was denied", systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.orange)
+                    .accessibilityIdentifier("home.importPermissionDenied")
+                Text("No document was imported. Try again to continue with the selected file.")
+                    .font(.callout)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button("Try Import Again") {
+                    store.loadSample()
+                }
+                .buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("home.retryImport")
+                .accessibilityHint("Retry import without losing the current document.")
             }
         }
         .popoverTip(DropZoneTip(), arrowEdge: .top)

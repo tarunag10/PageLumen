@@ -1,8 +1,18 @@
 import PageLumenCore
 import SwiftUI
 
+enum HomeUITestingMode: Equatable {
+    case importFixture
+    case permissionDenied
+}
+
 struct ContentView: View {
     @Environment(DocumentStore.self) private var store
+    let uiTestingImportMode: HomeUITestingMode?
+
+    init(uiTestingImportMode: HomeUITestingMode? = nil) {
+        self.uiTestingImportMode = uiTestingImportMode
+    }
     // Re-render when the high-contrast toggle changes so AccessibleStyle tokens
     // (border, selected, elevatedBackground, appBackground) pick up the new
     // value.
@@ -19,7 +29,7 @@ struct ContentView: View {
                 Group {
                     switch store.selectedDestination ?? .home {
                     case .home:
-                        HomeView()
+                        HomeView(uiTestingImportMode: uiTestingImportMode)
                     case .processing:
                         ProcessingView()
                     case .review:

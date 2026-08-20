@@ -64,4 +64,25 @@ final class PageLumenUITests: XCTestCase {
         XCTAssertTrue(settingsApp.checkBoxes["settings.boostContrast"].exists)
         XCTAssertTrue(settingsApp.buttons["settings.forgetAll"].exists)
     }
+
+    func testDeterministicImportFixtureReachesReview() throws {
+        let importApp = XCUIApplication()
+        importApp.launchArguments = ["-ui-testing", "-ui-testing-import"]
+        importApp.launch()
+
+        XCTAssertTrue(importApp.buttons["home.uiTestImportFixture"].waitForExistence(timeout: 5))
+        importApp.buttons["home.uiTestImportFixture"].click()
+        XCTAssertTrue(importApp.buttons["review.queue"].waitForExistence(timeout: 5))
+    }
+
+    func testDeterministicDeniedImportOffersRecovery() throws {
+        let deniedApp = XCUIApplication()
+        deniedApp.launchArguments = ["-ui-testing", "-ui-testing-import-denied"]
+        deniedApp.launch()
+
+        XCTAssertTrue(deniedApp.staticTexts["home.importPermissionDenied"].waitForExistence(timeout: 5))
+        XCTAssertTrue(deniedApp.buttons["home.retryImport"].exists)
+        deniedApp.buttons["home.retryImport"].click()
+        XCTAssertTrue(deniedApp.buttons["review.queue"].waitForExistence(timeout: 5))
+    }
 }

@@ -30,6 +30,15 @@ participant-driven XCUITest flows:
 | Export | `export.backToReview`, `export.<format>` |
 | Settings | `settings.privacyMode`, `settings.searchableCopies`, `settings.forgetAll`, `settings.appearance`, `settings.boostContrast` |
 
+The bounded import seam accepts `-ui-testing -ui-testing-import` and exposes
+`home.uiTestImportFixture`; activating it loads the in-memory demo document and
+asserts the transition to Review without opening `NSOpenPanel`. The recovery
+seam accepts `-ui-testing -ui-testing-import-denied`, exposes the explicit
+`home.importPermissionDenied` state and `home.retryImport` action, then loads
+the same bounded fixture after retry. These routes validate state transitions
+and loss-free recovery only. They do not simulate or prove macOS sandbox,
+security-scoped bookmark, Screen Recording, or real picker permission behavior.
+
 The additional identifiers are intentionally not asserted from the initial
 Home-only headless contract because their views are reached after import or
 settings navigation. A participant run must exercise each enabled control and

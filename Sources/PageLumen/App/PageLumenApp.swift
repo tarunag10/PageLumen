@@ -47,13 +47,24 @@ struct PageLumenApp: App {
         ProcessInfo.processInfo.arguments.contains("-ui-testing-settings")
     }
 
+    /// Provides a bounded import/recovery route for XCUITest. It never runs
+    /// during a normal launch and deliberately uses the in-memory demo rather
+    /// than opening a system panel or changing Screen Recording permission.
+    private var uiTestingImportMode: HomeUITestingMode? {
+        guard isUITestingLaunch else { return nil }
+        if ProcessInfo.processInfo.arguments.contains("-ui-testing-import-denied") {
+            return .permissionDenied
+        }
+        return ProcessInfo.processInfo.arguments.contains("-ui-testing-import") ? .importFixture : nil
+    }
+
     var body: some Scene {
         WindowGroup("PageLumen", id: "main") {
             Group {
                 if isUITestingSettingsLaunch {
                     SettingsView()
                 } else {
-                    ContentView()
+                    ContentView(uiTestingImportMode: uiTestingImportMode)
                 }
             }
                 .environment(store)
