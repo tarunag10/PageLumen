@@ -482,7 +482,7 @@ participant and physical-device gates remain open.
 - [x] Add a bounded reading-mode slice: focus selected block, line spacing, typography choices, speech speed, and saved reading preferences. Speech word/paragraph highlighting remains a separate host-validation item.
 - [x] Add an assistive-technology regression checklist: `docs/accessibility-regression-checklist.md` separates automated evidence from required manual VoiceOver, full keyboard, Switch Control, large-text, contrast/transparency/motion, and pointer/zoom passes.
 - [x] Add per-export remediation checklist, unresolved-risk summary, and a clear “manual review still required” explanation. `AccessibilityAudit` exposes deterministic checklist/risk/notice values and Step 4 renders them alongside the export gate.
-- [ ] Add quote capture with page/block citations and a “copy accessible excerpt” command.
+- [x] Add quote capture with page/block citations and a “copy accessible excerpt” command. `DocumentQuote` normalizes the excerpt and adds page/reading-order block citation; every editable review block exposes the copy action and focused Codable/citation tests pass.
 - [ ] Add document comparison for source vs OCR and user-selected document revisions; never use AI comparison without provenance/citation output.
 
 **Exit gate for Phase 6:** Participant evidence identifies improved time-to-correct and successful task completion; critical accessibility issues are triaged before release.
