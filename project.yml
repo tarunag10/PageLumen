@@ -54,6 +54,8 @@ targets:
         embed: true
       - target: PageLumenFinderActionExtension
         embed: true
+      - target: PageLumenQuickLookPreviewExtension
+        embed: true
     settings:
       base:
         CODE_SIGN_ENTITLEMENTS: Config/PageLumen.entitlements
@@ -217,6 +219,27 @@ targets:
               NSExtensionActivationSupportsFileWithMaxCount: 20
           NSExtensionPointIdentifier: com.apple.ui-services
           NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).ShareViewController"
+  PageLumenQuickLookPreviewExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Sources/PageLumenQuickLookPreviewExtension
+    settings:
+      base:
+        APPLICATION_EXTENSION_API_ONLY: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.PageLumen.quicklook-preview
+        PRODUCT_NAME: PageLumenQuickLookPreviewExtension
+        SKIP_INSTALL: YES
+    info:
+      path: generated/PageLumenQuickLookPreviewExtension-Info.plist
+      properties:
+        CFBundleName: PageLumenQuickLookPreviewExtension
+        CFBundlePackageType: XPC!
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.quicklook.preview
+          NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).PreviewProvider"
 schemes:
   PageLumen:
     build:
@@ -236,3 +259,4 @@ schemes:
         - PageLumenShareExtension
         - PageLumenQuickLookExtension
         - PageLumenFinderActionExtension
+        - PageLumenQuickLookPreviewExtension

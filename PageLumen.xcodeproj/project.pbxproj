@@ -61,6 +61,7 @@
 		79D4F83A44CF76C068B5CEB3 /* Markdown in Frameworks */ = {isa = PBXBuildFile; productRef = 369133CBDBC34C65FA521F2D /* Markdown */; };
 		7B76A9C9436A9036EC7D6F74 /* LocalLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 698302D733C8FC04BEF74C41 /* LocalLibrary.swift */; };
 		803E55A18410EC589214DC87 /* DocumentComparison.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E9D777DAD53BDBD0F9B12FD /* DocumentComparison.swift */; };
+		875D546DF5841B6A6F10BB93 /* PageLumenQuickLookPreviewExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = DE971D1419147D1D8061BCB2 /* PageLumenQuickLookPreviewExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		879DCD4FD0AFC056A27FAEED /* SpeechEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1BE8CE264BD58F722F55395 /* SpeechEngine.swift */; };
 		88FDE4B11602D96714E616FE /* DocumentPersistingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97FBD3593ADD8AA57BD938D6 /* DocumentPersistingTests.swift */; };
 		8CE6A8FA43F6CBC88534DB5D /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C34F432A51C9DD416B5FC4 /* HomeView.swift */; };
@@ -96,6 +97,7 @@
 		B820A83E9DB0DD704EFAFDAF /* MarkdownExportContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D4A7DCB07A9B2ACD32B05F1 /* MarkdownExportContract.swift */; };
 		BAD4A4480B85EF2FB7EC1AC1 /* PageLumenShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A63B95682C8E4C1D0B88C19B /* PageLumenShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BE044BB82DB542AC8C22CBC2 /* PageLumenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9E4B58A0FC934C9DC62F3754 /* PageLumenCore.framework */; };
+		BF0B4DA58EA4E551DDB49B58 /* PreviewProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FDD628982B5856C678E3715 /* PreviewProvider.swift */; };
 		BFE0D930DE9DE5573220EA4C /* SummaryEvaluation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F5E5E9D8CFD724FD3DF855A /* SummaryEvaluation.swift */; };
 		C5B624A312CE431432D1512F /* Markdown in Frameworks */ = {isa = PBXBuildFile; productRef = 500F981A82AD0A47ED8D74F4 /* Markdown */; };
 		CADBE13ACC4787DF896763E9 /* DocumentEditing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01C6609B23473073ABF51DAC /* DocumentEditing.swift */; };
@@ -164,6 +166,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 962E31A5C1A7EFDCD654E46A;
 			remoteInfo = PageLumenShareExtension;
+		};
+		881F1FF0F67F119D8CC0D2D0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CF4AE81689A39DBC166AFBB2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7E3EC9EE15CFCDC8AAFAA4DE;
+			remoteInfo = PageLumenQuickLookPreviewExtension;
 		};
 		AB6DFC7421744567BC065359 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -238,6 +247,7 @@
 				BAD4A4480B85EF2FB7EC1AC1 /* PageLumenShareExtension.appex in Embed Foundation Extensions */,
 				9642F5B4149848D2A8A72D0E /* PageLumenQuickLookExtension.appex in Embed Foundation Extensions */,
 				EF5B5F13C766EF2F90708734 /* PageLumenFinderActionExtension.appex in Embed Foundation Extensions */,
+				875D546DF5841B6A6F10BB93 /* PageLumenQuickLookPreviewExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -285,6 +295,7 @@
 		543E401D8D1A3EDD97BEF98B /* WatchFolder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchFolder.swift; sourceTree = "<group>"; };
 		555134BE2841CFA4E241DA08 /* StatusBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBadge.swift; sourceTree = "<group>"; };
 		592B7703C035A313BDDEEB61 /* TranslationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationService.swift; sourceTree = "<group>"; };
+		5FDD628982B5856C678E3715 /* PreviewProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewProvider.swift; sourceTree = "<group>"; };
 		6015A15D694DAFCB913F0C5F /* ThumbnailProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailProvider.swift; sourceTree = "<group>"; };
 		672E6D23DE829F90478ECDFC /* BatchImportQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchImportQueueTests.swift; sourceTree = "<group>"; };
 		68E1FFE567A7A567DD135156 /* TranslationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationServiceTests.swift; sourceTree = "<group>"; };
@@ -342,6 +353,7 @@
 		D7B8E38055F0DB96ACA3C18D /* AudioExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioExportService.swift; sourceTree = "<group>"; };
 		DCDA2E6EF46E0BCE1DECEC3A /* DocumentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentStore.swift; sourceTree = "<group>"; };
 		DE6C1C05D94652978F76FE97 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		DE971D1419147D1D8061BCB2 /* PageLumenQuickLookPreviewExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PageLumenQuickLookPreviewExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		DEEC4CA5A45CE5965F401DC5 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		DFCBF3FB1A08324BB3E81267 /* AISummaryProvenanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISummaryProvenanceTests.swift; sourceTree = "<group>"; };
 		E5E295A473B6B35D602BBC8B /* ScreenshotCaptureErrorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotCaptureErrorTests.swift; sourceTree = "<group>"; };
@@ -465,6 +477,7 @@
 				680CE959C44FA58C3E38BEC1 /* PageLumen */,
 				134642FDB2D5C6AA8A321742 /* PageLumenCore */,
 				B838DD4AC952FED5CE27D2CE /* PageLumenQuickLookExtension */,
+				9EEBE22A1658E54AA4267AFD /* PageLumenQuickLookPreviewExtension */,
 				0D960C78226335007A42F669 /* PageLumenShareExtension */,
 			);
 			path = Sources;
@@ -538,6 +551,14 @@
 			path = PageLumen;
 			sourceTree = "<group>";
 		};
+		9EEBE22A1658E54AA4267AFD /* PageLumenQuickLookPreviewExtension */ = {
+			isa = PBXGroup;
+			children = (
+				5FDD628982B5856C678E3715 /* PreviewProvider.swift */,
+			);
+			path = PageLumenQuickLookPreviewExtension;
+			sourceTree = "<group>";
+		};
 		A1D5CF321FF0B90A7F03279E /* __Snapshots__ */ = {
 			isa = PBXGroup;
 			children = (
@@ -554,6 +575,7 @@
 				EBC3669176703A82D1F69F41 /* PageLumenCoreTests.xctest */,
 				91D7F8B44C87409C4CE1B6AD /* PageLumenFinderActionExtension.appex */,
 				C57385F1233E3807E072B399 /* PageLumenQuickLookExtension.appex */,
+				DE971D1419147D1D8061BCB2 /* PageLumenQuickLookPreviewExtension.appex */,
 				A63B95682C8E4C1D0B88C19B /* PageLumenShareExtension.appex */,
 				7E8ABA7756F913A74F3BF5C1 /* PageLumenTests.xctest */,
 				C3DAC8E53053B077F92A007C /* PageLumenUITests.xctest */,
@@ -705,6 +727,7 @@
 				12AEB261FB5DB1F1C5E54B24 /* PBXTargetDependency */,
 				B80BF6B725BC5212B70A9B86 /* PBXTargetDependency */,
 				3022D50550243B21CE6CFA71 /* PBXTargetDependency */,
+				661B1C32F3481562D9657171 /* PBXTargetDependency */,
 			);
 			name = PageLumen;
 			packageProductDependencies = (
@@ -713,6 +736,23 @@
 			productName = PageLumen;
 			productReference = 71EFCA7649331DDBB9F8204A /* PageLumen.app */;
 			productType = "com.apple.product-type.application";
+		};
+		7E3EC9EE15CFCDC8AAFAA4DE /* PageLumenQuickLookPreviewExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2D13F7CFAB961200399BC379 /* Build configuration list for PBXNativeTarget "PageLumenQuickLookPreviewExtension" */;
+			buildPhases = (
+				A60038C63D22E5EF7ED22771 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PageLumenQuickLookPreviewExtension;
+			packageProductDependencies = (
+			);
+			productName = PageLumenQuickLookPreviewExtension;
+			productReference = DE971D1419147D1D8061BCB2 /* PageLumenQuickLookPreviewExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 		962E31A5C1A7EFDCD654E46A /* PageLumenShareExtension */ = {
 			isa = PBXNativeTarget;
@@ -820,6 +860,9 @@
 					5C2657DF8BFEC120F22D2211 = {
 						ProvisioningStyle = Automatic;
 					};
+					7E3EC9EE15CFCDC8AAFAA4DE = {
+						ProvisioningStyle = Automatic;
+					};
 					962E31A5C1A7EFDCD654E46A = {
 						ProvisioningStyle = Automatic;
 					};
@@ -862,6 +905,7 @@
 				114285C5C49B46E4CFD7E932 /* PageLumenCoreTests */,
 				98803E2927EE5A48A9A5530D /* PageLumenFinderActionExtension */,
 				BB099FD9D0501F9391310E52 /* PageLumenQuickLookExtension */,
+				7E3EC9EE15CFCDC8AAFAA4DE /* PageLumenQuickLookPreviewExtension */,
 				962E31A5C1A7EFDCD654E46A /* PageLumenShareExtension */,
 				5AE4C091EA58619DC977AC19 /* PageLumenTests */,
 				CB07E6CEE42E7BFCE6E15440 /* PageLumenUITests */,
@@ -1010,6 +1054,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A60038C63D22E5EF7ED22771 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BF0B4DA58EA4E551DDB49B58 /* PreviewProvider.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AAAF2714702F571B9CB4241F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1076,6 +1128,11 @@
 			target = 98803E2927EE5A48A9A5530D /* PageLumenFinderActionExtension */;
 			targetProxy = 07A4A16421BE6BBCB8A280A9 /* PBXContainerItemProxy */;
 		};
+		661B1C32F3481562D9657171 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7E3EC9EE15CFCDC8AAFAA4DE /* PageLumenQuickLookPreviewExtension */;
+			targetProxy = 881F1FF0F67F119D8CC0D2D0 /* PBXContainerItemProxy */;
+		};
 		893B820A3FC12391E382207A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 5C2657DF8BFEC120F22D2211 /* PageLumen */;
@@ -1099,6 +1156,24 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		034F1686C4516BDDB66BDA25 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = "generated/PageLumenQuickLookPreviewExtension-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.pagelumen.PageLumen.quicklook-preview";
+				PRODUCT_NAME = PageLumenQuickLookPreviewExtension;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
 		0DC11E8C2AB43FB68E414128 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1478,6 +1553,24 @@
 			};
 			name = Debug;
 		};
+		DF2703D0C6421886E6BA3DE5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = "generated/PageLumenQuickLookPreviewExtension-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.pagelumen.PageLumen.quicklook-preview";
+				PRODUCT_NAME = PageLumenQuickLookPreviewExtension;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
 		EDF56E52FAC0572F03A44446 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1526,6 +1619,15 @@
 			buildConfigurations = (
 				835DDAEDF2382069AE3E1532 /* Debug */,
 				A2DE41D52EE23CBC1AEDC6C9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		2D13F7CFAB961200399BC379 /* Build configuration list for PBXNativeTarget "PageLumenQuickLookPreviewExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				034F1686C4516BDDB66BDA25 /* Debug */,
+				DF2703D0C6421886E6BA3DE5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

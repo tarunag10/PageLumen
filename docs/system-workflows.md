@@ -18,11 +18,11 @@ context so the app delegate remains the single import entry point. Its archive,
 sandbox/security-scoped behavior, and Finder host behavior still require
 participant validation. The `PageLumenFinderActionExtension` and
 `PageLumenQuickLookExtension` targets now provide bounded Finder handoff and
-first-page/image thumbnail paths. Quick Look preview remains unclaimed. The
-thumbnail target renders a bounded PDF page or image with a 512-pixel cap,
-without OCR, persistence, or shared caches. Sandbox, memory/latency, and real
-host behavior still require participant validation. A complete system-workflow
-implementation must verify:
+first-page/image thumbnail and bounded three-page PDF preview paths. The
+thumbnail target caps output at 512 pixels; the preview target exposes at most
+three source pages. Neither performs OCR, persistence, or shared-cache writes.
+Sandbox, memory/latency, and real host behavior still require participant
+validation. A complete system-workflow implementation must verify:
 
 1. The extension can access a user-selected file without retaining a stale
    security-scoped bookmark.
