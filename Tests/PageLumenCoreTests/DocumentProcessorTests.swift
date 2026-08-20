@@ -313,6 +313,11 @@ final class DocumentProcessorTests: XCTestCase {
         let document = try await DocumentProcessor().process(url: url)
         let allText = document.allBlocks.map(\.text).joined(separator: " ")
         XCTAssertTrue(allText.contains("Structured") || allText.contains("test"), "Expected some recognized text, got: \(allText)")
+        XCTAssertFalse(document.allBlocks.isEmpty)
+        XCTAssertTrue(document.allBlocks.allSatisfy { observation in
+            guard let raw = observation.rawObservation else { return false }
+            return raw.transcript == observation.originalText && raw.normalizedBounds.width >= 0 && raw.normalizedBounds.height >= 0
+        })
     }
 
     @MainActor

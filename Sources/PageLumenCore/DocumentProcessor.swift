@@ -372,7 +372,8 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
                             "structured-recognition": "title"
                         ],
                         provenance: BlockProvenance(source: .visionOCR, pageNumber: pageNumber, bounds: bounds, confidence: Double(observation.confidence), engine: "Vision structured document recognition"),
-                        originalText: text
+                        originalText: text,
+                        rawObservation: OCRObservationRecord(transcript: text, confidence: Double(observation.confidence), normalizedBounds: normalizedBounds(for: bounds, pageSize: pageSize), engine: "Vision structured document recognition", kind: "title")
                     ))
                     index += 1
                 }
@@ -394,7 +395,8 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
                             "structured-recognition": "paragraph"
                     ],
                     provenance: BlockProvenance(source: .visionOCR, pageNumber: pageNumber, bounds: bounds, confidence: Double(observation.confidence), engine: "Vision structured document recognition"),
-                    originalText: text
+                    originalText: text,
+                    rawObservation: OCRObservationRecord(transcript: text, confidence: Double(observation.confidence), normalizedBounds: normalizedBounds(for: bounds, pageSize: pageSize), engine: "Vision structured document recognition", kind: "paragraph")
                 ))
                 index += 1
             }
@@ -427,6 +429,16 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         )
     }
 
+    private func normalizedBounds(for bounds: BoundingBox, pageSize: CGSize) -> BoundingBox {
+        guard pageSize.width > 0, pageSize.height > 0 else { return .init(x: 0, y: 0, width: 0, height: 0) }
+        return BoundingBox(
+            x: bounds.x / pageSize.width,
+            y: 1.0 - ((bounds.y + bounds.height) / Double(pageSize.height)),
+            width: bounds.width / pageSize.width,
+            height: bounds.height / pageSize.height
+        )
+    }
+
     private func recognizeText(in cgImage: CGImage, pageNumber: Int, pageSize: CGSize) async throws -> [TextBlock] {
         try await withCheckedThrowingContinuation { continuation in
             let request = VNRecognizeTextRequest { request, error in
@@ -454,7 +466,13 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
                         readingOrderIndex: index,
                         metadata: ["source": BlockSource.visionOCR.metadataValue],
                         provenance: BlockProvenance(source: .visionOCR, pageNumber: pageNumber, bounds: bounds, confidence: Double(candidate.confidence), engine: "Vision text recognition"),
-                        originalText: candidate.string
+                        originalText: candidate.string,
+                        rawObservation: OCRObservationRecord(
+                            transcript: candidate.string,
+                            confidence: Double(candidate.confidence),
+                            normalizedBounds: BoundingBox(x: box.minX, y: box.minY, width: box.width, height: box.height),
+                            engine: "Vision text recognition"
+                        )
                     )
                 }
                 continuation.resume(returning: blocks)

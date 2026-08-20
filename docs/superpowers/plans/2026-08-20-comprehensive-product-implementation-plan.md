@@ -196,7 +196,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 ### 1.2 Improve document structure and reading order
 
 - [x] Preserve the fast embedded-text path and augment it with PDF semantics available through PDFKit: page labels, links, nested bookmarks, document metadata, annotations, form fields, and bounded character text positions. All are retained through the model with legacy Codable defaults; unsupported producer-specific semantics remain outside the contract.
-- [ ] Use Vision structured document recognition for image/scanned pages, retaining raw observations and normalized bounds before heuristic post-processing.
+- [x] Use Vision structured document recognition for image/scanned pages, retaining a typed raw-observation record (transcript, confidence, normalized bounds, engine, and kind) before heuristic post-processing. Legacy documents decode with no observation record.
 - [ ] Explicitly model lists, captions, headers, footers, footnotes, sidebars, tables, and figures. Do not force unknown content into prose.
 - [ ] Add a reading-order confidence score and provenance for every ordering decision.
 - [ ] Create deterministic fixtures for: two/three-column papers, legal filings, forms, receipts, slides, multi-page tables, charts, rotated pages, multilingual text, low-quality scans, handwriting, equations, and documents with deliberate OCR traps.

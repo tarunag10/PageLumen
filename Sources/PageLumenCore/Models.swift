@@ -152,6 +152,23 @@ public struct BoundingBox: Codable, Equatable, Sendable {
     public var maxY: Double { y + height }
 }
 
+public struct OCRObservationRecord: Codable, Equatable, Sendable {
+    public var transcript: String
+    public var confidence: Double
+    /// Vision-normalized coordinates (origin at the lower-left).
+    public var normalizedBounds: BoundingBox
+    public var engine: String
+    public var kind: String
+
+    public init(transcript: String, confidence: Double, normalizedBounds: BoundingBox, engine: String, kind: String = "text") {
+        self.transcript = transcript
+        self.confidence = confidence
+        self.normalizedBounds = normalizedBounds
+        self.engine = engine
+        self.kind = kind
+    }
+}
+
 public struct TextBlock: Identifiable, Codable, Equatable, Sendable {
     public var id: UUID
     public var pageNumber: Int
@@ -165,6 +182,9 @@ public struct TextBlock: Identifiable, Codable, Equatable, Sendable {
     /// The first extracted text, retained for an explicit raw-OCR diff.
     /// Existing documents decode this as nil and remain fully readable.
     public var originalText: String?
+    /// Raw, privacy-sensitive OCR observation metadata retained for audit and
+    /// layout regression; this stores no Vision framework object.
+    public var rawObservation: OCRObservationRecord?
 
     public var hasTextEdit: Bool {
         guard let originalText else { return false }
@@ -181,7 +201,8 @@ public struct TextBlock: Identifiable, Codable, Equatable, Sendable {
         readingOrderIndex: Int = 0,
         metadata: [String: String] = [:],
         provenance: BlockProvenance? = nil,
-        originalText: String? = nil
+        originalText: String? = nil,
+        rawObservation: OCRObservationRecord? = nil
     ) {
         self.id = id
         self.pageNumber = pageNumber
@@ -193,6 +214,7 @@ public struct TextBlock: Identifiable, Codable, Equatable, Sendable {
         self.metadata = metadata
         self.provenance = provenance
         self.originalText = originalText
+        self.rawObservation = rawObservation
     }
 }
 
