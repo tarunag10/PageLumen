@@ -92,6 +92,34 @@ xcodebuild -project PageLumen.xcodeproj \
   build-for-testing
 ```
 
+When executing the runner on current Xcode, use an explicit local Mac
+destination and disable parallel destination scheduling. This avoids the
+ambiguous `Supported platforms for the buildables in the current scheme is
+empty` path and makes worker materialization diagnostics reproducible:
+
+```sh
+CLANG_MODULE_CACHE_PATH=/tmp/PageLumenClangCache \
+SWIFT_MODULECACHE_PATH=/tmp/PageLumenSwiftCache \
+SWIFTPM_MODULECACHE_OVERRIDE=/tmp/PageLumenSPMCache \
+xcodebuild -project PageLumen.xcodeproj \
+  -scheme PageLumen \
+  -configuration Debug \
+  -sdk macosx \
+  -destination 'platform=macOS,arch=arm64' \
+  -parallel-testing-enabled NO \
+  -disable-concurrent-destination-testing \
+  CODE_SIGNING_ALLOWED=YES \
+  CODE_SIGN_IDENTITY=- \
+  -only-testing:PageLumenUITests \
+  test
+```
+
+Ad-hoc signing is a launch diagnostic for the local GUI session; it is not
+distribution signing. A run counts as UI evidence only when the output (or
+the `.xcresult` summary) contains executed UI test assertions. A build,
+`Testing started` line, worker timeout, interruption, or result bundle with
+zero executed tests must be recorded as infrastructure evidence instead.
+
 Running the tests requires a logged-in macOS GUI session. A participant run
 must separately record outcomes for onboarding, dark/light appearance,
 permission denial/recovery, import, review, and export; compilation alone is
