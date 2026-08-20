@@ -66,6 +66,48 @@ public enum LocalModelPrototypeDecision: Equatable, Sendable {
     }
 }
 
+public enum LocalModelLifecycleState: Equatable, Sendable {
+    case unavailable
+    case awaitingConsent
+    case downloading(progress: Double)
+    case ready
+    case cancelled
+    case removed
+    case failed(String)
+}
+
+/// Pure state transitions for a future model manager. No network or
+/// filesystem mutation is performed by this shipping-safe contract.
+public enum LocalModelLifecycle {
+    public static func startDownload(from state: LocalModelLifecycleState,
+                                     consentGranted: Bool) -> LocalModelLifecycleState {
+        guard consentGranted else { return .awaitingConsent }
+        guard state == .unavailable || state == .cancelled || state == .removed else { return state }
+        return .downloading(progress: 0)
+    }
+
+    public static func updateProgress(_ progress: Double,
+                                     from state: LocalModelLifecycleState) -> LocalModelLifecycleState {
+        guard case .downloading = state else { return state }
+        return .downloading(progress: min(max(progress, 0), 1))
+    }
+
+    public static func finishDownload(from state: LocalModelLifecycleState) -> LocalModelLifecycleState {
+        guard case .downloading(let progress) = state, progress >= 1 else { return state }
+        return .ready
+    }
+
+    public static func cancel(from state: LocalModelLifecycleState) -> LocalModelLifecycleState {
+        guard case .downloading = state else { return state }
+        return .cancelled
+    }
+
+    public static func removeOffline(from state: LocalModelLifecycleState) -> LocalModelLifecycleState {
+        guard state == .ready else { return state }
+        return .removed
+    }
+}
+
 /// Evaluates launch gates for a future prototype without changing the default
 /// deterministic pipeline. A caller must explicitly pass consent and opt in;
 /// no global setting is mutated here.

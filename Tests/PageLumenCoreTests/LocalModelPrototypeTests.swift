@@ -47,6 +47,19 @@ final class LocalModelPrototypeTests: XCTestCase {
                                                           prototypeEnabled: true), .denied(.unsupportedDevice))
     }
 
+    func testLifecycleRequiresConsentAndClampsProgress() {
+        XCTAssertEqual(LocalModelLifecycle.startDownload(from: .unavailable, consentGranted: false), .awaitingConsent)
+        let downloading = LocalModelLifecycle.startDownload(from: .unavailable, consentGranted: true)
+        XCTAssertEqual(LocalModelLifecycle.updateProgress(2, from: downloading), .downloading(progress: 1))
+    }
+
+    func testLifecycleSupportsCancellationAndOfflineRemoval() {
+        let downloading = LocalModelLifecycle.startDownload(from: .unavailable, consentGranted: true)
+        XCTAssertEqual(LocalModelLifecycle.cancel(from: downloading), .cancelled)
+        XCTAssertEqual(LocalModelLifecycle.removeOffline(from: .ready), .removed)
+        XCTAssertEqual(LocalModelLifecycle.startDownload(from: .ready, consentGranted: true), .ready)
+    }
+
     private func validManifest() -> LocalModelPrototypeManifest {
         LocalModelPrototypeManifest(repositoryURL: URL(string: "https://github.com/example/model")!,
                                      revision: "abc123", licenseIdentifier: "MIT",

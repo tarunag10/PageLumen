@@ -414,7 +414,7 @@ remains an explicit manual gate and is not claimed here.
   and `LocalModelPrototypeGate` validate model metadata and fail closed behind
   explicit prototype, consent, removal-policy, and device gates; no model
   weights are downloaded and the default pipeline is unchanged.
-- [ ] Require model cards, model-license review, download size estimate, source/repository disclosure, explicit download consent, storage location, progress/cancellation, offline removal, and device capability checks.
+- [x] Require model cards, model-license review, download size estimate, source/repository disclosure, explicit download consent, storage location, progress/cancellation, offline removal, and device capability checks. `LocalModelPrototypeManifest`, `LocalModelPrototypeGate`, and `LocalModelLifecycle` enforce these boundaries for any future prototype; no model is currently downloaded or approved.
 - [ ] Compare against Apple Foundation Models on the same evaluation corpus. Prefer the option with lower unsupported-claim rate and lower operational cost, not merely more fluent prose.
 - [x] Keep Intel Macs and unsupported Apple-silicon configurations on deterministic non-AI fallbacks. The current Foundation Models availability contract returns `notSupported`/`unavailable`, and `ExplanationEngine` retains the deterministic cited fallback; downloaded-model support is not claimed.
 

@@ -52,3 +52,7 @@ Foundation Models and a future prototype must submit measured snapshots for
 the same corpus revision. It prefers lower unsupported-claim rate, then lower
 operational cost, and returns an explicit unavailable/incomparable decision
 when required evidence is missing. No model comparison has been run yet.
+
+`LocalModelLifecycle` defines consent, progress, cancellation, ready, and
+offline-removal transitions for any future downloader. It is a pure state
+contract; no current product code downloads or stores model weights.
