@@ -105,6 +105,16 @@ final class DocumentPersistingTests: XCTestCase {
         XCTAssertEqual(try persisting.storageSizeInBytes(), 0)
     }
 
+    func testSaveFailsWithoutReplacingAnUnwritableParentPath() throws {
+        let blocker = tempDirectory.appendingPathComponent("parent-blocker")
+        try Data("not a directory".utf8).write(to: blocker)
+        let url = blocker.appendingPathComponent("recent.json")
+        let persisting = FilePersisting(fileURL: url)
+
+        XCTAssertThrowsError(try persisting.save(SampleDataFactory.makeDemoDocument()))
+        XCTAssertEqual(try Data(contentsOf: blocker), Data("not a directory".utf8))
+    }
+
     func testCorruptStoreIsBackedUpAndSurfacesTypedError() throws {
         let url = tempDirectory.appendingPathComponent("recent.json")
         try Data("not valid JSON".utf8).write(to: url)
