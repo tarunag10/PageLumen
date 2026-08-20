@@ -136,10 +136,10 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 **Files:** `ScreenshotCaptureService.swift`, `HomeView.swift`, `OnboardingView.swift`, `project.yml`, capture tests
 
-- [ ] Add `NSScreenCaptureUsageDescription` to the app Info configuration with a plain-language purpose statement.
+- [x] Add `NSScreenCaptureUsageDescription` to the app Info configuration with a plain-language purpose statement.
 - [ ] Replace first-window selection with `SCContentSharingPicker` where available. Do not inspect/capture a window until the person selects it.
-- [ ] Treat picker dismissal, denied permission, and API failure as distinct errors. Do not silently fall back to a shell capture after denial or dismissal.
-- [ ] Retain a narrowly scoped legacy region picker only if a supported native alternative cannot serve macOS 14; document why and make it visible in the UI.
+- [x] Treat picker dismissal, denied permission, and API failure as distinct errors. Do not silently fall back to a shell capture after denial or dismissal.
+- [x] Retain a narrowly scoped legacy region picker only if a supported native alternative cannot serve macOS 14; document why and make it visible in the UI.
 - [ ] Provide a pre-permission explanatory screen, a System Settings deep-link/help path after denial, cancellation, and stale temporary-file cleanup on app launch.
 - [ ] Ensure temporary captures are removed after successful processing unless the person explicitly saves them.
 - [ ] Add tests for error mapping, no selected window, cancellation, temp cleanup, and command argument construction. Manually test macOS 14 and the current macOS release.
@@ -225,14 +225,14 @@ Each milestone should ship in independently revertible pull requests. A feature 
 ### 2.1 Establish an export contract
 
 - [x] Define a format capability matrix in `docs/accessibility.md`: semantics retained, source citations, table support, figure descriptions, metadata, anonymisation, and validation status.
-- [ ] Add `ExportValidationResult` with machine-readable warnings and a human-readable report.
+- [x] Add `ExportValidationResult` with machine-readable warnings and a human-readable report.
 - [x] Block or require confirmation when exporting unresolved blocker-level review findings.
 - [ ] Give each output an embedded provenance/review summary that can be excluded with a clearly labelled privacy setting.
-- [ ] Update Save Panels, file extensions, preview copy, and user documentation to use the same terminology.
+- [x] Update Save Panels, file extensions, preview copy, and user documentation to use the same terminology.
 
 ### 2.2 Tagged HTML and Markdown
 
-- [ ] Make tagged HTML the recommended remediation export.
+- [x] Make tagged HTML the recommended remediation export.
 - [ ] Verify heading hierarchy, landmarks, document language, table headers/scopes, figure alt text, link preservation, and escaped content.
 - [x] Add page/block anchors so exported citations can return to the original PageLumen review workspace.
 - [ ] Add a robust Markdown AST validation/normalisation layer (see `swift-markdown` decision below) before supporting Markdown import or advanced editing.
@@ -242,12 +242,12 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 - [ ] Replace hand-rolled ZIP concerns in DOCX generation with a tested archive library, validate generated DOCX parts, and preserve headings/tables/alt text where OOXML permits.
 - [ ] Retain CSV formula neutralisation; add locale/newline/quote and malformed-table tests.
-- [ ] Version the JSON schema, make source URL/text-snippet redaction explicit, and provide a schema document.
+- [x] Version the JSON schema, make source URL/text-snippet redaction explicit, and provide a schema document.
 - [ ] Make audio export use the selected speech voice/language rather than hard-coded `en-US`; include cancellation/progress and verify generated media metadata.
 
 ### 2.4 Readable PDF and PDF/UA direction
 
-- [ ] Keep the current output labelled `Readable PDF`.
+- [x] Keep the current output labelled `Readable PDF`.
 - [ ] Research whether the required PDF structure tree, marked content, language, title, alt text, table semantics, and reading-order information can be created and validated reliably with the supported Apple APIs.
 - [ ] Build a small prototype using a fixture corpus before exposing a “PDF/UA-oriented” option.
 - [ ] Integrate an external validator only when its license, redistribution model, automation environment, and known limitations are approved.
