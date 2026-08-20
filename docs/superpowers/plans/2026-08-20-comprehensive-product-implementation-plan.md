@@ -504,7 +504,7 @@ participant and physical-device gates remain open.
 - [ ] Reconcile App Store privacy nutrition labels with actual network/data behaviour before submission.
 - [x] Update `docs/privacy.md` for library retention, model downloads, Apple Intelligence, App Intents, capture, Stirling opt-in operations, required-reason API audit, and export anonymisation.
 - [ ] Provide a real contact channel in `SECURITY.md` and a vulnerability-handling policy.
-- [ ] Fuzz or robustness-test malformed PDFs/images and ensure errors reveal neither document text nor local paths unnecessarily.
+- [x] Add deterministic malformed PDF/image robustness tests. Import failures expose only a safe last-path-component PDF label (or a generic image message), never the local path or payload; property-based fuzzing remains a future hardening option.
 
 ### 7.3 Distribution evidence
 

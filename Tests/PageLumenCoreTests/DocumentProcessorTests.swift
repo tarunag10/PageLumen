@@ -54,6 +54,50 @@ final class DocumentProcessorTests: XCTestCase {
     }
 
     @MainActor
+    func testMalformedPDFFailsWithoutLeakingPathOrPayload() async throws {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("private-document-(UUID().uuidString)")
+            .appendingPathExtension("pdf")
+        let secret = "PRIVATE OCR CONTENT (UUID().uuidString)"
+        try Data("not a pdf (secret)".utf8).write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        do {
+            _ = try await DocumentProcessor().process(url: url)
+            XCTFail("Expected malformed PDFs to throw")
+        } catch let error as DocumentProcessorError {
+            let description = error.localizedDescription
+            XCTAssertEqual(description, "The PDF (url.lastPathComponent) could not be opened.")
+            XCTAssertFalse(description.contains(url.path), "Errors must not expose the local path")
+            XCTAssertFalse(description.contains(secret), "Errors must not expose document payloads")
+        } catch {
+            XCTFail("Unexpected error: (error)")
+        }
+    }
+
+    @MainActor
+    func testMalformedImageFailsWithoutLeakingPathOrPayload() async throws {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("private-image-(UUID().uuidString)")
+            .appendingPathExtension("png")
+        let secret = "PRIVATE OCR CONTENT (UUID().uuidString)"
+        try Data("not an image (secret)".utf8).write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        do {
+            _ = try await DocumentProcessor().process(url: url)
+            XCTFail("Expected malformed images to throw")
+        } catch let error as DocumentProcessorError {
+            let description = error.localizedDescription
+            XCTAssertEqual(description, "The selected image could not be decoded.")
+            XCTAssertFalse(description.contains(url.path), "Errors must not expose the local path")
+            XCTAssertFalse(description.contains(secret), "Errors must not expose document payloads")
+        } catch {
+            XCTFail("Unexpected error: (error)")
+        }
+    }
+
+    @MainActor
     func testPDFOverPageBudgetThrowsReadableError() async throws {
         let url = try makePDF(containingPages: Array(repeating: "Budget page", count: 101))
         defer { try? FileManager.default.removeItem(at: url) }
