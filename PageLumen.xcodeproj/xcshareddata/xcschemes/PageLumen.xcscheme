@@ -89,6 +89,17 @@
                ReferencedContainer = "container:PageLumen.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "CB07E6CEE42E7BFCE6E15440"
+               BuildableName = "PageLumenUITests.xctest"
+               BlueprintName = "PageLumenUITests"
+               ReferencedContainer = "container:PageLumen.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <CommandLineArguments>
       </CommandLineArguments>

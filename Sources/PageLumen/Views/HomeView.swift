@@ -87,12 +87,14 @@ struct HomeView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut("o", modifiers: [.command])
+                .accessibilityIdentifier("home.openFiles")
 
                 Button {
                     store.pasteImageFromClipboard()
                 } label: {
                     Label("Paste Image", systemImage: "doc.on.clipboard")
                 }
+                .accessibilityIdentifier("home.pasteImage")
 
                 Menu {
                     Button("Capture Selected Region") {
@@ -105,12 +107,14 @@ struct HomeView: View {
                 } label: {
                     Label("Capture Screen", systemImage: "camera.viewfinder")
                 }
+                .accessibilityIdentifier("home.captureScreen")
 
                 Button {
                     store.loadSample()
                 } label: {
                     Label("Try Demo", systemImage: "play.circle")
                 }
+                .accessibilityIdentifier("home.tryDemo")
             }
         }
         .popoverTip(DropZoneTip(), arrowEdge: .top)

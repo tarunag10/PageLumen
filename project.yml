@@ -124,6 +124,24 @@ targets:
         CFBundlePackageType: BNDL
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
+  PageLumenUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: Tests/PageLumenUITests
+    dependencies:
+      - target: PageLumen
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.PageLumenUITests
+        TEST_TARGET_NAME: PageLumen
+    info:
+      path: generated/PageLumenUITests-Info.plist
+      properties:
+        CFBundleName: PageLumenUITests
+        CFBundlePackageType: BNDL
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
 schemes:
   PageLumen:
     build:
@@ -139,3 +157,4 @@ schemes:
       targets:
         - PageLumenCoreTests
         - PageLumenTests
+        - PageLumenUITests

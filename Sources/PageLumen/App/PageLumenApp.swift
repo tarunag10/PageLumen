@@ -29,6 +29,13 @@ struct PageLumenApp: App {
     @AppStorage("appearancePreference") private var appearancePreference = "system"
     @State private var isShowingOnboarding = false
 
+    /// UI tests use a clean, isolated launch mode so the first screen is
+    /// deterministic. This does not alter normal launches or persisted user
+    /// preferences.
+    private var isUITestingLaunch: Bool {
+        ProcessInfo.processInfo.arguments.contains("-ui-testing")
+    }
+
     var body: some Scene {
         WindowGroup("PageLumen", id: "main") {
             ContentView()
@@ -41,7 +48,7 @@ struct PageLumenApp: App {
                         .tint(AccessibleStyle.accent)
                 }
                 .onAppear {
-                    if !hasSeenOnboarding {
+                    if !hasSeenOnboarding && !isUITestingLaunch {
                         isShowingOnboarding = true
                     }
                 }
