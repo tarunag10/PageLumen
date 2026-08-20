@@ -154,6 +154,7 @@ private struct ReviewHeader: View {
                 } label: {
                     Label("More", systemImage: "ellipsis.circle")
                 }
+                .accessibilityIdentifier("review.more")
                 .help("More review tools")
                 .popover(isPresented: $showConfidenceChart, arrowEdge: .top) {
                     ConfidenceChartView(document: store.document)
@@ -326,6 +327,7 @@ private struct ReviewTrustBar: View {
             } label: {
                 Label("Issues (\(store.reviewIssueCount))", systemImage: "list.bullet.rectangle")
             }
+            .accessibilityIdentifier("review.issueNavigator")
             .help("Jump to an unresolved review issue")
 
             Button {
@@ -333,6 +335,7 @@ private struct ReviewTrustBar: View {
             } label: {
                 Label("First issue", systemImage: "scope")
             }
+            .accessibilityIdentifier("review.firstIssue")
             .popoverTip(ReviewIssueTip(), arrowEdge: .top)
             .disabled(store.reviewIssueCount == 0)
 

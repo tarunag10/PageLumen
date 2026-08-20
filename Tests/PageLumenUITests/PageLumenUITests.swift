@@ -91,6 +91,29 @@ final class PageLumenUITests: XCTestCase {
         XCTAssertFalse(fixtureApp.sheets.firstMatch.exists, "Control-surface coverage must not open a save panel")
     }
 
+    func testFixtureReviewExposesResponsivePrimaryAndSecondaryTools() throws {
+        let reviewApp = XCUIApplication()
+        reviewApp.launchArguments = ["-ui-testing", "-ui-testing-fixture"]
+        reviewApp.launch()
+
+        XCTAssertTrue(reviewApp.buttons["review.queue"].waitForExistence(timeout: 5))
+        XCTAssertTrue(reviewApp.buttons["review.continue"].exists)
+        XCTAssertTrue(reviewApp.buttons["review.issueNavigator"].exists)
+        XCTAssertTrue(reviewApp.buttons["review.firstIssue"].exists)
+        XCTAssertTrue(reviewApp.buttons["review.more"].exists)
+        XCTAssertTrue(reviewApp.textFields["review.search"].exists)
+        XCTAssertTrue(reviewApp.buttons["review.nextMatch"].exists)
+        XCTAssertTrue(reviewApp.buttons["review.previousMatch"].exists)
+
+        // The secondary menu is discoverable without requiring a native panel
+        // or a real document import. Its menu contents are exercised by the
+        // participant/release flow because popovers are host-rendered.
+        reviewApp.buttons["review.more"].click()
+        XCTAssertTrue(reviewApp.menuItems["Confidence chart"].waitForExistence(timeout: 2))
+        XCTAssertTrue(reviewApp.menuItems["Edit history"].exists)
+        XCTAssertTrue(reviewApp.menuItems["Compare edits"].exists)
+    }
+
     func testDeterministicExportWritesARealFileAndReportsStatus() throws {
         let exportApp = XCUIApplication()
         exportApp.launchArguments = ["-ui-testing", "-ui-testing-fixture", "-ui-testing-export"]
