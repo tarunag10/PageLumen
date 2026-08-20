@@ -135,7 +135,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
   unversioned arrays remain readable and are upgraded on the next write;
   future versions fail without moving or deleting the store so a newer binary
   can recover it. SwiftData schema migration remains a separate release gate.
-- [ ] Add `lastClearedAt` and a clear statement of what “Forget all” deletes; do not imply it deletes original user-selected source files.
+- [x] Add `lastClearedAt` and a clear statement of what “Forget all” deletes; Settings persists/displays the timestamp and explicitly says original user-selected source files are not deleted.
 - [x] Persist and display `lastClearedAt`; the Settings copy explicitly describes retained local copies and source files remain untouched.
 
 **Acceptance:** A deliberately invalid SwiftData location launches, imports, reviews, and exports a document; Settings reports degraded recents storage.
@@ -158,7 +158,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 
 **Files:** `PageLumenApp.swift`, `AccessibleStyle.swift`, view snapshots/tests
 
-- [ ] Remove all forced `.preferredColorScheme(.dark)` calls.
+- [x] Remove all forced `.preferredColorScheme(.dark)` calls; the app now defaults to system appearance and offers explicit system/light/dark selection in Settings.
 - [x] Add an optional Appearance setting (`System`, `Light`, `Dark`) that defaults to System and leaves contrast/transparency controls independent.
 - [ ] Verify system Increase Contrast, Reduce Transparency, Reduce Motion, VoiceOver focus, keyboard-only navigation, large text, and light/dark appearance.
 - [ ] Ensure colours have semantic names/tokens and all status indicators retain a text and symbol equivalent.
