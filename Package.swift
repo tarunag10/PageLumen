@@ -44,6 +44,11 @@ let package = Package(
             name: "PageLumenCoreTests",
             dependencies: [
                 "PageLumenCore",
+                // DOCX writer tests exercise the app-owned archive writer and
+                // use @testable import PageLumen; keep that dependency
+                // explicit so clean SwiftPM builds do not rely on stale
+                // incremental modules.
+                "PageLumen",
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
                 .product(name: "Markdown", package: "swift-markdown")
             ],
