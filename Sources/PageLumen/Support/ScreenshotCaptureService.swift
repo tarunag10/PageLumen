@@ -22,6 +22,24 @@ enum ScreenshotCaptureMode {
     }
 }
 
+/// Describes which user-controlled selection surface is available. The
+/// capability is intentionally observable without presenting system UI so the
+/// app can explain its behavior and tests can assert that no window is ever
+/// selected implicitly.
+enum ScreenshotCaptureSelectionCapability: Equatable {
+    case contentSharingPicker
+    case legacyInteractivePicker
+
+    var displayName: String {
+        switch self {
+        case .contentSharingPicker:
+            return "macOS content sharing picker"
+        case .legacyInteractivePicker:
+            return "macOS interactive screenshot picker"
+        }
+    }
+}
+
 enum ScreenshotCaptureError: LocalizedError, Equatable {
     case cancelled
     case commandFailed(Int32)
@@ -77,6 +95,18 @@ struct ScreenshotCaptureService {
         CGPreflightScreenCaptureAccess()
     }
 
+    /// The modern picker is available on macOS 14 and later. It is a
+    /// capability contract rather than a promise that capture will succeed:
+    /// permission, cancellation, and picker failures remain user-visible.
+    var windowSelectionCapability: ScreenshotCaptureSelectionCapability {
+        #if canImport(ScreenCaptureKit)
+        if #available(macOS 14.0, *) {
+            return .contentSharingPicker
+        }
+        #endif
+        return .legacyInteractivePicker
+    }
+
     @discardableResult
     static func cleanupStaleTemporaryCaptures(
         in directory: URL = FileManager.default.temporaryDirectory,
@@ -116,10 +146,117 @@ struct ScreenshotCaptureService {
             .appendingPathComponent("\(mode.filePrefix)-\(UUID().uuidString)")
             .appendingPathExtension("png")
 
-        // `screencapture -i/-w` presents Apple's interactive region/window
-        // picker. Never silently choose the first on-screen window.
-        return try await legacyCapture(mode: mode, outputURL: url)
+        switch mode {
+        case .selectedRegion:
+            // SCContentSharingPicker intentionally does not provide a freeform
+            // rectangle. Keep Apple's interactive region picker for this mode.
+            return try await legacyCapture(mode: mode, outputURL: url)
+        case .window:
+            #if canImport(ScreenCaptureKit)
+            if #available(macOS 14.0, *) {
+                // The picker returns the person's selected filter. There is no
+                // fallback after cancellation or API failure, and no content
+                // is inspected before the selection callback.
+                return try await captureWithContentSharingPicker(outputURL: url)
+            }
+            #endif
+            return try await legacyCapture(mode: mode, outputURL: url)
+        }
     }
+
+    #if canImport(ScreenCaptureKit)
+    @available(macOS 14.0, *)
+    private func captureWithContentSharingPicker(outputURL: URL) async throws -> URL {
+        let picker = SCContentSharingPicker.shared
+        var configuration = picker.defaultConfiguration
+        configuration.allowedPickerModes = .singleWindow
+        configuration.allowsChangingSelectedContent = false
+        picker.defaultConfiguration = configuration
+
+        let observer = ContentSharingPickerObserver()
+        picker.add(observer)
+        picker.isActive = true
+        defer {
+            picker.remove(observer)
+            picker.isActive = false
+        }
+
+        do {
+            let filter = try await withTaskCancellationHandler(operation: {
+                try await observer.waitForSelection {
+                    picker.present(using: .window)
+                }
+            }, onCancel: {
+                observer.cancel()
+            })
+            let configuration = SCStreamConfiguration()
+            configuration.capturesAudio = false
+            configuration.showsCursor = false
+            return try await captureImage(
+                filter: filter,
+                configuration: configuration,
+                outputURL: outputURL
+            )
+        } catch {
+            throw ScreenshotCaptureError.modernCaptureError(error)
+        }
+    }
+
+    @available(macOS 14.0, *)
+    private final class ContentSharingPickerObserver: NSObject, SCContentSharingPickerObserver {
+        private let lock = NSLock()
+        private var continuation: CheckedContinuation<SCContentFilter, Error>?
+        private var completed = false
+
+        func waitForSelection(present: () -> Void) async throws -> SCContentFilter {
+            try await withCheckedThrowingContinuation { continuation in
+                lock.lock()
+                self.continuation = continuation
+                let alreadyCompleted = completed
+                lock.unlock()
+                if !alreadyCompleted {
+                    present()
+                }
+            }
+        }
+
+        func cancel() {
+            finish(.failure(CancellationError()))
+        }
+
+        func contentSharingPicker(
+            _ picker: SCContentSharingPicker,
+            didCancelFor stream: SCStream?
+        ) {
+            finish(.failure(ScreenshotCaptureError.cancelled))
+        }
+
+        func contentSharingPicker(
+            _ picker: SCContentSharingPicker,
+            didUpdateWith filter: SCContentFilter,
+            for stream: SCStream?
+        ) {
+            finish(.success(filter))
+        }
+
+        func contentSharingPickerStartDidFailWithError(_ error: Error) {
+            finish(.failure(error))
+        }
+
+        private func finish(_ result: Result<SCContentFilter, Error>) {
+            lock.lock()
+            guard !completed else {
+                lock.unlock()
+                return
+            }
+            completed = true
+            let continuation = self.continuation
+            self.continuation = nil
+            lock.unlock()
+            continuation?.resume(with: result)
+        }
+    }
+    #endif
 
     @available(macOS 14.0, *)
     private func captureWithScreenshotManager(mode: ScreenshotCaptureMode, outputURL: URL) async throws -> URL {

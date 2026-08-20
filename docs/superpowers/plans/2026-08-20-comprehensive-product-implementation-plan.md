@@ -145,7 +145,7 @@ Each milestone should ship in independently revertible pull requests. A feature 
 **Files:** `ScreenshotCaptureService.swift`, `HomeView.swift`, `OnboardingView.swift`, `project.yml`, capture tests
 
 - [x] Add `NSScreenCaptureUsageDescription` to the app Info configuration with a plain-language purpose statement.
-- [ ] Replace first-window selection with `SCContentSharingPicker` where available. Do not inspect/capture a window until the person selects it.
+- [x] Replace first-window selection with `SCContentSharingPicker` where available. Window capture now waits for the person's single-window selection before creating a filter; selected-region capture retains the interactive rectangle picker because the modern picker does not expose a freeform rectangle. Manual system-picker validation remains open.
 - [x] Treat picker dismissal, denied permission, and API failure as distinct errors. Do not silently fall back to a shell capture after denial or dismissal.
 - [x] Retain a narrowly scoped legacy region picker only if a supported native alternative cannot serve macOS 14; document why and make it visible in the UI.
 - [x] Provide a pre-permission explanatory screen, a System Settings deep-link/help path after denial, cancellation, and stale temporary-file cleanup on app launch. Manual permission-denial recovery remains a participant gate.
