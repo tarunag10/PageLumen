@@ -47,6 +47,22 @@ struct PageLumenApp: App {
         ProcessInfo.processInfo.arguments.contains("-ui-testing-settings")
     }
 
+    /// Appearance overrides are test-only launch seams. They let the UI
+    /// contract exercise all three supported appearance choices without
+    /// changing the user's persisted preference or depending on the host
+    /// Mac's current System Settings appearance.
+    private var uiTestingAppearancePreference: String? {
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("-ui-testing-appearance-light") { return "light" }
+        if arguments.contains("-ui-testing-appearance-dark") { return "dark" }
+        if arguments.contains("-ui-testing-appearance-system") { return "system" }
+        return nil
+    }
+
+    private var effectiveAppearancePreference: String {
+        uiTestingAppearancePreference ?? appearancePreference
+    }
+
     /// Provides a bounded import/recovery route for XCUITest. It never runs
     /// during a normal launch and deliberately uses the in-memory demo rather
     /// than opening a system panel or changing Screen Recording permission.
@@ -62,7 +78,7 @@ struct PageLumenApp: App {
         WindowGroup("PageLumen", id: "main") {
             Group {
                 if isUITestingSettingsLaunch {
-                    SettingsView()
+                    SettingsView(appearanceOverride: uiTestingAppearancePreference)
                 } else {
                     ContentView(uiTestingImportMode: uiTestingImportMode)
                 }
@@ -70,7 +86,7 @@ struct PageLumenApp: App {
                 .environment(store)
                 .frame(minWidth: 1_120, minHeight: 720)
                 .tint(AccessibleStyle.accent)
-                .preferredColorScheme(appearancePreference == "light" ? .light : appearancePreference == "dark" ? .dark : nil)
+                .preferredColorScheme(effectiveAppearancePreference == "light" ? .light : effectiveAppearancePreference == "dark" ? .dark : nil)
                 .sheet(isPresented: $isShowingOnboarding) {
                     OnboardingView(isPresented: $isShowingOnboarding)
                         .tint(AccessibleStyle.accent)

@@ -51,6 +51,16 @@ settings launch; it does not prove Apple Intelligence availability on a given
 Mac, model output quality, or the behavior of the system settings that govern
 eligibility.
 
+The appearance contract has an isolated launch seam for each supported choice:
+`-ui-testing-appearance-system`, `-ui-testing-appearance-light`, and
+`-ui-testing-appearance-dark` (used with `-ui-testing -ui-testing-settings`).
+The test asserts the visible `settings.appearanceValue` preview for all three
+values. These arguments override only the test process's effective color
+scheme; they do not write `@AppStorage` or alter the user's macOS appearance
+preference. This proves the app's System/Light/Dark wiring deterministically,
+while contrast, transparency, motion, VoiceOver, and host-level visual
+verification remain separate accessibility gates.
+
 Workflow step buttons retain their accessible labels (`Step 1, Add` through
 `Step 4, Export`) so navigation checks do not depend on SwiftUI view hierarchy
 or localized visual text.

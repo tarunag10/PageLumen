@@ -4,6 +4,14 @@ import SwiftUI
 import TipKit
 
 struct SettingsView: View {
+    /// Non-nil only for the isolated UI-test launch route. Normal Settings
+    /// uses the persisted preference and remains fully user-editable.
+    let appearanceOverride: String?
+
+    init(appearanceOverride: String? = nil) {
+        self.appearanceOverride = appearanceOverride
+    }
+
     @Environment(DocumentStore.self) private var store
     @AppStorage("privacyMode") private var privacyMode = true
     @AppStorage("ocrProfile") private var ocrProfile = "General"
@@ -89,6 +97,10 @@ struct SettingsView: View {
                 }
                 .accessibilityIdentifier("settings.appearance")
                 .accessibilityHint("Choose System to follow macOS appearance and accessibility settings")
+                Text("Current preview: \(appearanceLabel(appearanceOverride ?? appearancePreference)) appearance")
+                    .font(.callout)
+                    .foregroundStyle(AccessibleStyle.secondaryText)
+                    .accessibilityIdentifier("settings.appearanceValue")
                 Toggle("Boost contrast", isOn: $boostContrast)
                     .accessibilityIdentifier("settings.boostContrast")
                     .onChange(of: boostContrast) { _, newValue in
@@ -343,6 +355,14 @@ struct SettingsView: View {
         } set: { newValue in
             store.exportOptions[keyPath: keyPath] = newValue
             store.persistExportDefaults()
+        }
+    }
+
+    private func appearanceLabel(_ value: String) -> String {
+        switch value {
+        case "light": return "Light"
+        case "dark": return "Dark"
+        default: return "System"
         }
     }
 

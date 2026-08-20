@@ -107,6 +107,26 @@ final class PageLumenUITests: XCTestCase {
         XCTAssertTrue(settingsApp.buttons["settings.forgetAll"].exists)
     }
 
+    func testSettingsAppearanceLaunchSeamsExerciseSystemLightAndDark() throws {
+        let cases = [("system", "System"), ("light", "Light"), ("dark", "Dark")]
+
+        for (mode, label) in cases {
+            let appearanceApp = XCUIApplication()
+            appearanceApp.launchArguments = [
+                "-ui-testing",
+                "-ui-testing-settings",
+                "-ui-testing-appearance-\(mode)"
+            ]
+            appearanceApp.launch()
+
+            XCTAssertTrue(appearanceApp.windows.firstMatch.waitForExistence(timeout: 5))
+            let value = appearanceApp.staticTexts["settings.appearanceValue"]
+            XCTAssertTrue(value.waitForExistence(timeout: 3))
+            XCTAssertEqual(value.label, "Current preview: \(label) appearance")
+            appearanceApp.terminate()
+        }
+    }
+
     func testDeterministicImportFixtureReachesReview() throws {
         let importApp = XCUIApplication()
         importApp.launchArguments = ["-ui-testing", "-ui-testing-import"]
