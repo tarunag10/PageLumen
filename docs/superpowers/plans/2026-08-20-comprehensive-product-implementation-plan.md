@@ -389,7 +389,7 @@ remains an explicit manual gate and is not claimed here.
 **Use:** SQLite migrations, FTS5 full-text local search, observation, and optional SQLCipher-compatible path.
 
 - [x] Run the Phase 3 spike before dependency adoption. `docs/grdb-spike-2026-08-20.md` records the repository-boundary evidence, consent-gated search behavior, adoption triggers, and explicit decision not to add a second persistence truth yet.
-- [ ] If selected, use GRDB as the sole repository implementation; do not duplicate production truth in SwiftData and GRDB.
+- [x] If selected, use GRDB as the sole repository implementation; do not duplicate production truth in SwiftData and GRDB. GRDB is not selected in this phase; `docs/grdb-spike-2026-08-20.md` records SwiftData as the sole production repository and the explicit adoption triggers.
 - [x] Enable FTS only for user-approved local searchable copies. `docs/search-and-encryption-decision.md` records that no persistent FTS index is currently enabled; any future index must follow the documented consent, deletion, and rebuild boundary.
 - [x] Evaluate encryption-key storage in Keychain and recovery implications before claiming encryption at rest. The decision record explicitly makes no current encryption-at-rest claim and defines the required Keychain/recovery review before adopting an encrypted store.
 
