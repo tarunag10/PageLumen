@@ -11,11 +11,14 @@ PageLumen currently supports the safest part of the macOS system workflow:
 - `PageLumenSystemWorkflowContract` is the shared, deterministic list used by
   the delegate and unit tests.
 
-Finder Quick Action, Share extension, Quick Look preview, and Quick Look
-thumbnail support are intentionally not claimed as shipped. Each requires a
-separate app-extension target, extension-specific Info.plist and sandbox
-configuration, security-scoped URL handling, and validation on a real Finder
-host. A future implementation must verify:
+The Share extension target now provides the bounded handoff path for selected
+PDF/image file URLs. It filters extensions and caps the invocation at 20 files,
+does no OCR or persistence, and opens accepted URLs through the extension
+context so the app delegate remains the single import entry point. Its archive,
+sandbox/security-scoped behavior, and Finder host behavior still require
+participant validation. Finder Quick Action and Quick Look preview/thumbnail
+support remain unclaimed until their own targets are packaged and validated.
+A complete system-workflow implementation must verify:
 
 1. The extension can access a user-selected file without retaining a stale
    security-scoped bookmark.

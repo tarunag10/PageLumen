@@ -48,6 +48,8 @@ targets:
     dependencies:
       - target: PageLumenCore
       - package: ZIPFoundation
+      - target: PageLumenShareExtension
+        embed: true
     settings:
       base:
         CODE_SIGN_ENTITLEMENTS: Config/PageLumen.entitlements
@@ -142,6 +144,30 @@ targets:
         CFBundlePackageType: BNDL
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
+  PageLumenShareExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Sources/PageLumenShareExtension
+    settings:
+      base:
+        APPLICATION_EXTENSION_API_ONLY: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.pagelumen.PageLumen.share
+        PRODUCT_NAME: PageLumenShareExtension
+        SKIP_INSTALL: YES
+    info:
+      path: generated/PageLumenShareExtension-Info.plist
+      properties:
+        CFBundleName: PageLumenShareExtension
+        CFBundlePackageType: XPC!
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        NSExtension:
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsFileWithMaxCount: 20
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).ShareViewController"
 schemes:
   PageLumen:
     build:
@@ -158,3 +184,4 @@ schemes:
         - PageLumenCoreTests
         - PageLumenTests
         - PageLumenUITests
+        - PageLumenShareExtension
