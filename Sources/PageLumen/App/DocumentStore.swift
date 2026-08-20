@@ -126,7 +126,8 @@ final class DocumentStore {
             includeFigures: UserDefaults.standard.object(forKey: "includeFigures") as? Bool ?? true,
             includePageReferences: UserDefaults.standard.object(forKey: "includePageReferences") as? Bool ?? true,
             includeConfidenceNotes: UserDefaults.standard.object(forKey: "includeConfidenceNotes") as? Bool ?? true,
-            includeHeadersAndFooters: UserDefaults.standard.object(forKey: "includeHeadersAndFooters") as? Bool ?? true
+            includeHeadersAndFooters: UserDefaults.standard.object(forKey: "includeHeadersAndFooters") as? Bool ?? true,
+            includeProvenance: UserDefaults.standard.object(forKey: "includeProvenance") as? Bool ?? true
         )
         if let stored = try? self.persisting.recentDocuments(), let first = stored.first {
             self.recentDocuments = stored
@@ -627,7 +628,7 @@ final class DocumentStore {
     }
 
     // Cache key intentionally covers only the inputs that change the rendered
-    // preview (format + the six option booleans + a content fingerprint).
+    // preview (format + export option booleans + a content fingerprint).
     // Bumping the fingerprint on every document mutation keeps the cache fresh
     // without invalidating on every SwiftUI re-render.
     private struct PreviewCache {
@@ -661,6 +662,7 @@ final class DocumentStore {
         hasher.combine(options.includePageReferences)
         hasher.combine(options.includeConfidenceNotes)
         hasher.combine(options.includeHeadersAndFooters)
+        hasher.combine(options.includeProvenance)
         return hasher.finalize()
     }
 

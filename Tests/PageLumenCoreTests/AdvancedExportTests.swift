@@ -119,6 +119,17 @@ final class AdvancedExportTests: XCTestCase {
         XCTAssertNil(provenance["sourceURL"])
     }
 
+    func testJSONExportCanExcludeProvenanceWithExplicitOption() throws {
+        var options = ExportOptions.full
+        options.includeProvenance = false
+        let data = ExportEngine().jsonData(for: SampleDataFactory.makeDemoDocument(), options: options)
+        let object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let export = try XCTUnwrap(object["export"] as? [String: Any])
+
+        XCTAssertEqual(export["provenanceIncluded"] as? Bool, false)
+        XCTAssertNil(export["provenance"])
+    }
+
     func testJSONExportSnapshotIncludesExpectedKeys() throws {
         let document = SampleDataFactory.makeDemoDocument()
 

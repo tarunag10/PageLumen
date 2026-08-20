@@ -617,6 +617,13 @@ public struct ExportEngine: Sendable {
     }
 
     private func jsonExportMetadata(for document: ReaderDocument, options: ExportOptions) -> [String: Any] {
+        guard options.includeProvenance else {
+            return [
+                "format": ExportFormat.json.rawValue,
+                "schemaVersion": Self.jsonSchemaVersion,
+                "provenanceIncluded": false
+            ]
+        }
         let findings = DocumentEditing.reviewFindings(for: document)
         var provenance: [String: Any] = [
             "documentID": document.id.uuidString.lowercased(),
@@ -635,6 +642,7 @@ public struct ExportEngine: Sendable {
         return [
             "format": ExportFormat.json.rawValue,
             "schemaVersion": Self.jsonSchemaVersion,
+            "provenanceIncluded": true,
             "provenance": provenance
         ]
     }

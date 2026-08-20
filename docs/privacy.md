@@ -22,7 +22,7 @@ This page summarises the privacy commitments that PageLumen makes to its users. 
 ## Exported JSON and Source URLs
 
 - The JSON export written by `ExportEngine` includes the source `ReaderDocument.sourceURL` by default, because that is often useful when piping output into downstream tooling.
-- The new "Save export anonymously" toggle in the Summary & Export view flips on the `redactSourceURL` option of the new `ExportSanitizer`. With it on, `sourceURL` is stripped from the JSON payload and OCR-text snippets in the Accessibility Report are truncated. This is on top of any redaction the user may already do at the file system level.
+- The Summary & Export view includes an "Include provenance and review details" toggle. Turn it off when sharing a JSON export without PageLumen's document identifier, source metadata, or review-count envelope. The existing `redactSourceURL` and `redactTextSnippets` options remain available to callers that need finer-grained redaction.
 
 ## Clearing Local Cache and Recent Documents
 

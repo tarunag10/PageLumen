@@ -147,6 +147,7 @@ struct SummaryExportView: View {
                         Toggle("Include page references", isOn: $store.exportOptions.includePageReferences)
                         Toggle("Include confidence notes", isOn: $store.exportOptions.includeConfidenceNotes)
                         Toggle("Include repeated headers and footers", isOn: $store.exportOptions.includeHeadersAndFooters)
+                        Toggle("Include provenance and review details", isOn: $store.exportOptions.includeProvenance)
                     }
                     .tint(AccessibleStyle.accent)
 
