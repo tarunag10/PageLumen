@@ -43,6 +43,53 @@ public enum ReviewIssueKind: String, Codable, Equatable, Sendable {
     case lowConfidence
     case unknownBlockType
     case unreviewedTableOrFigure
+    case conflictingExtractionSources
+    case unresolvedTableHeaders
+    case missingImageDescription
+    case unreviewedAIContribution
+}
+
+/// The action-oriented category used to order the review queue.  Categories
+/// are intentionally independent from `ReviewIssueKind`: the latter is a
+/// compatibility-facing description of how a finding was detected, while
+/// this vocabulary describes the risk a reviewer should address first.
+public enum ReviewFindingCategory: String, Codable, Equatable, Sendable, CaseIterable {
+    case unreadablePage
+    case missingStructure
+    case lowConfidence
+    case conflictingExtractionSources
+    case unresolvedTableHeaders
+    case missingImageDescription
+    case unreviewedAIContribution
+    case other
+
+    /// Lower values are surfaced first. Keep this order explicit and stable
+    /// so queue order does not vary with dictionary, task, or page iteration.
+    public var priority: Int {
+        switch self {
+        case .unreadablePage: return 0
+        case .missingStructure: return 1
+        case .lowConfidence: return 2
+        case .conflictingExtractionSources: return 3
+        case .unresolvedTableHeaders: return 4
+        case .missingImageDescription: return 5
+        case .unreviewedAIContribution: return 6
+        case .other: return 7
+        }
+    }
+
+    public var displayName: String {
+        switch self {
+        case .unreadablePage: return "Unreadable page"
+        case .missingStructure: return "Missing structure"
+        case .lowConfidence: return "Low confidence"
+        case .conflictingExtractionSources: return "Conflicting extraction sources"
+        case .unresolvedTableHeaders: return "Unresolved table headers"
+        case .missingImageDescription: return "Missing image description"
+        case .unreviewedAIContribution: return "Unreviewed AI contribution"
+        case .other: return "Other review item"
+        }
+    }
 }
 
 public enum ReviewFindingSeverity: String, Codable, Equatable, Sendable, CaseIterable {
@@ -95,6 +142,7 @@ public struct ReviewFindingProvenance: Codable, Equatable, Sendable {
 public struct ReviewFinding: Identifiable, Codable, Equatable, Sendable {
     public var id: String
     public var kind: ReviewIssueKind
+    public var category: ReviewFindingCategory
     public var severity: ReviewFindingSeverity
     public var pageNumber: Int
     public var blockID: UUID?
@@ -107,6 +155,7 @@ public struct ReviewFinding: Identifiable, Codable, Equatable, Sendable {
     public init(
         id: String,
         kind: ReviewIssueKind,
+        category: ReviewFindingCategory? = nil,
         severity: ReviewFindingSeverity,
         pageNumber: Int,
         blockID: UUID? = nil,
@@ -118,6 +167,7 @@ public struct ReviewFinding: Identifiable, Codable, Equatable, Sendable {
     ) {
         self.id = id
         self.kind = kind
+        self.category = category ?? ReviewFindingCategory(categoryFor: kind)
         self.severity = severity
         self.pageNumber = pageNumber
         self.blockID = blockID
@@ -129,13 +179,15 @@ public struct ReviewFinding: Identifiable, Codable, Equatable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, kind, severity, pageNumber, blockID, title, detail, isResolved, decision, provenance
+        case id, kind, category, severity, pageNumber, blockID, title, detail, isResolved, decision, provenance
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
         kind = try container.decode(ReviewIssueKind.self, forKey: .kind)
+        category = try container.decodeIfPresent(ReviewFindingCategory.self, forKey: .category)
+            ?? ReviewFindingCategory(categoryFor: kind)
         severity = try container.decode(ReviewFindingSeverity.self, forKey: .severity)
         pageNumber = try container.decode(Int.self, forKey: .pageNumber)
         blockID = try container.decodeIfPresent(UUID.self, forKey: .blockID)
@@ -144,6 +196,20 @@ public struct ReviewFinding: Identifiable, Codable, Equatable, Sendable {
         isResolved = try container.decodeIfPresent(Bool.self, forKey: .isResolved) ?? false
         decision = try container.decodeIfPresent(ReviewDecision.self, forKey: .decision) ?? .unreviewed
         provenance = try container.decodeIfPresent(ReviewFindingProvenance.self, forKey: .provenance)
+    }
+}
+
+private extension ReviewFindingCategory {
+    init(categoryFor kind: ReviewIssueKind) {
+        switch kind {
+        case .pageWarning: self = .unreadablePage
+        case .unknownBlockType, .unreviewedTableOrFigure: self = .missingStructure
+        case .lowConfidence: self = .lowConfidence
+        case .conflictingExtractionSources: self = .conflictingExtractionSources
+        case .unresolvedTableHeaders: self = .unresolvedTableHeaders
+        case .missingImageDescription: self = .missingImageDescription
+        case .unreviewedAIContribution: self = .unreviewedAIContribution
+        }
     }
 }
 
@@ -291,6 +357,8 @@ public enum DocumentEditing {
             var issues: [ReviewIssue] = []
             if let warning = page.warning {
                 issues.append(ReviewIssue(kind: .pageWarning, pageNumber: page.pageNumber, title: "Page warning", detail: warning))
+            } else if page.ocrStatus == .failed || page.blocks.isEmpty {
+                issues.append(ReviewIssue(kind: .pageWarning, pageNumber: page.pageNumber, title: "Unreadable page", detail: "No reliable extracted content is available. Verify the original page or retry extraction."))
             }
 
             for block in page.blocks.sorted(by: { $0.readingOrderIndex < $1.readingOrderIndex }) {
@@ -303,20 +371,50 @@ public enum DocumentEditing {
                 } else if block.confidence < preset.lowConfidenceThreshold {
                     issues.append(ReviewIssue(kind: .lowConfidence, pageNumber: page.pageNumber, blockID: block.id, title: "Low OCR confidence", detail: "\(Int(block.confidence * 100))% confidence: \(previewText(block.text))"))
                 } else if block.type == .table || block.type == .figure {
-                    issues.append(ReviewIssue(kind: .unreviewedTableOrFigure, pageNumber: page.pageNumber, blockID: block.id, title: "Review generated structure", detail: previewText(block.text)))
+                    if block.type == .table,
+                       let table = page.tables.first(where: { $0.bounds == block.bounds }),
+                       !table.rows.isEmpty,
+                       table.columnHeaderRows.isEmpty {
+                        issues.append(ReviewIssue(kind: .unresolvedTableHeaders, pageNumber: page.pageNumber, blockID: block.id, title: "Unresolved table headers", detail: "Assign column or row headers before publishing this table."))
+                    } else if block.type == .figure,
+                              let figure = page.figures.first(where: { $0.bounds == block.bounds }),
+                              figure.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        issues.append(ReviewIssue(kind: .missingImageDescription, pageNumber: page.pageNumber, blockID: block.id, title: "Missing image description", detail: "Add a concise description for assistive technology."))
+                    } else {
+                        issues.append(ReviewIssue(kind: .unreviewedTableOrFigure, pageNumber: page.pageNumber, blockID: block.id, title: "Review generated structure", detail: previewText(block.text)))
+                    }
                 }
+
+                if hasConflictingExtractionSources(block) {
+                    issues.append(ReviewIssue(kind: .conflictingExtractionSources, pageNumber: page.pageNumber, blockID: block.id, title: "Conflicting extraction sources", detail: "Extraction sources disagree for this block. Verify it against the original page."))
+                }
+
+                if hasUnreviewedAIContribution(block) {
+                    issues.append(ReviewIssue(kind: .unreviewedAIContribution, pageNumber: page.pageNumber, blockID: block.id, title: "Unreviewed AI contribution", detail: "Review the generated contribution against the cited source before accepting it."))
+                }
+            }
+
+            // Preserve findings even when a typed table or figure has no
+            // corresponding text block (for example, a structure-only PDF).
+            for table in page.tables where table.rows.count > 0 && table.columnHeaderRows.isEmpty {
+                guard !page.blocks.contains(where: { $0.type == .table && $0.bounds == table.bounds }) else { continue }
+                issues.append(ReviewIssue(kind: .unresolvedTableHeaders, pageNumber: page.pageNumber, title: "Unresolved table headers", detail: "Assign column or row headers before publishing this table."))
+            }
+            for figure in page.figures where figure.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                guard !page.blocks.contains(where: { $0.type == .figure && $0.bounds == figure.bounds }) else { continue }
+                issues.append(ReviewIssue(kind: .missingImageDescription, pageNumber: page.pageNumber, title: "Missing image description", detail: "Add a concise description for assistive technology."))
             }
             return issues
         }
     }
 
     public static func reviewFindings(for document: ReaderDocument, preset: ReviewPreset = .general) -> [ReviewFinding] {
-        reviewIssues(for: document, preset: preset).map { issue in
+        let findings = reviewIssues(for: document, preset: preset).map { issue in
             let severity: ReviewFindingSeverity
             switch issue.kind {
-            case .pageWarning, .unknownBlockType:
+            case .pageWarning, .unknownBlockType, .conflictingExtractionSources:
                 severity = .blocker
-            case .lowConfidence, .unreviewedTableOrFigure:
+            case .lowConfidence, .unreviewedTableOrFigure, .unresolvedTableHeaders, .missingImageDescription, .unreviewedAIContribution:
                 severity = .warning
             }
             let block = issue.blockID.flatMap { id in document.allBlocks.first { $0.id == id } }
@@ -327,7 +425,8 @@ public enum DocumentEditing {
                     case .embeddedPDF: return .embeddedPDF
                     case .visionOCR: return .visionOCR
                     case .userEdit: return .userEdit
-                    case .appleIntelligence, .heuristic: return .heuristic
+                    case .appleIntelligence: return .appleIntelligence
+                    case .heuristic: return .heuristic
                     }
                 }
                 switch block?.blockSource {
@@ -340,6 +439,7 @@ public enum DocumentEditing {
             return ReviewFinding(
                 id: issue.id,
                 kind: issue.kind,
+                category: ReviewFindingCategory(categoryFor: issue.kind),
                 severity: severity,
                 pageNumber: issue.pageNumber,
                 blockID: issue.blockID,
@@ -354,6 +454,23 @@ public enum DocumentEditing {
                     parentBlockID: issue.blockID
                 )
             )
+        }
+
+        // Category rank is the primary key. Page and reading order are only
+        // tie-breakers, making repeated runs stable while preserving the
+        // existing source navigation destinations and decisions.
+        return findings.sorted { lhs, rhs in
+            if lhs.category.priority != rhs.category.priority {
+                return lhs.category.priority < rhs.category.priority
+            }
+            let lhsSeverity = severityRank(lhs.severity)
+            let rhsSeverity = severityRank(rhs.severity)
+            if lhsSeverity != rhsSeverity { return lhsSeverity < rhsSeverity }
+            if lhs.pageNumber != rhs.pageNumber { return lhs.pageNumber < rhs.pageNumber }
+            let lhsOrder = lhs.blockID.flatMap { id in document.allBlocks.first(where: { $0.id == id })?.readingOrderIndex } ?? Int.max
+            let rhsOrder = rhs.blockID.flatMap { id in document.allBlocks.first(where: { $0.id == id })?.readingOrderIndex } ?? Int.max
+            if lhsOrder != rhsOrder { return lhsOrder < rhsOrder }
+            return lhs.id < rhs.id
         }
     }
 
@@ -414,5 +531,36 @@ public enum DocumentEditing {
             return trimmed
         }
         return "\(trimmed.prefix(90))..."
+    }
+
+    private static func severityRank(_ severity: ReviewFindingSeverity) -> Int {
+        switch severity {
+        case .blocker: return 0
+        case .warning: return 1
+        case .info: return 2
+        }
+    }
+
+    private static func hasConflictingExtractionSources(_ block: TextBlock) -> Bool {
+        guard let declared = block.blockSource, let provenance = block.provenance else { return false }
+        switch (declared, provenance.source) {
+        case (.embeddedPDF, .embeddedPDF), (.visionOCR, .visionOCR), (.userEdited, .userEdit):
+            return false
+        case (_, .heuristic):
+            // Heuristics derive structure from either source and are not a
+            // second extraction source by themselves.
+            return false
+        default:
+            return true
+        }
+    }
+
+    private static func hasUnreviewedAIContribution(_ block: TextBlock) -> Bool {
+        if block.provenance?.source == .appleIntelligence { return true }
+        let values = block.metadata.reduce(into: Set<String>()) { result, pair in
+            result.insert(pair.key.lowercased())
+            result.insert(pair.value.lowercased())
+        }
+        return values.contains("ai") || values.contains("apple-intelligence") || values.contains("appleintelligence") || values.contains("ai-contribution")
     }
 }

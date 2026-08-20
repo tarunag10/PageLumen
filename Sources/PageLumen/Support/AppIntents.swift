@@ -65,6 +65,10 @@ private extension ReviewIssueKind {
         case .lowConfidence: return "Low-confidence extraction"
         case .unknownBlockType: return "Unknown content type"
         case .unreviewedTableOrFigure: return "Structure needs review"
+        case .conflictingExtractionSources: return "Conflicting extraction sources"
+        case .unresolvedTableHeaders: return "Unresolved table headers"
+        case .missingImageDescription: return "Missing image description"
+        case .unreviewedAIContribution: return "Unreviewed AI contribution"
         }
     }
 }

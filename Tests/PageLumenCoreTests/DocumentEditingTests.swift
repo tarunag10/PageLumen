@@ -141,6 +141,74 @@ final class DocumentEditingTests: XCTestCase {
         XCTAssertFalse(String(describing: finding.provenance).contains(sourceBlock.text))
     }
 
+    func testReviewFindingsUseDeterministicRiskCategoriesAndPriorityOrder() {
+        let unreadable = ReaderPage(
+            pageNumber: 1,
+            size: PageSize(width: 400, height: 600),
+            ocrStatus: .failed,
+            blocks: []
+        )
+        let unknown = TextBlock(pageNumber: 2, type: .unknown, text: "Unclassified", bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20), confidence: 0.95)
+        let low = TextBlock(pageNumber: 3, type: .paragraph, text: "Low confidence", bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20), confidence: 0.2)
+        let conflicting = TextBlock(
+            pageNumber: 4,
+            type: .paragraph,
+            text: "Conflicting source",
+            bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20),
+            confidence: 0.95,
+            metadata: ["source": BlockSource.embeddedPDF.rawValue],
+            provenance: BlockProvenance(source: .visionOCR, pageNumber: 4)
+        )
+        let tableBounds = BoundingBox(x: 0, y: 0, width: 100, height: 40)
+        let tableBlock = TextBlock(pageNumber: 5, type: .table, text: "A | B", bounds: tableBounds, confidence: 0.95)
+        let figureBounds = BoundingBox(x: 0, y: 50, width: 100, height: 40)
+        let figureBlock = TextBlock(pageNumber: 6, type: .figure, text: "Chart", bounds: figureBounds, confidence: 0.95)
+        let ai = TextBlock(
+            pageNumber: 7,
+            type: .paragraph,
+            text: "Generated draft",
+            bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20),
+            confidence: 0.95,
+            provenance: BlockProvenance(source: .appleIntelligence, pageNumber: 7)
+        )
+        let document = ReaderDocument(title: "Priority", sourceType: .sample, pages: [
+            unreadable,
+            ReaderPage(pageNumber: 2, size: PageSize(width: 400, height: 600), blocks: [unknown]),
+            ReaderPage(pageNumber: 3, size: PageSize(width: 400, height: 600), blocks: [low]),
+            ReaderPage(pageNumber: 4, size: PageSize(width: 400, height: 600), blocks: [conflicting]),
+            ReaderPage(pageNumber: 5, size: PageSize(width: 400, height: 600), blocks: [tableBlock], tables: [TableRegion(pageNumber: 5, bounds: tableBounds, rows: [["A", "B"], ["1", "2"]], confidence: 0.95)]),
+            ReaderPage(pageNumber: 6, size: PageSize(width: 400, height: 600), blocks: [figureBlock], figures: [FigureRegion(pageNumber: 6, bounds: figureBounds, chartType: .bar, visibleText: "Chart", description: "", confidence: 0.95)]),
+            ReaderPage(pageNumber: 7, size: PageSize(width: 400, height: 600), blocks: [ai])
+        ])
+
+        let findings = DocumentEditing.reviewFindings(for: document)
+
+        XCTAssertEqual(findings.map(\.category), [
+            .unreadablePage,
+            .missingStructure,
+            .lowConfidence,
+            .conflictingExtractionSources,
+            .unresolvedTableHeaders,
+            .missingImageDescription,
+            .unreviewedAIContribution
+        ])
+        XCTAssertEqual(findings.map(\.category.priority), Array(0...6))
+        XCTAssertEqual(findings.last?.provenance?.source, .appleIntelligence)
+        XCTAssertTrue(findings.allSatisfy { !$0.isResolved })
+    }
+
+    func testReviewFindingCategoryDecodesForLegacyPayloadWithoutCategory() throws {
+        let finding = ReviewFinding(id: "low", kind: .lowConfidence, severity: .warning, pageNumber: 1, title: "Low", detail: "Review")
+        let data = try JSONEncoder().encode(finding)
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        object.removeValue(forKey: "category")
+        let legacyData = try JSONSerialization.data(withJSONObject: object)
+
+        let decoded = try JSONDecoder().decode(ReviewFinding.self, from: legacyData)
+
+        XCTAssertEqual(decoded.category, .lowConfidence)
+    }
+
     func testReviewDecisionPersistsAcceptedAndRejectedStates() {
         let block = TextBlock(pageNumber: 1, type: .unknown, text: "Keep source", bounds: BoundingBox(x: 0, y: 0, width: 100, height: 20), confidence: 0.4)
         var document = ReaderDocument(title: "Decisions", sourceType: .sample, pages: [
