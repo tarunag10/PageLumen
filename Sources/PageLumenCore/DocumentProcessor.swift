@@ -40,6 +40,11 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         /// OCR target is two pixels per PDF point (roughly 144 DPI), reduced
         /// further for unusually large pages by the pixel budget.
         static let ocrTargetScale: CGFloat = 2.0
+        /// Standalone images use their embedded physical resolution when it is
+        /// available. This keeps a 600-DPI scan from consuming the same OCR
+        /// memory as a page whose source is already close to the 144-DPI
+        /// recognition target.
+        static let ocrTargetDPI: CGFloat = 144
     }
 
     public static let supportedExtensions: [String] = [
@@ -307,7 +312,7 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         try validateImageBudget(cgImage)
 
         let pageSize = CGSize(width: cgImage.width, height: cgImage.height)
-        let ocrImage = boundedOCRImage(cgImage)
+        let ocrImage = boundedOCRImage(cgImage, sourceDPI: sourceDPI(for: image))
         var document = ReaderDocument(
             title: title,
             sourceType: sourceType,
@@ -561,12 +566,13 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         }
     }
 
-    private func boundedOCRImage(_ image: CGImage) -> CGImage {
+    private func boundedOCRImage(_ image: CGImage, sourceDPI: CGFloat? = nil) -> CGImage {
         let width = CGFloat(image.width)
         let height = CGFloat(image.height)
         let pixelScale = sqrt(ImportBudget.maxOCRImagePixels / max(1, width * height))
         let dimensionScale = ImportBudget.maxOCRImageDimension / max(width, height)
-        let scale = min(1, pixelScale, dimensionScale)
+        let dpiScale = Self.sourceAwareOCRScale(sourceDPI: sourceDPI)
+        let scale = min(1, dpiScale, pixelScale, dimensionScale)
         guard scale < 1 else { return image }
 
         let targetWidth = max(1, Int((width * scale).rounded(.down)))
@@ -583,6 +589,29 @@ public final class DocumentProcessor: DocumentImporting, @unchecked Sendable {
         context.interpolationQuality = .high
         context.draw(image, in: CGRect(x: 0, y: 0, width: CGFloat(targetWidth), height: CGFloat(targetHeight)))
         return context.makeImage() ?? image
+    }
+
+    /// Returns a downsampling factor for an image with a trustworthy embedded
+    /// DPI. Missing or invalid metadata intentionally preserves the existing
+    /// pixel/memory bounds rather than guessing a physical page size.
+    internal static func sourceAwareOCRScale(sourceDPI: CGFloat?) -> CGFloat {
+        guard let sourceDPI, sourceDPI.isFinite, sourceDPI > 0 else { return 1 }
+        return min(1, ImportBudget.ocrTargetDPI / sourceDPI)
+    }
+
+    private func sourceDPI(for image: NSImage) -> CGFloat? {
+        guard let tiff = image.tiffRepresentation,
+              let source = CGImageSourceCreateWithData(tiff as CFData, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any] else {
+            return nil
+        }
+        let width = (properties[kCGImagePropertyDPIWidth] as? NSNumber)?.doubleValue
+        let height = (properties[kCGImagePropertyDPIHeight] as? NSNumber)?.doubleValue
+        let values = [width, height].compactMap { $0 }.filter { $0.isFinite && $0 > 0 }
+        guard !values.isEmpty else { return nil }
+        // Prefer the lower axis so anisotropic metadata does not discard
+        // detail on the less-dense axis.
+        return CGFloat(values.min()!)
     }
 
     private func render(pdfPage: PDFPage) -> NSImage? {

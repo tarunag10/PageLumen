@@ -4,6 +4,14 @@ import XCTest
 @testable import PageLumenCore
 
 final class DocumentProcessorTests: XCTestCase {
+    func testSourceDPIAwareOCRScaleTargetsHighResolutionScansWithoutUpscaling() {
+        XCTAssertEqual(DocumentProcessor.sourceAwareOCRScale(sourceDPI: 600), 0.24, accuracy: 0.001)
+        XCTAssertEqual(DocumentProcessor.sourceAwareOCRScale(sourceDPI: 144), 1.0, accuracy: 0.001)
+        XCTAssertEqual(DocumentProcessor.sourceAwareOCRScale(sourceDPI: 72), 1.0, accuracy: 0.001)
+        XCTAssertEqual(DocumentProcessor.sourceAwareOCRScale(sourceDPI: nil), 1.0, accuracy: 0.001)
+        XCTAssertEqual(DocumentProcessor.sourceAwareOCRScale(sourceDPI: 0), 1.0, accuracy: 0.001)
+    }
+
     @MainActor
     func testPNGDataUsesBoundedImageIOThumbnail() throws {
         let image = NSImage(size: CGSize(width: 1_200, height: 800))
