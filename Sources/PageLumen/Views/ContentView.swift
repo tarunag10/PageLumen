@@ -19,9 +19,9 @@ struct ContentView: View {
     @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
-        HStack(spacing: 0) {
+        HSplitView {
             SidebarView()
-                .frame(width: 264)
+                .frame(minWidth: 220, idealWidth: 264, maxWidth: 360)
 
             VStack(spacing: 0) {
                 WorkflowHeader()
@@ -43,6 +43,7 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .frame(minWidth: 1_120, minHeight: 720)
         .background(AccessibleStyle.appBackground)
         .alert(item: Binding(
             get: { store.processingBudgetPrompt },
@@ -66,14 +67,16 @@ struct ContentView: View {
                 } label: {
                     Label("Open Files", systemImage: "doc.badge.plus")
                 }
-                .help("Open PDFs, scans, screenshots, or images")
+                .disabled(store.isProcessing)
+                .help(store.isProcessing ? "Finish or cancel the current import first" : "Open PDFs, scans, screenshots, or images")
 
                 Button {
                     store.pasteImageFromClipboard()
                 } label: {
                     Label("Paste Image", systemImage: "doc.on.clipboard")
                 }
-                .help("Import an image from the clipboard")
+                .disabled(store.isProcessing)
+                .help(store.isProcessing ? "Finish or cancel the current import first" : "Import an image from the clipboard")
 
                 if store.isProcessing {
                     ProgressView()
@@ -82,6 +85,7 @@ struct ContentView: View {
                 }
             }
         }
+        .navigationTitle(store.document.title == "Untitled document" ? "Add a document" : store.document.title)
     }
 }
 
@@ -90,30 +94,34 @@ private struct WorkflowHeader: View {
     @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
-        HStack(spacing: 10) {
-            StepPill(number: 1, title: "Add", destination: .home)
-            StepConnector()
-            StepPill(number: 2, title: "Process", destination: .processing)
-            StepConnector()
-            StepPill(number: 3, title: "Review", destination: .review)
-            StepConnector()
-            StepPill(number: 4, title: "Export", destination: .summaryExport)
-
-            Spacer()
-
-            if store.isProcessing {
-                ProgressView()
-                    .controlSize(.small)
-                    .tint(AccessibleStyle.accentBright)
-                Text("Processing locally")
-                    .font(.callout)
-                    .foregroundStyle(AccessibleStyle.secondaryText)
-            } else {
-                Text(nextStepText)
-                    .font(.callout)
-                    .foregroundStyle(AccessibleStyle.secondaryText)
-                    .lineLimit(1)
+        HStack(spacing: 12) {
+            ScrollView(.horizontal, showsIndicators: true) {
+                HStack(spacing: 10) {
+                    StepPill(number: 1, title: "Add", destination: .home)
+                    StepConnector()
+                    StepPill(number: 2, title: "Process", destination: .processing)
+                    StepConnector()
+                    StepPill(number: 3, title: "Review", destination: .review)
+                    StepConnector()
+                    StepPill(number: 4, title: "Export", destination: .summaryExport)
+                }
+                .padding(.vertical, 1)
             }
+            Divider()
+                .frame(height: 22)
+
+            Group {
+                if store.isProcessing {
+                    Label("Processing locally", systemImage: "gearshape.2")
+                } else {
+                    Text(nextStepText)
+                }
+            }
+            .font(.callout)
+            .foregroundStyle(AccessibleStyle.secondaryText)
+            .lineLimit(2)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: 380, alignment: .leading)
         }
         .padding(.horizontal, 22)
         .padding(.vertical, 14)
@@ -158,8 +166,7 @@ private struct StepPill: View {
 
     var body: some View {
         Button {
-            guard store.canNavigate(to: destination) else { return }
-            store.selectedDestination = destination
+            _ = store.navigate(to: destination)
         } label: {
             HStack(spacing: 9) {
                 ZStack {
@@ -194,7 +201,7 @@ private struct StepPill: View {
         .buttonStyle(.plain)
         .disabled(!store.canNavigate(to: destination))
         .accessibilityLabel("Step \(number), \(title)")
-        .accessibilityValue(isSelected ? "Selected" : "Not selected")
-        .accessibilityHint(store.canNavigate(to: destination) ? "Show the \(title.lowercased()) step." : "Complete an import before opening this step.")
+        .accessibilityValue(isSelected ? "Selected, \(store.navigationAvailabilityMessage(to: destination))" : store.navigationAvailabilityMessage(to: destination))
+        .accessibilityHint(store.canNavigate(to: destination) ? "Show the \(title.lowercased()) step." : store.navigationAvailabilityMessage(to: destination))
     }
 }

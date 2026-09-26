@@ -217,7 +217,7 @@ struct AccessiblePanel: ViewModifier {
         content
             .background {
                 Group {
-                    if AccessibleStyle.boostContrast {
+                    if usesHighContrast {
                         AccessibleStyle.panelBackground
                     } else {
                         AccessibleStyle.panelGradient
@@ -227,7 +227,7 @@ struct AccessiblePanel: ViewModifier {
             }
             .overlay {
                 RoundedRectangle(cornerRadius: radius)
-                    .stroke(borderColor, lineWidth: 1)
+                    .stroke(usesHighContrast ? AccessibleStyle.focusBorder : borderColor, lineWidth: 1)
             }
             .shadow(
                 color: Color.black.opacity(paddedShadow ? AccessibleStyle.cardShadow.opacity : 0),
@@ -235,6 +235,10 @@ struct AccessiblePanel: ViewModifier {
                 x: AccessibleStyle.cardShadow.x,
                 y: AccessibleStyle.cardShadow.y
             )
+    }
+
+    private var usesHighContrast: Bool {
+        AccessibleStyle.boostContrast || NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast
     }
 }
 
@@ -245,7 +249,7 @@ struct AccessibleToolbarSurface: ViewModifier {
             .background(AccessibleStyle.elevatedBackground)
             .overlay(alignment: .bottom) {
                 Rectangle()
-                    .fill(AccessibleStyle.border)
+                    .fill(NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast ? AccessibleStyle.focusBorder : AccessibleStyle.border)
                     .frame(height: 1)
             }
     }
@@ -293,7 +297,7 @@ private struct LiquidGlassModifier: ViewModifier {
 
     @ViewBuilder
     func body(content: Content) -> some View {
-        if #available(macOS 26.0, *), !boostContrast, !reduceTransparency {
+        if #available(macOS 26.0, *), !boostContrast, !NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast, !reduceTransparency {
             content.background(.regularMaterial)
         } else {
             content

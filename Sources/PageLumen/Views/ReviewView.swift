@@ -11,18 +11,38 @@ struct ReviewView: View {
     var body: some View {
         VStack(spacing: 0) {
             ProcessingBanner()
-            ReviewTrustBar()
-
-            HSplitView {
-                PreviewPane(page: store.selectedPage, showReadingOrder: showReadingOrder)
-                    .frame(minWidth: 300, idealWidth: 420)
-
-                VStack(spacing: 0) {
-                    ReviewHeader(showReadingOrder: $showReadingOrder, readingPreferences: $readingPreferences)
-                    Divider()
-                    StructuredOutputView(readingPreferences: $readingPreferences)
+            if store.document.pages.isEmpty {
+                ContentUnavailableView {
+                    Label("Nothing to Review", systemImage: "doc.text.magnifyingglass")
+                } description: {
+                    Text("Import a document to inspect extracted text, reading order, tables, and figures.")
+                } actions: {
+                    Button {
+                        store.openDocumentPanel()
+                    } label: {
+                        Label("Open Files", systemImage: "doc.badge.plus")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut("o", modifiers: [.command])
                 }
-                .frame(minWidth: 360, idealWidth: 520)
+                .accessibilityIdentifier("review.emptyState")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .disabled(store.isProcessing)
+            } else {
+                ReviewTrustBar()
+
+                HSplitView {
+                    PreviewPane(page: store.selectedPage, showReadingOrder: showReadingOrder)
+                        .frame(minWidth: 300, idealWidth: 420)
+
+                    VStack(spacing: 0) {
+                        ReviewHeader(showReadingOrder: $showReadingOrder, readingPreferences: $readingPreferences)
+                        Divider()
+                        StructuredOutputView(readingPreferences: $readingPreferences)
+                    }
+                    .frame(minWidth: 360, idealWidth: 520)
+                }
+                .disabled(store.isProcessing)
             }
         }
         .background(AccessibleStyle.appBackground)
@@ -48,6 +68,9 @@ private struct ProcessingBanner: View {
             .padding(.horizontal, 18)
             .padding(.vertical, 11)
             .accessibleToolbarSurface()
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("review.processingBanner")
+            .accessibilityAddTraits(.updatesFrequently)
         }
     }
 }
@@ -69,25 +92,20 @@ private struct ReviewHeader: View {
                     Text("Step 3: Review text")
                         .font(.headline)
                         .foregroundStyle(AccessibleStyle.primaryText)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text("Compare the preview with extracted blocks, then resolve anything marked for review.")
                         .font(.caption)
                         .foregroundStyle(AccessibleStyle.secondaryText)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .layoutPriority(1)
-
-                Picker("Page", selection: $store.selectedPageNumber) {
-                    ForEach(store.document.pages) { page in
-                        Text("Page \(page.pageNumber)").tag(page.pageNumber)
-                    }
-                }
-                .frame(width: 132)
 
                 Spacer(minLength: 8)
 
                 Button {
-                    store.selectedDestination = .summaryExport
+                    _ = store.navigate(to: .summaryExport)
                 } label: {
                     Label("Continue", systemImage: "arrow.right")
                 }
@@ -99,7 +117,24 @@ private struct ReviewHeader: View {
                 .help(store.isProcessing ? "Finish processing before exporting" : "Open summary and export options")
             }
 
-            ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                Picker("Page", selection: $store.selectedPageNumber) {
+                    ForEach(store.document.pages) { page in
+                        Text("Page \(page.pageNumber)").tag(page.pageNumber)
+                    }
+                }
+                .frame(minWidth: 120, idealWidth: 132, maxWidth: 180)
+
+                if let page = store.selectedPage {
+                    Text("Page \(page.pageNumber) of \(store.document.pages.count)")
+                        .font(.caption)
+                        .foregroundStyle(AccessibleStyle.secondaryText)
+                }
+
+                Spacer(minLength: 0)
+            }
+
+            ScrollView(.horizontal, showsIndicators: true) {
             HStack(spacing: 8) {
                 Toggle("Reading order", isOn: $showReadingOrder)
                     .toggleStyle(.switch)
@@ -133,7 +168,7 @@ private struct ReviewHeader: View {
                 .accessibilityIdentifier("review.queue")
                 .popover(isPresented: $showReviewQueue, arrowEdge: .top) {
                     ReviewQueuePopover()
-                        .frame(width: 360, height: 420)
+                        .frame(minWidth: 320, idealWidth: 360, maxWidth: 460, minHeight: 360, idealHeight: 420, maxHeight: 560)
                 }
 
                 Menu {
@@ -164,11 +199,11 @@ private struct ReviewHeader: View {
                 }
                 .popover(isPresented: $showEditHistory, arrowEdge: .top) {
                     EditHistoryPopover()
-                        .frame(width: 360, height: 360)
+                        .frame(minWidth: 320, idealWidth: 360, maxWidth: 460, minHeight: 320, idealHeight: 360, maxHeight: 520)
                 }
                 .popover(isPresented: $showDocumentChanges, arrowEdge: .top) {
                     DocumentChangesPopover()
-                        .frame(width: 520, height: 440)
+                        .frame(minWidth: 420, idealWidth: 520, maxWidth: 720, minHeight: 360, idealHeight: 440, maxHeight: 640)
                 }
 
                 if let page = store.selectedPage {
@@ -184,7 +219,7 @@ private struct ReviewHeader: View {
             .controlSize(.small)
             }
 
-            ScrollView(.horizontal, showsIndicators: false) {
+            ScrollView(.horizontal, showsIndicators: true) {
             HStack(spacing: 10) {
                 TextField("Search extracted text", text: $store.reviewSearchQuery)
                     .textFieldStyle(.roundedBorder)
@@ -216,7 +251,7 @@ private struct ReviewHeader: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 280)
+                .frame(minWidth: 220, idealWidth: 280, maxWidth: 420)
 
                 Spacer()
 
@@ -318,7 +353,7 @@ private struct ReviewTrustBar: View {
                 if store.reviewIssues.isEmpty {
                     Text("No review issues")
                 } else {
-                    ForEach(store.reviewIssues.prefix(12)) { issue in
+                    ForEach(store.reviewIssues) { issue in
                         Button {
                             store.jumpToIssue(issue)
                         } label: {
@@ -382,7 +417,8 @@ private struct TrustMetric: View {
                 Text(value)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(AccessibleStyle.primaryText)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(.horizontal, 12)
@@ -625,6 +661,7 @@ private extension DocumentChangeKind {
 private struct StructuredOutputView: View {
     @Environment(DocumentStore.self) private var store
     @Binding var readingPreferences: ReadingPreferences
+    @FocusState private var focusedBlockID: UUID?
     @AppStorage("boostContrast") private var boostContrast = false
 
     var body: some View {
@@ -642,7 +679,11 @@ private struct StructuredOutputView: View {
                         }
 
                         ForEach(store.filteredSelectedPageBlocks) { block in
-                            EditableBlockRow(block: block, readingPreferences: readingPreferences)
+                            EditableBlockRow(
+                                block: block,
+                                readingPreferences: readingPreferences,
+                                focusedBlockID: $focusedBlockID
+                            )
                                 .id(block.id)
                         }
 
@@ -678,8 +719,12 @@ private struct StructuredOutputView: View {
                 .padding(22)
             }
             .onChange(of: store.selectedBlockID) { _, blockID in
-                guard let blockID else { return }
+                guard let blockID else {
+                    focusedBlockID = nil
+                    return
+                }
                 reader.scrollTo(blockID, anchor: .center)
+                focusedBlockID = blockID
             }
         }
         .background(AccessibleStyle.appBackground)
@@ -690,6 +735,7 @@ private struct EditableBlockRow: View {
     @Environment(DocumentStore.self) private var store
     let block: TextBlock
     let readingPreferences: ReadingPreferences
+    let focusedBlockID: FocusState<UUID?>.Binding
     @State private var draft: String = ""
     @State private var commitTask: Task<Void, Never>?
     @AppStorage("boostContrast") private var boostContrast = false
@@ -697,6 +743,18 @@ private struct EditableBlockRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
+                Button {
+                    _ = store.selectReviewSource(pageNumber: block.pageNumber, blockID: block.id)
+                } label: {
+                    Image(systemName: "scope")
+                }
+                .buttonStyle(.bordered)
+                .focused(focusedBlockID, equals: block.id)
+                .accessibilityLabel("Select this block")
+                .accessibilityValue(store.selectedBlockID == block.id ? "Selected" : "Not selected")
+                .accessibilityAddTraits(store.selectedBlockID == block.id ? .isSelected : [])
+                .accessibilityHint("Selects this block and moves the preview to its source page.")
+
                 Picker("Block type", selection: blockTypeBinding) {
                     ForEach(editableBlockTypes, id: \.self) { type in
                         Label(type.rawValue.capitalized, systemImage: iconName(for: type))
@@ -704,7 +762,7 @@ private struct EditableBlockRow: View {
                     }
                 }
                 .labelsHidden()
-                .frame(width: 150)
+                .frame(minWidth: 120, idealWidth: 150, maxWidth: 220)
 
                 Button {
                     store.moveBlock(block, direction: .up)
@@ -759,6 +817,7 @@ private struct EditableBlockRow: View {
                     .font(.caption)
                     .foregroundStyle(AccessibleStyle.secondaryText)
             }
+            .contentShape(Rectangle())
 
             TextEditor(text: $draft)
                 .font(readingPreferences.typography.font(for: block.type))
@@ -790,7 +849,6 @@ private struct EditableBlockRow: View {
         }
         .padding(focusHighlightPadding)
         .background(focusHighlightColor, in: RoundedRectangle(cornerRadius: 8))
-                        .onTapGesture { _ = store.selectReviewSource(pageNumber: block.pageNumber, blockID: block.id) }
         .padding(14)
         .accessiblePanel(borderColor: block.confidence < 0.7 ? AccessibleStyle.warning : AccessibleStyle.border)
         .overlay {
@@ -809,6 +867,9 @@ private struct EditableBlockRow: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(block.type.rawValue.capitalized) block, confidence \(Int(block.confidence * 100)) percent")
         .accessibilityHint("Edit text, change type, drag to reorder, or use the arrow buttons as a keyboard fallback.")
+        .accessibilityAction {
+            _ = store.selectReviewSource(pageNumber: block.pageNumber, blockID: block.id)
+        }
         .onDrag {
             NSItemProvider(object: block.id.uuidString as NSString)
         }
@@ -932,6 +993,7 @@ private struct TableHeaderAssignmentEditor: View {
     let onApply: ([Int], [Int]) -> Void
     @State private var columnRows = ""
     @State private var rowColumns = ""
+    @State private var validationMessage: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -947,10 +1009,24 @@ private struct TableHeaderAssignmentEditor: View {
             }
             .textFieldStyle(.roundedBorder)
             Button("Apply header assignments") {
-                onApply(parse(columnRows), parse(rowColumns))
+                let columnResult = parse(columnRows, upperBound: table.rows.count, label: "Column header rows")
+                let rowResult = parse(rowColumns, upperBound: table.rows.map(\.count).max() ?? 0, label: "Row header columns")
+                if let error = columnResult.error ?? rowResult.error {
+                    validationMessage = error
+                } else {
+                    validationMessage = nil
+                    onApply(columnResult.values, rowResult.values)
+                }
             }
             .buttonStyle(.bordered)
             .accessibilityHint("Applies the selected table header row and column indexes.")
+
+            if let validationMessage {
+                Label(validationMessage, systemImage: "exclamationmark.triangle")
+                    .font(.caption)
+                    .foregroundStyle(AccessibleStyle.error)
+                    .accessibilityIdentifier("review.tableHeaderValidation")
+            }
         }
         .padding(14)
         .accessiblePanel(borderColor: AccessibleStyle.accent.opacity(0.35))
@@ -963,8 +1039,18 @@ private struct TableHeaderAssignmentEditor: View {
         rowColumns = table.rowHeaderColumns.map(String.init).joined(separator: ", ")
     }
 
-    private func parse(_ value: String) -> [Int] {
-        value.split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespacesAndNewlines)) }
+    private func parse(_ value: String, upperBound: Int, label: String) -> (values: [Int], error: String?) {
+        let tokens = value.split(separator: ",", omittingEmptySubsequences: true).map {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        var indexes: [Int] = []
+        for token in tokens {
+            guard let index = Int(token), index >= 0, index < upperBound else {
+                return ([], "\(label) must contain indexes from 0 to \(max(upperBound - 1, 0)).")
+            }
+            indexes.append(index)
+        }
+        return (indexes, nil)
     }
 }
 
@@ -981,7 +1067,7 @@ private struct TableGridEditor: View {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(table.rows.indices, id: \.self) { rowIndex in
                         HStack(spacing: 6) {
-                            Text("(rowIndex)")
+                            Text("\(rowIndex)")
                                 .font(.caption.monospacedDigit())
                                 .foregroundStyle(AccessibleStyle.secondaryText)
                                 .frame(width: 24)

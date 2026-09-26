@@ -149,6 +149,10 @@ final class DocumentStore {
     }
 
     func setIntelligenceMode(_ mode: IntelligenceMode) {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before changing document intelligence settings"
+            return
+        }
         intelligencePreferences.set(mode.rawValue, forKey: "intelligenceMode")
         intelligencePreferences.set(mode == .appleFoundationModels, forKey: "useOnDeviceAI")
         regenerateSummary()
@@ -158,6 +162,10 @@ final class DocumentStore {
     }
 
     func setIntelligenceOptOutForCurrentDocument(_ optedOut: Bool) {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before changing document intelligence settings"
+            return
+        }
         let key = intelligenceOptOutKey(for: document.id)
         if optedOut {
             intelligencePreferences.set(true, forKey: key)
@@ -174,15 +182,74 @@ final class DocumentStore {
         UserDefaults.standard.object(forKey: "privacyMode") as? Bool ?? true
     }
 
+    @discardableResult
+    func setPrivacyMode(_ enabled: Bool) -> Bool {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before changing privacy mode"
+            return false
+        }
+        UserDefaults.standard.set(enabled, forKey: "privacyMode")
+        statusMessage = enabled ? "Privacy mode enabled; translated export is disabled" : "Privacy mode disabled"
+        return true
+    }
+
+    @discardableResult
+    func setExportOption(_ enabled: Bool, keyPath: WritableKeyPath<ExportOptions, Bool>) -> Bool {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before changing export defaults"
+            return false
+        }
+        exportOptions[keyPath: keyPath] = enabled
+        persistExportDefaults()
+        return true
+    }
+
     func canNavigate(to destination: Destination) -> Bool {
         switch destination {
-        case .home, .processing:
+        case .home:
+            return !isProcessing
+        case .processing:
             return true
         case .review:
-            return !document.pages.isEmpty
+            return !document.pages.isEmpty && !isProcessing && !isAllFailedBatch
         case .summaryExport:
-            return !document.pages.isEmpty && !isProcessing
+            return !document.pages.isEmpty && !isProcessing && !isAllFailedBatch
         }
+    }
+
+    private var isAllFailedBatch: Bool {
+        batchQueue.totalCount > 0 &&
+        !isProcessing &&
+        batchQueue.completedDocuments.isEmpty &&
+        batchQueue.failedCount == batchQueue.totalCount
+    }
+
+    func navigationAvailabilityMessage(to destination: Destination) -> String {
+        guard !canNavigate(to: destination) else { return "Available" }
+        switch destination {
+        case .home:
+            return isProcessing ? "Finish processing first" : "Available"
+        case .processing:
+            return "Available"
+        case .review:
+            if isProcessing { return "Finish processing first" }
+            if isAllFailedBatch { return "Resolve the failed import before reviewing" }
+            return "Import a document first"
+        case .summaryExport:
+            if isProcessing { return "Finish processing first" }
+            if isAllFailedBatch { return "Resolve the failed import before exporting" }
+            return "Import a document first"
+        }
+    }
+
+    @discardableResult
+    func navigate(to destination: Destination) -> Bool {
+        guard canNavigate(to: destination) else {
+            statusMessage = navigationAvailabilityMessage(to: destination)
+            return false
+        }
+        selectedDestination = destination
+        return true
     }
 
     private let exportEngine = ExportEngine()
@@ -278,6 +345,10 @@ final class DocumentStore {
     }
 
     func chooseWatchFolder() {
+        guard !isProcessing else {
+            statusMessage = "Finish or cancel the current import before changing watch-folder settings"
+            return
+        }
         let panel = NSOpenPanel()
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
@@ -296,6 +367,10 @@ final class DocumentStore {
     }
 
     func setWatchFolderEnabled(_ enabled: Bool) {
+        guard !isProcessing else {
+            statusMessage = "Finish or cancel the current import before changing watch-folder settings"
+            return
+        }
         watchFolderEnabled = enabled
         repositoryPreferences.set(enabled, forKey: DocumentRepositorySettings.watchFolderEnabledKey)
         guard enabled else {
@@ -309,6 +384,10 @@ final class DocumentStore {
     }
 
     func importWatchFolderCandidate(_ candidate: WatchFolderCandidate) {
+        guard !isProcessing else {
+            statusMessage = "Finish or cancel the current import before importing a watch-folder file"
+            return
+        }
         watchFolderCandidates.removeAll { $0.id == candidate.id }
         watchFolderFailures.removeAll { $0.id == candidate.id }
         watchFolderImportsInFlight.insert(candidate.url)
@@ -320,6 +399,10 @@ final class DocumentStore {
     }
 
     func retryWatchFolderFailure(_ failure: WatchFolderImportFailure) {
+        guard !isProcessing else {
+            statusMessage = "Finish or cancel the current import before retrying a watch-folder file"
+            return
+        }
         watchFolderFailures.removeAll { $0.id == failure.id }
         watchFolderImportsInFlight.insert(failure.id)
         startImport(urls: [failure.id])
@@ -408,6 +491,10 @@ final class DocumentStore {
     /// rather than silently selecting a different source block.
     @discardableResult
     func applyReviewSelection(_ payload: ReviewSelectionPayload) -> Bool {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before opening Review"
+            return false
+        }
         if let payloadDocumentID = payload.documentID, payloadDocumentID != document.id {
             statusMessage = "This Review link belongs to a different document"
             return false
@@ -447,6 +534,10 @@ final class DocumentStore {
     }
 
     func setReviewPreset(_ preset: ReviewPreset) {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before changing the review preset"
+            return
+        }
         reviewPreset = preset
         statusMessage = "Review preset set to \(preset.rawValue)"
     }
@@ -568,6 +659,10 @@ final class DocumentStore {
     }
 
     func acceptCurrentReviewIssue() {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before changing review decisions"
+            return
+        }
         guard let issue = currentReviewIssue else {
             statusMessage = "Select a review issue first"
             return
@@ -576,6 +671,10 @@ final class DocumentStore {
     }
 
     func rejectCurrentReviewIssue() {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before changing review decisions"
+            return
+        }
         guard let issue = currentReviewIssue else {
             statusMessage = "Select a review issue first"
             return
@@ -594,6 +693,10 @@ final class DocumentStore {
     /// has opened the original page. Neither path changes extracted source
     /// text or retained OCR observations.
     func markReviewIssueReviewed(_ issue: ReviewIssue) {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before changing review decisions"
+            return
+        }
         if let blockID = issue.blockID,
            let block = document.allBlocks.first(where: { $0.id == blockID }) {
             setBlockReviewed(block, isReviewed: true)
@@ -611,6 +714,10 @@ final class DocumentStore {
     }
 
     func reopenReviewIssue(_ issue: ReviewIssue) {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before changing review decisions"
+            return
+        }
         guard let blockID = issue.blockID,
               let block = document.allBlocks.first(where: { $0.id == blockID }) else {
             statusMessage = "This page warning remains open until its source is corrected"
@@ -621,6 +728,10 @@ final class DocumentStore {
     }
 
     func rejectReviewIssue(_ issue: ReviewIssue) {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before changing review decisions"
+            return
+        }
         guard let blockID = issue.blockID,
               let block = document.allBlocks.first(where: { $0.id == blockID }) else {
             statusMessage = "This page warning needs source-level correction"
@@ -640,6 +751,10 @@ final class DocumentStore {
     }
 
     private func jumpToSearchMatch(direction: Int) {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before searching Review"
+            return
+        }
         let query = reviewSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else {
             return
@@ -668,6 +783,10 @@ final class DocumentStore {
     }
 
     func loadSample() {
+        guard !isProcessing else {
+            statusMessage = "Finish or cancel the current import before loading the demo"
+            return
+        }
         document = DocumentStore.makeInitialDocument()
         applyLanguagePreference()
         remember(document)
@@ -679,6 +798,10 @@ final class DocumentStore {
     }
 
     func forgetAllRecentDocuments() {
+        guard !isProcessing else {
+            statusMessage = "Finish or cancel the current import before forgetting recent documents"
+            return
+        }
         let count = recentDocuments.count
         recentDocuments.removeAll()
         try? persisting.forgetAll()
@@ -734,14 +857,20 @@ final class DocumentStore {
             statusMessage = "The matching document is no longer in the local library"
             return
         }
-        selectRecentDocument(selected)
-        _ = selectReviewSource(pageNumber: result.pageNumber, blockID: result.blockID)
+        guard selectRecentDocument(selected),
+              selectReviewSource(pageNumber: result.pageNumber, blockID: result.blockID) else {
+            return
+        }
         statusMessage = "Opened \(result.title), page \(result.pageNumber)"
     }
 
     /// Removes one retained library copy without touching its source file.
     /// If the active document is removed, return to the import step.
     func forgetRecentDocument(_ selectedDocument: ReaderDocument) {
+        guard !isProcessing else {
+            statusMessage = "Finish or cancel the current import before forgetting a recent document"
+            return
+        }
         let wasActive = selectedDocument.id == document.id
         recentDocuments.removeAll { $0.id == selectedDocument.id }
         do {
@@ -765,6 +894,10 @@ final class DocumentStore {
     }
 
     func openDocumentPanel() {
+        guard !isProcessing else {
+            statusMessage = "Finish or cancel the current import before opening another document"
+            return
+        }
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.pdf, .png, .jpeg, .tiff, .heic]
         panel.allowsMultipleSelection = true
@@ -779,21 +912,34 @@ final class DocumentStore {
         await importURLs([url])
     }
 
-    func startImport(urls: [URL]) {
+    @discardableResult
+    func startImport(urls: [URL]) -> Bool {
+        guard !isProcessing else {
+            statusMessage = "Finish or cancel the current import before starting another"
+            return false
+        }
         importTask?.cancel()
         let supportedURLs = urls.filter(BatchImportQueue.isSupportedURL)
         guard !supportedURLs.isEmpty else {
             statusMessage = "No supported PDF or image files were selected."
-            return
+            return false
+        }
+        if !pendingImportURLs.isEmpty {
+            pendingImportURLs.append(contentsOf: supportedURLs)
+            let count = supportedURLs.count
+            let noun = count == 1 ? "file" : "files"
+            statusMessage = "Added \(count) \(noun) to the pending import choice."
+            return true
         }
         if let first = supportedURLs.first,
            let estimate = processingBudgetEstimate(for: first), estimate.requiresChoice {
             pendingImportURLs = supportedURLs
             processingBudgetPrompt = ProcessingBudgetPrompt(url: first, estimate: estimate)
             statusMessage = "Choose a bounded processing option before importing."
-            return
+            return true
         }
         beginImport(urls: supportedURLs, options: .full)
+        return true
     }
 
     func chooseFullProcessing() {
@@ -899,7 +1045,7 @@ final class DocumentStore {
             isProcessing = false
             importTask = nil
             statusMessage = batchSummary
-            selectedDestination = .review
+            selectedDestination = batchQueue.completedDocuments.isEmpty ? .processing : .review
         } catch is CancellationError {
             cancelImport()
         } catch {
@@ -924,6 +1070,10 @@ final class DocumentStore {
     }
 
     func pasteImageFromClipboard() {
+        guard !isProcessing else {
+            statusMessage = "Finish or cancel the current import before pasting another image"
+            return
+        }
         guard let image = NSPasteboard.general.readObjects(forClasses: [NSImage.self])?.first as? NSImage else {
             statusMessage = "Clipboard does not contain an image."
             return
@@ -943,7 +1093,7 @@ final class DocumentStore {
                     self.processingDocument = preparedSnapshot
                     self.document = preparedSnapshot
                 }
-                applyLanguagePreference()
+                applyLanguagePreference(to: &document)
                 try Task.checkCancellation()
                 processingDocument = document
                 remember(document)
@@ -984,6 +1134,10 @@ final class DocumentStore {
     }
 
     func captureScreenshot(mode: ScreenshotCaptureMode) async {
+        guard !isProcessing else {
+            statusMessage = "Finish or cancel the current import before capturing another document"
+            return
+        }
         isProcessing = true
         statusMessage = mode == .selectedRegion ? "Select a screen region to capture..." : "Click a window to capture..."
 
@@ -1003,8 +1157,13 @@ final class DocumentStore {
     }
 
     func regenerateSummary() {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before regenerating the summary"
+            return
+        }
         let source = document
         let length = summaryLength
+        let sourceVersion = currentDocumentVersion
         guard useOnDeviceAI else {
             document.summary = explanationEngine.betterSummary(for: source, length: length)
             clearIntelligenceProvenance()
@@ -1016,8 +1175,11 @@ final class DocumentStore {
         // ready, and discard a late result if the document changed meanwhile.
         Task { @MainActor [weak self] in
             guard let self else { return }
-            guard self.document.id == source.id else { return }
+            guard self.document.id == source.id,
+                  self.currentDocumentVersion == sourceVersion else { return }
             let result = await self.explanationEngine.groundedIntelligenceSummary(for: source, length: length)
+            guard self.document.id == source.id,
+                  self.currentDocumentVersion == sourceVersion else { return }
             switch result {
             case .generated(let grounded):
                 self.document.summary = grounded.text
@@ -1055,25 +1217,43 @@ final class DocumentStore {
         defaults.set(exportOptions.includeHeadersAndFooters, forKey: "includeHeadersAndFooters")
     }
 
-    func applyLanguagePreference() {
+    @discardableResult
+    func applyLanguagePreference() -> Bool {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before changing the language hint"
+            return false
+        }
         applyLanguagePreference(to: &document)
+        return true
     }
 
-    func selectBatchItem(_ item: BatchImportItem) {
+    @discardableResult
+    func selectBatchItem(_ item: BatchImportItem) -> Bool {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before switching documents"
+            return false
+        }
         guard let selectedDocument = item.document else {
-            return
+            return false
         }
         document = selectedDocument
         selectedPageNumber = selectedDocument.pages.first?.pageNumber ?? 1
         selectedDestination = .review
         statusMessage = "Viewing \(selectedDocument.title)"
+        return true
     }
 
-    func selectRecentDocument(_ selectedDocument: ReaderDocument) {
+    @discardableResult
+    func selectRecentDocument(_ selectedDocument: ReaderDocument) -> Bool {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before switching documents"
+            return false
+        }
         document = selectedDocument
         selectedPageNumber = selectedDocument.pages.first?.pageNumber ?? 1
         selectedDestination = .review
         statusMessage = "Viewing \(selectedDocument.title)"
+        return true
     }
 
     func openRecentDocument(id: UUID) {
@@ -1086,6 +1266,7 @@ final class DocumentStore {
     }
 
     func updateBlock(_ block: TextBlock, text: String) {
+        guard guardReviewEditingAllowed() else { return }
         guard let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == block.pageNumber }),
               let blockIndex = document.pages[pageIndex].blocks.firstIndex(where: { $0.id == block.id }) else {
             return
@@ -1108,6 +1289,10 @@ final class DocumentStore {
     }
 
     func setBlockReviewed(_ block: TextBlock, isReviewed: Bool) {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before changing review decisions"
+            return
+        }
         let currentDecision = DocumentEditing.reviewDecision(block)
         guard (isReviewed ? currentDecision != .accepted : currentDecision != .unreviewed) else { return }
         recordEdit("Change block review status")
@@ -1116,6 +1301,10 @@ final class DocumentStore {
     }
 
     func setSelectedPageReviewed(_ isReviewed: Bool) {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before changing review decisions"
+            return
+        }
         guard let page = document.pages.first(where: { $0.pageNumber == selectedPageNumber }),
               page.blocks.contains(where: { DocumentEditing.isReviewed($0) != isReviewed }) else { return }
         recordEdit("Change page review status")
@@ -1155,11 +1344,13 @@ final class DocumentStore {
     /// draft is held separately from extracted source and is never applied
     /// implicitly.
     func prepareReviewDraft() {
+        guard guardReviewEditingAllowed() else { return }
         reviewDraft = explanationEngine.groundedSummary(for: document, length: summaryLength)
         statusMessage = "Draft prepared for review; extracted source is unchanged"
     }
 
     func insertReviewDraftAsSummary() {
+        guard guardReviewEditingAllowed() else { return }
         guard let draft = reviewDraft else { return }
         recordEdit("Insert reviewed draft")
         document.summary = draft.text
@@ -1174,6 +1365,7 @@ final class DocumentStore {
     /// Replaces the selected block only after an explicit review action. This
     /// is intentionally limited to a selected block and retains undo history.
     func replaceSelectedDescriptionAfterReview() {
+        guard guardReviewEditingAllowed() else { return }
         guard let draft = reviewDraft,
               let selectedBlockID,
               let pageIndex = document.pages.firstIndex(where: { page in
@@ -1210,6 +1402,7 @@ final class DocumentStore {
     }
 
     func changeBlockType(_ block: TextBlock, to type: BlockType) {
+        guard guardReviewEditingAllowed() else { return }
         guard block.type != type else { return }
         recordEdit("Change block type")
         DocumentEditing.changeBlockType(id: block.id, to: type, in: &document)
@@ -1229,6 +1422,7 @@ final class DocumentStore {
     }
 
     func updateTableExplanation(_ table: TableRegion, text: String) {
+        guard guardReviewEditingAllowed() else { return }
         guard let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == table.pageNumber }),
               let tableIndex = document.pages[pageIndex].tables.firstIndex(where: { $0.id == table.id }) else {
             return
@@ -1248,6 +1442,7 @@ final class DocumentStore {
     }
 
     func updateTableHeaderAssignments(_ table: TableRegion, columnHeaderRows: [Int], rowHeaderColumns: [Int]) {
+        guard guardReviewEditingAllowed() else { return }
         guard let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == table.pageNumber }),
               let tableIndex = document.pages[pageIndex].tables.firstIndex(where: { $0.id == table.id }) else {
             return
@@ -1274,6 +1469,7 @@ final class DocumentStore {
     }
 
     func updateTableCell(_ table: TableRegion, row: Int, column: Int, text: String) {
+        guard guardReviewEditingAllowed() else { return }
         guard let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == table.pageNumber }),
               let tableIndex = document.pages[pageIndex].tables.firstIndex(where: { $0.id == table.id }),
               document.pages[pageIndex].tables[tableIndex].rows.indices.contains(row),
@@ -1295,6 +1491,7 @@ final class DocumentStore {
     }
 
     func updateFigureDescription(_ figure: FigureRegion, text: String) {
+        guard guardReviewEditingAllowed() else { return }
         guard let pageIndex = document.pages.firstIndex(where: { $0.pageNumber == figure.pageNumber }),
               let figureIndex = document.pages[pageIndex].figures.firstIndex(where: { $0.id == figure.id }) else {
             return
@@ -1314,6 +1511,7 @@ final class DocumentStore {
     }
 
     func moveBlock(_ block: TextBlock, direction: BlockMoveDirection) {
+        guard guardReviewEditingAllowed() else { return }
         recordEdit("Reorder block")
         DocumentEditing.moveBlock(id: block.id, direction: direction, in: &document)
         document.summary = explanationEngine.betterSummary(for: document, length: summaryLength)
@@ -1324,6 +1522,7 @@ final class DocumentStore {
     /// final destination up front and shouldn't have to chain repeated
     /// `moveBlock(_:direction:)` calls.
     func reorderBlock(id: UUID, to destinationIndex: Int) {
+        guard guardReviewEditingAllowed() else { return }
         guard let pageIndex = document.pages.firstIndex(where: { page in
             page.blocks.contains(where: { $0.id == id })
         }),
@@ -1343,6 +1542,7 @@ final class DocumentStore {
     }
 
     func undo() {
+        guard guardReviewEditingAllowed() else { return }
         guard let previous = undoStack.popLast() else { return }
         redoStack.append(document)
         document = previous
@@ -1351,11 +1551,20 @@ final class DocumentStore {
     }
 
     func redo() {
+        guard guardReviewEditingAllowed() else { return }
         guard let next = redoStack.popLast() else { return }
         undoStack.append(document)
         document = next
         refreshEditHistoryState()
         statusMessage = "Redid last edit"
+    }
+
+    private func guardReviewEditingAllowed() -> Bool {
+        guard !isProcessing else {
+            statusMessage = "Finish processing before editing the document"
+            return false
+        }
+        return true
     }
 
     private func recordEdit(_ label: String) {
@@ -1415,10 +1624,20 @@ final class DocumentStore {
         hasher.combine(document.pageCount)
         hasher.combine(document.allBlocks.count)
         for page in document.pages {
+            hasher.combine(page.pageNumber)
+            hasher.combine(page.layoutType.rawValue)
+            hasher.combine(page.warning ?? "")
             for block in page.blocks {
                 hasher.combine(block.id)
+                hasher.combine(block.pageNumber)
+                hasher.combine(block.type.rawValue)
+                hasher.combine(block.text)
+                hasher.combine(block.confidence)
+                hasher.combine(block.readingOrderIndex)
             }
         }
+        hasher.combine(document.summary)
+        hasher.combine(document.language ?? "")
         return hasher.finalize()
     }
 
@@ -1439,6 +1658,12 @@ final class DocumentStore {
     }
 
     func export(format: ExportFormat) {
+        guard !document.pages.isEmpty && !isProcessing else {
+            statusMessage = isProcessing
+                ? "Finish processing before exporting"
+                : "Import a document before exporting"
+            return
+        }
         switch format {
         case .audio:
             exportAudio()
@@ -1484,7 +1709,17 @@ final class DocumentStore {
 
     func exportAvailabilityMessage(for format: ExportFormat) -> String {
         guard format == .translated else {
-            return canExport(format) ? "Save \(format.rawValue)" : "Import and finish processing a document first"
+            guard !document.pages.isEmpty else { return "Import a document before exporting" }
+            guard !isProcessing else { return "Finish processing before exporting" }
+            guard !isAllFailedBatch else { return "Resolve the failed import before exporting" }
+            if [.html, .taggedHTML, .pdf].contains(format) {
+                let validation = exportEngine.validate(document: document, format: format, options: exportOptions)
+                if !validation.canExport,
+                   let finding = validation.findings.first(where: { $0.hasPrefix("[Needs fix]") }) {
+                    return "Resolve \(finding.replacingOccurrences(of: "[Needs fix] ", with: "")) before exporting"
+                }
+            }
+            return "Save \(format.rawValue)"
         }
         if privacyMode { return "Disable Privacy mode to use translation export" }
         switch TranslationService().availability(for: Self.targetLanguageFromDefaults()) {

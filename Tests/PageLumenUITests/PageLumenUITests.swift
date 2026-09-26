@@ -23,6 +23,7 @@ final class PageLumenUITests: XCTestCase {
         XCTAssertTrue(app.buttons["home.pasteImage"].exists)
         XCTAssertTrue(app.buttons["home.captureScreen"].exists)
         XCTAssertTrue(app.buttons["home.tryDemo"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["sidebar.status"].exists)
     }
 
     func testHomeExposesWorkflowNavigation() throws {
@@ -35,6 +36,24 @@ final class PageLumenUITests: XCTestCase {
                 "Missing accessible workflow step: \(step)"
             )
         }
+    }
+
+    func testEmptyReviewStateOffersImportRecovery() throws {
+        let reviewApp = XCUIApplication()
+        reviewApp.launchArguments = ["-ui-testing", "-ui-testing-review-empty"]
+        reviewApp.launch()
+
+        XCTAssertTrue(reviewApp.otherElements["review.emptyState"].waitForExistence(timeout: 5))
+        XCTAssertTrue(reviewApp.buttons["Open Files"].exists)
+    }
+
+    func testEmptyExportStateOffersImportRecovery() throws {
+        let exportApp = XCUIApplication()
+        exportApp.launchArguments = ["-ui-testing", "-ui-testing-export-empty"]
+        exportApp.launch()
+
+        XCTAssertTrue(exportApp.otherElements["export.emptyState"].waitForExistence(timeout: 5))
+        XCTAssertTrue(exportApp.buttons["Open Files"].exists)
     }
 
     func testFixtureLaunchExposesReviewAndExportWorkflow() throws {
@@ -114,6 +133,7 @@ final class PageLumenUITests: XCTestCase {
         XCTAssertTrue(reviewApp.buttons["review.issueNavigator"].exists)
         XCTAssertTrue(reviewApp.buttons["review.firstIssue"].exists)
         XCTAssertTrue(reviewApp.buttons["review.more"].exists)
+        XCTAssertTrue(reviewApp.buttons["Select this block"].waitForExistence(timeout: 3))
         XCTAssertTrue(reviewApp.textFields["review.search"].exists)
         XCTAssertTrue(reviewApp.buttons["review.nextMatch"].exists)
         XCTAssertTrue(reviewApp.buttons["review.previousMatch"].exists)
@@ -218,4 +238,5 @@ final class PageLumenUITests: XCTestCase {
         deniedApp.buttons["home.retryImport"].click()
         XCTAssertTrue(deniedApp.buttons["review.queue"].waitForExistence(timeout: 5))
     }
+
 }

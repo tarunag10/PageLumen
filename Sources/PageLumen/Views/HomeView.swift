@@ -21,6 +21,9 @@ struct HomeView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
                 heroSection
+                if shouldShowStatusBanner {
+                    homeStatusBanner
+                }
                 dropZone
                 stepCards
             }
@@ -56,6 +59,38 @@ struct HomeView: View {
                 .foregroundStyle(AccessibleStyle.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    private var homeStatusBanner: some View {
+        Label(store.statusMessage, systemImage: homeStatusSymbol)
+            .font(.callout.weight(.medium))
+            .foregroundStyle(homeStatusTint)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(homeStatusTint.opacity(0.12), in: RoundedRectangle(cornerRadius: AccessibleStyle.innerCornerRadius))
+            .overlay {
+                RoundedRectangle(cornerRadius: AccessibleStyle.innerCornerRadius)
+                    .stroke(homeStatusTint.opacity(0.45))
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("home.status")
+            .accessibilityAddTraits(.updatesFrequently)
+    }
+
+    private var shouldShowStatusBanner: Bool {
+        let value = store.statusMessage.lowercased()
+        return ["error", "failed", "cancel", "denied", "unsupported", "clipboard", "could not", "finish or cancel"].contains {
+            value.contains($0)
+        }
+    }
+
+    private var homeStatusSymbol: String {
+        store.statusMessage.localizedCaseInsensitiveContains("cancel") ? "xmark.circle" : "exclamationmark.triangle"
+    }
+
+    private var homeStatusTint: Color {
+        store.statusMessage.localizedCaseInsensitiveContains("cancel") ? AccessibleStyle.secondaryText : AccessibleStyle.warning
     }
 
     private var dropZone: some View {
@@ -177,6 +212,8 @@ struct HomeView: View {
         .buttonStyle(.borderedProminent)
         .keyboardShortcut("o", modifiers: [.command])
         .accessibilityIdentifier("home.openFiles")
+        .disabled(store.isProcessing)
+        .help(store.isProcessing ? "Finish or cancel the current import first" : "Open PDFs, scans, screenshots, or images")
 
         Button {
             store.pasteImageFromClipboard()
@@ -184,6 +221,8 @@ struct HomeView: View {
             Label("Paste Image", systemImage: "doc.on.clipboard")
         }
         .accessibilityIdentifier("home.pasteImage")
+        .disabled(store.isProcessing)
+        .help(store.isProcessing ? "Finish or cancel the current import first" : "Import an image from the clipboard")
 
         Menu {
             Button("Capture Selected Region") { beginCapture(.selectedRegion) }
@@ -192,6 +231,8 @@ struct HomeView: View {
             Label("Capture Screen", systemImage: "camera.viewfinder")
         }
         .accessibilityIdentifier("home.captureScreen")
+        .disabled(store.isProcessing)
+        .help(store.isProcessing ? "Finish or cancel the current import first" : "Capture a screen region or window")
 
         Button {
             store.loadSample()
@@ -199,6 +240,8 @@ struct HomeView: View {
             Label("Try Demo", systemImage: "play.circle")
         }
         .accessibilityIdentifier("home.tryDemo")
+        .disabled(store.isProcessing)
+        .help(store.isProcessing ? "Finish or cancel the current import first" : "Load a local sample document")
     }
 
     private var capturePermissionHelp: some View {
@@ -225,7 +268,7 @@ struct HomeView: View {
             }
         }
         .padding(28)
-        .frame(width: 520)
+        .frame(minWidth: 420, idealWidth: 520, maxWidth: 680)
     }
 
     private func beginCapture(_ mode: ScreenshotCaptureMode) {
@@ -245,12 +288,22 @@ struct HomeView: View {
     }
 
     private var stepCards: some View {
-        HStack(spacing: 16) {
-            InfoTile(number: "1", title: "Add", value: "Open, paste, capture, or drop source files.", stepCircleSize: stepCircleSize)
-            InfoTile(number: "2", title: "Process", value: "Watch page thumbnails and OCR progress.", stepCircleSize: stepCircleSize)
-            InfoTile(number: "3", title: "Review", value: "Fix OCR text, check page order, and inspect notes.", stepCircleSize: stepCircleSize)
-            InfoTile(number: "4", title: "Export", value: "Save Markdown, TXT, HTML, PDF, CSV, or JSON.", stepCircleSize: stepCircleSize)
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 16) {
+                infoTiles
+            }
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 16)], spacing: 16) {
+                infoTiles
+            }
         }
+    }
+
+    @ViewBuilder
+    private var infoTiles: some View {
+        InfoTile(number: "1", title: "Add", value: "Open, paste, capture, or drop source files.", stepCircleSize: stepCircleSize)
+        InfoTile(number: "2", title: "Process", value: "Watch page thumbnails and OCR progress.", stepCircleSize: stepCircleSize)
+        InfoTile(number: "3", title: "Review", value: "Fix OCR text, check page order, and inspect notes.", stepCircleSize: stepCircleSize)
+        InfoTile(number: "4", title: "Export", value: "Save Markdown, TXT, HTML, PDF, CSV, or JSON.", stepCircleSize: stepCircleSize)
     }
 
     private func announceDropResult(count: Int) {

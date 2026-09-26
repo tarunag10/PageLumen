@@ -13,7 +13,6 @@ struct SettingsView: View {
     }
 
     @Environment(DocumentStore.self) private var store
-    @AppStorage("privacyMode") private var privacyMode = true
     @AppStorage("ocrProfile") private var ocrProfile = "General"
     @AppStorage("languageHint") private var languageHint = "Automatic"
     @AppStorage("boostContrast") private var boostContrast = false
@@ -42,11 +41,13 @@ struct SettingsView: View {
             }
 
             Section("Privacy") {
-                Toggle("Privacy mode", isOn: $privacyMode)
+                Toggle("Privacy mode", isOn: Binding(
+                    get: { store.privacyMode },
+                    set: { _ = store.setPrivacyMode($0) }
+                ))
                     .accessibilityIdentifier("settings.privacyMode")
-                    .onChange(of: privacyMode) { _, enabled in
-                        store.statusMessage = enabled ? "Privacy mode enabled; translated export is disabled" : "Privacy mode disabled"
-                    }
+                    .disabled(store.isProcessing)
+                    .help(store.isProcessing ? "Finish processing before changing privacy mode" : "Keep translation and remote PDF operations disabled")
                 Text("Privacy mode keeps imports local and disables translation export, which may use a network-assisted service.")
                     .font(.callout)
                     .foregroundStyle(AccessibleStyle.secondaryText)
@@ -56,14 +57,14 @@ struct SettingsView: View {
                 Toggle("Enable Stirling-PDF operations", isOn: Binding(
                     get: { stirlingPDFEnabled },
                     set: { enabled in
-                        stirlingPDFEnabled = enabled && !privacyMode && stirlingEndpointState != .invalid
+                        stirlingPDFEnabled = enabled && !store.privacyMode && stirlingEndpointState != .invalid
                         if !stirlingPDFEnabled {
                             stirlingProbeState = nil
                         }
                     }
                 ))
                 .accessibilityIdentifier("settings.stirlingEnabled")
-                .disabled(privacyMode || stirlingEndpointState == .invalid)
+                .disabled(store.privacyMode || store.isProcessing || stirlingEndpointState == .invalid)
 
                 TextField("Local endpoint (for example, http://localhost:8080)", text: $stirlingPDFEndpointString)
                     .textFieldStyle(.roundedBorder)
@@ -92,7 +93,7 @@ struct SettingsView: View {
                     } label: {
                         Label(isProbingStirling ? "Checking…" : "Check connection", systemImage: "antenna.radiowaves.left.and.right")
                     }
-                    .disabled(isProbingStirling || stirlingEndpointState == .invalid || privacyMode)
+                    .disabled(isProbingStirling || stirlingEndpointState == .invalid || store.privacyMode || store.isProcessing)
                     .accessibilityIdentifier("settings.stirlingProbe")
                     if let stirlingProbeState {
                         Text(stirlingProbeStateLabel(stirlingProbeState))
@@ -124,7 +125,10 @@ struct SettingsView: View {
                     Label("Forget all recent documents", systemImage: "trash")
                 }
                 .accessibilityIdentifier("settings.forgetAll")
-                .disabled(store.recentDocuments.isEmpty)
+                .disabled(store.isProcessing || store.recentDocuments.isEmpty)
+                .help(store.isProcessing
+                    ? "Finish or cancel the current import before forgetting recent documents"
+                    : "Remove retained recent-document copies without deleting source files")
                 .confirmationDialog(
                     "Forget all recent documents? This cannot be undone.",
                     isPresented: $isShowingForgetConfirmation,
@@ -194,7 +198,10 @@ struct SettingsView: View {
                     ForEach(store.watchFolderCandidates) { candidate in
                         HStack {
                             Label(candidate.url.lastPathComponent, systemImage: "doc")
-                                .lineLimit(1)
+                                .lineLimit(2)
+                                .truncationMode(.middle)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .help(candidate.url.path)
                             Spacer()
                             Button("Import") {
                                 store.importWatchFolderCandidate(candidate)
@@ -215,7 +222,9 @@ struct SettingsView: View {
                     ForEach(store.watchFolderFailures) { failure in
                         VStack(alignment: .leading, spacing: 6) {
                             Label(failure.fileName, systemImage: "exclamationmark.triangle")
-                                .lineLimit(1)
+                                .lineLimit(2)
+                                .truncationMode(.middle)
+                                .fixedSize(horizontal: false, vertical: true)
                             Text(failure.message)
                                 .font(.caption)
                                 .foregroundStyle(AccessibleStyle.secondaryText)
@@ -235,6 +244,7 @@ struct SettingsView: View {
                     }
                 }
             }
+            .disabled(store.isProcessing)
 
             Section("Onboarding") {
                 Toggle("Show welcome screen on launch", isOn: showOnLaunchBinding)
@@ -266,10 +276,12 @@ struct SettingsView: View {
                     Text("French").tag("French")
                 }
                 .onChange(of: languageHint) { _, _ in
-                    store.applyLanguagePreference()
-                    store.statusMessage = languageHint == "Automatic" ? "Language detection set to automatic" : "Language hint set to \(languageHint)"
+                    if store.applyLanguagePreference() {
+                        store.statusMessage = languageHint == "Automatic" ? "Language detection set to automatic" : "Language hint set to \(languageHint)"
+                    }
                 }
             }
+            .disabled(store.isProcessing)
 
             Section("On-device AI") {
                 Picker("Intelligence mode", selection: $intelligenceModeRaw) {
@@ -284,6 +296,7 @@ struct SettingsView: View {
                 }
                 .accessibilityIdentifier("settings.intelligenceMode")
                 .accessibilityHint("Choose whether PageLumen may use Apple Intelligence for the current summary")
+                .disabled(store.isProcessing)
 
                 Toggle(
                     "Do not use intelligence for this document",
@@ -320,6 +333,7 @@ struct SettingsView: View {
                     .font(.callout)
                     .foregroundStyle(AccessibleStyle.secondaryText)
             }
+            .disabled(store.isProcessing)
 
             Section("Review Status") {
                 HStack {
@@ -335,6 +349,8 @@ struct SettingsView: View {
                     } label: {
                         Label("Jump to first review item", systemImage: "scope")
                     }
+                    .disabled(store.isProcessing)
+                    .help(store.isProcessing ? "Finish processing before opening Review" : "Open the first unresolved review item")
                 }
             }
 
@@ -354,13 +370,14 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(AccessibleStyle.secondaryText)
             }
+            .disabled(store.isProcessing)
 
-            Section("PRD Coverage") {
-                Text("Implemented locally: PDF/image import, paste image, batch import, screenshot capture, OCR, reading order, outline, editing, header/footer filtering, summaries, speech playback, Markdown/TXT/HTML/PDF/CSV/JSON exports, and privacy/profile settings.")
+            Section("About PageLumen") {
+                Text("PageLumen turns PDFs, scans, screenshots, slides, and images into readable, reviewable documents on your Mac.")
                     .font(.callout)
                     .foregroundStyle(AccessibleStyle.secondaryText)
 
-                Text("Longer-term roadmap: scanner/browser imports, trained layout models, full PDF/UA validation, advanced chart data extraction, audio-file export, EPUB/LMS/integration exports, and enterprise administration.")
+                Text("Your source file remains the source of record. Review extracted text and accessibility findings before choosing an export format.")
                     .font(.callout)
                     .foregroundStyle(AccessibleStyle.secondaryText)
             }
@@ -378,7 +395,7 @@ struct SettingsView: View {
                 .disabled(!translationAvailable)
 
                 if !translationAvailable {
-                    Label("Requires macOS 15 or later", systemImage: "exclamationmark.triangle")
+                    Label("Requires macOS 26 or later", systemImage: "exclamationmark.triangle")
                         .font(.caption)
                         .foregroundStyle(AccessibleStyle.secondaryText)
                 }
@@ -407,15 +424,14 @@ struct SettingsView: View {
             }
         }
         .padding(24)
-        .frame(width: 580)
+        .frame(minWidth: 460, idealWidth: 580, maxWidth: 720)
     }
 
     private func exportBinding(_ keyPath: WritableKeyPath<ExportOptions, Bool>) -> Binding<Bool> {
         Binding {
             store.exportOptions[keyPath: keyPath]
         } set: { newValue in
-            store.exportOptions[keyPath: keyPath] = newValue
-            store.persistExportDefaults()
+            _ = store.setExportOption(newValue, keyPath: keyPath)
         }
     }
 
@@ -434,7 +450,7 @@ struct SettingsView: View {
     }
 
     private func probeStirlingEndpoint() {
-        guard !privacyMode,
+        guard !store.privacyMode,
               let url = URL(string: stirlingPDFEndpointString.trimmingCharacters(in: .whitespacesAndNewlines)) else { return }
         let endpoint = StirlingPDFEndpoint(baseURL: url, allowRemoteHTTPS: stirlingPDFAllowRemoteHTTPS)
         guard endpoint.capabilityState != .invalid else { return }

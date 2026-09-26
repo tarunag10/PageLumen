@@ -51,6 +51,242 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertEqual(store.selectedDestination, .review)
     }
 
+    func testNavigationAvailabilityExplainsMissingImportAndActiveProcessing() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        store.document = ReaderDocument(title: "Empty", sourceType: .sample, pages: [])
+
+        XCTAssertEqual(store.navigationAvailabilityMessage(to: .review), "Import a document first")
+        XCTAssertEqual(store.navigationAvailabilityMessage(to: .summaryExport), "Import a document first")
+
+        store.document = ReaderDocument(
+            title: "Processing",
+            sourceType: .sample,
+            pages: [ReaderPage(
+                pageNumber: 1,
+                size: PageSize(width: 400, height: 600),
+                blocks: []
+            )]
+        )
+        store.isProcessing = true
+        XCTAssertFalse(store.canNavigate(to: .home))
+        XCTAssertEqual(store.navigationAvailabilityMessage(to: .home), "Finish processing first")
+        XCTAssertFalse(store.canNavigate(to: .review))
+        XCTAssertEqual(store.navigationAvailabilityMessage(to: .review), "Finish processing first")
+        XCTAssertFalse(store.canNavigate(to: .summaryExport))
+        XCTAssertEqual(store.navigationAvailabilityMessage(to: .summaryExport), "Finish processing first")
+        XCTAssertFalse(store.navigate(to: .home))
+        XCTAssertEqual(store.statusMessage, "Finish processing first")
+        XCTAssertFalse(store.applyReviewSelection(ReviewSelectionPayload(pageNumber: 1)))
+        XCTAssertEqual(store.statusMessage, "Finish processing before opening Review")
+
+        store.isProcessing = false
+        XCTAssertTrue(store.canNavigate(to: .home))
+        XCTAssertTrue(store.navigate(to: .home))
+        XCTAssertEqual(store.selectedDestination, .home)
+        XCTAssertTrue(store.canNavigate(to: .review))
+        XCTAssertTrue(store.canNavigate(to: .summaryExport))
+    }
+
+    func testProcessingLocksPrivacyExportDefaultsAndReviewPreset() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        store.isProcessing = true
+
+        XCTAssertFalse(store.setPrivacyMode(false))
+        XCTAssertTrue(store.privacyMode)
+        XCTAssertEqual(store.statusMessage, "Finish processing before changing privacy mode")
+
+        XCTAssertFalse(store.setExportOption(false, keyPath: \ExportOptions.includeHeadings))
+        XCTAssertTrue(store.exportOptions.includeHeadings)
+        XCTAssertEqual(store.statusMessage, "Finish processing before changing export defaults")
+
+        store.setReviewPreset(.legal)
+        XCTAssertEqual(store.reviewPreset, .general)
+        XCTAssertEqual(store.statusMessage, "Finish processing before changing the review preset")
+    }
+
+    func testExportDispatcherRejectsEmptyAndActiveProcessingDocuments() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        store.document = ReaderDocument(title: "Empty", sourceType: .sample, pages: [])
+
+        store.export(format: .docx)
+        XCTAssertEqual(store.statusMessage, "Import a document before exporting")
+
+        store.document = ReaderDocument(
+            title: "Processing",
+            sourceType: .sample,
+            pages: [ReaderPage(pageNumber: 1, size: PageSize(width: 400, height: 600), blocks: [])]
+        )
+        store.isProcessing = true
+        store.export(format: .audio)
+        XCTAssertEqual(store.statusMessage, "Finish processing before exporting")
+    }
+
+    func testReviewDecisionsDoNotMutateDocumentDuringActiveProcessing() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let block = store.document.pages[0].blocks[0]
+        let originalDocument = store.document
+        store.isProcessing = true
+
+        store.updateBlock(block, text: "Should not replace active OCR")
+        XCTAssertEqual(store.document, originalDocument)
+        XCTAssertEqual(store.statusMessage, "Finish processing before editing the document")
+
+        store.setBlockReviewed(block, isReviewed: true)
+        XCTAssertEqual(store.document, originalDocument)
+        XCTAssertEqual(store.statusMessage, "Finish processing before changing review decisions")
+
+        store.setSelectedPageReviewed(true)
+        XCTAssertEqual(store.document, originalDocument)
+        XCTAssertEqual(store.statusMessage, "Finish processing before changing review decisions")
+    }
+
+    func testDocumentSwitchRoutesDoNotDisplaceActiveProcessing() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let originalID = store.document.id
+        let other = ReaderDocument(title: "Other", sourceType: .sample, pages: store.document.pages)
+        store.isProcessing = true
+
+        XCTAssertFalse(store.selectRecentDocument(other))
+        XCTAssertEqual(store.document.id, originalID)
+        XCTAssertEqual(store.selectedDestination, .home)
+        XCTAssertEqual(store.statusMessage, "Finish processing before switching documents")
+    }
+
+    func testImportEntryPointsDoNotSilentlyCancelActiveProcessing() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        store.isProcessing = true
+
+        XCTAssertFalse(store.startImport(urls: [URL(fileURLWithPath: "/tmp/queued.pdf")]))
+        XCTAssertEqual(store.statusMessage, "Finish or cancel the current import before starting another")
+
+        store.pasteImageFromClipboard()
+        XCTAssertEqual(store.statusMessage, "Finish or cancel the current import before pasting another image")
+    }
+
+    func testWatchFolderRecoveryItemsRemainAvailableDuringActiveProcessing() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let candidate = WatchFolderCandidate(url: URL(fileURLWithPath: "/tmp/pending.pdf"), byteSize: 10)
+        let failure = WatchFolderImportFailure(url: URL(fileURLWithPath: "/tmp/failed.pdf"), message: "Unreadable fixture")
+        store.watchFolderCandidates = [candidate]
+        store.watchFolderFailures = [failure]
+        store.isProcessing = true
+
+        store.setWatchFolderEnabled(false)
+        XCTAssertEqual(store.watchFolderCandidates, [candidate])
+        XCTAssertEqual(store.watchFolderFailures, [failure])
+        XCTAssertEqual(store.statusMessage, "Finish or cancel the current import before changing watch-folder settings")
+
+        store.importWatchFolderCandidate(candidate)
+        XCTAssertEqual(store.watchFolderCandidates, [candidate])
+        XCTAssertEqual(store.statusMessage, "Finish or cancel the current import before importing a watch-folder file")
+
+        store.retryWatchFolderFailure(failure)
+        XCTAssertEqual(store.watchFolderFailures, [failure])
+        XCTAssertEqual(store.statusMessage, "Finish or cancel the current import before retrying a watch-folder file")
+    }
+
+    func testIntelligenceSettingsDoNotRegeneratePartialDocuments() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let originalDocument = store.document
+        store.isProcessing = true
+
+        store.setIntelligenceMode(.appleFoundationModels)
+        XCTAssertEqual(store.document, originalDocument)
+        XCTAssertEqual(store.statusMessage, "Finish processing before changing document intelligence settings")
+
+        store.setIntelligenceOptOutForCurrentDocument(true)
+        XCTAssertEqual(store.document, originalDocument)
+        XCTAssertEqual(store.statusMessage, "Finish processing before changing document intelligence settings")
+
+        store.regenerateSummary()
+        XCTAssertEqual(store.document, originalDocument)
+        XCTAssertEqual(store.statusMessage, "Finish processing before regenerating the summary")
+    }
+
+    func testLanguageHintDoesNotMutatePartialDocumentDuringProcessing() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        store.document.language = "en"
+        store.isProcessing = true
+        UserDefaults.standard.set("Hindi", forKey: "languageHint")
+
+        XCTAssertFalse(store.applyLanguagePreference())
+        XCTAssertEqual(store.document.language, "en")
+        XCTAssertEqual(store.statusMessage, "Finish processing before changing the language hint")
+    }
+
+    func testAppDelegatePreservesOneSupportedBatchForExternalOpen() {
+        let delegate = AppDelegate()
+        let urls = [
+            URL(fileURLWithPath: "/tmp/first.pdf"),
+            URL(fileURLWithPath: "/tmp/ignored.txt"),
+            URL(fileURLWithPath: "/tmp/second.png")
+        ]
+
+        XCTAssertEqual(
+            delegate.queueOpenURLs(urls),
+            [URL(fileURLWithPath: "/tmp/first.pdf"), URL(fileURLWithPath: "/tmp/second.png")]
+        )
+
+        XCTAssertEqual(
+            delegate.consumePendingOpenURLs(),
+            [URL(fileURLWithPath: "/tmp/first.pdf"), URL(fileURLWithPath: "/tmp/second.png")]
+        )
+        XCTAssertTrue(delegate.consumePendingOpenURLs().isEmpty)
+
+        let restoredURL = URL(fileURLWithPath: "/tmp/restored.pdf")
+        delegate.restorePendingOpenURLs([restoredURL])
+        delegate.markOpenURLDelivered(restoredURL)
+        XCTAssertTrue(delegate.consumePendingOpenURLs().isEmpty)
+
+        delegate.restorePendingOpenURLs([restoredURL])
+        delegate.restorePendingOpenURLs([URL(fileURLWithPath: "/tmp/second-restored.pdf")])
+        XCTAssertEqual(
+            delegate.consumePendingOpenURLs(),
+            [URL(fileURLWithPath: "/tmp/second-restored.pdf"), restoredURL]
+        )
+    }
+
+    func testForgetOperationsDoNotMutateLibraryDuringActiveProcessing() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let active = store.document
+        store.isProcessing = true
+
+        store.forgetAllRecentDocuments()
+        XCTAssertFalse(store.recentDocuments.isEmpty)
+        XCTAssertEqual(store.statusMessage, "Finish or cancel the current import before forgetting recent documents")
+
+        store.forgetRecentDocument(active)
+        XCTAssertTrue(store.recentDocuments.contains(where: { $0.id == active.id }))
+        XCTAssertEqual(store.statusMessage, "Finish or cancel the current import before forgetting a recent document")
+    }
+
+    func testExportPreviewInvalidatesAfterSameDocumentTextEdit() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        let initial = store.exportPreviewText()
+        XCTAssertTrue(initial.contains("PageLumen") || !initial.isEmpty)
+
+        store.document.pages[0].blocks[0].text = "Updated preview content"
+
+        let updated = store.exportPreviewText()
+        XCTAssertTrue(updated.contains("Updated preview content"))
+    }
+
+    func testAllFailedBatchStaysOnProcessingForRecovery() async {
+        let store = DocumentStore(processor: AlwaysFailingImporter(), persisting: InMemoryPersisting())
+
+        await store.importURLs([URL(fileURLWithPath: "/tmp/unreadable.pdf")])
+
+        XCTAssertFalse(store.isProcessing)
+        XCTAssertEqual(store.selectedDestination, .processing)
+        XCTAssertEqual(store.batchQueue.completedCount, 0)
+        XCTAssertEqual(store.batchQueue.failedCount, 1)
+        XCTAssertTrue(store.statusMessage.contains("failed"))
+        XCTAssertFalse(store.canNavigate(to: .review))
+        XCTAssertFalse(store.canNavigate(to: .summaryExport))
+        XCTAssertEqual(store.navigationAvailabilityMessage(to: .review), "Resolve the failed import before reviewing")
+        XCTAssertEqual(store.exportAvailabilityMessage(for: .markdown), "Resolve the failed import before exporting")
+    }
+
     func testStirlingCompressionRequiresConfigurationPrivacyOffAndConfirmation() {
         let store = DocumentStore(persisting: InMemoryPersisting())
         store.loadSample()
@@ -310,6 +546,23 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertTrue(store.canExport(.markdown))
         XCTAssertFalse(store.canExport(.translated))
         XCTAssertTrue(store.exportAvailabilityMessage(for: .translated).contains("Privacy"))
+    }
+
+    func testExportAvailabilityExplainsValidationBlockers() {
+        let store = DocumentStore(persisting: InMemoryPersisting())
+        store.document = ReaderDocument(
+            title: "Needs review",
+            sourceType: .sample,
+            pages: [ReaderPage(
+                pageNumber: 1,
+                size: PageSize(width: 400, height: 600),
+                blocks: []
+            )]
+        )
+
+        XCTAssertFalse(store.canExport(.taggedHTML))
+        XCTAssertTrue(store.exportAvailabilityMessage(for: .taggedHTML).contains("Resolve"))
+        XCTAssertFalse(store.exportAvailabilityMessage(for: .taggedHTML).contains("Import and finish processing"))
     }
 
     func testMoveBlockUpdatesReadingOrder() {
@@ -574,15 +827,14 @@ final class DocumentStoreTests: XCTestCase {
         let second = store.exportPreviewText()
         XCTAssertEqual(first, second, "Two back-to-back calls should return the same preview text")
 
-        // A "light" mutation that doesn't change the document version should
-        // still hit the cache, so the rendered text reflects the previous
-        // document state, not the mutated one.
+        // Same-document content edits must invalidate the cache so a preview
+        // never presents stale source text.
         if let block = store.document.allBlocks.first {
             store.updateBlock(block, text: "MUTATED CONTENT FOR CACHE TEST")
         }
         let afterMutation = store.exportPreviewText()
-        XCTAssertEqual(afterMutation, first, "Cache should be hit despite a non-versioned mutation")
-        XCTAssertFalse(afterMutation.contains("MUTATED CONTENT FOR CACHE TEST"))
+        XCTAssertNotEqual(afterMutation, first, "Content edits should invalidate the preview cache")
+        XCTAssertTrue(afterMutation.contains("MUTATED CONTENT FOR CACHE TEST"))
     }
 
     func testExportPreviewTextReRendersWhenDocumentChanges() {
@@ -793,6 +1045,20 @@ final class DocumentStoreTests: XCTestCase {
             sourceType: .sample,
             pages: [ReaderPage(pageNumber: 1, size: PageSize(width: 400, height: 600), blocks: [first, second, third])]
         )
+    }
+}
+
+private struct AlwaysFailingImporter: DocumentImporting {
+    func process(url: URL, onProgress: DocumentProcessingProgressHandler?) async throws -> ReaderDocument {
+        throw NSError(domain: "PageLumenTests", code: 1, userInfo: [NSLocalizedDescriptionKey: "Fixture is unreadable"])
+    }
+
+    func process(securityScopedURL url: URL, onProgress: DocumentProcessingProgressHandler?) async throws -> ReaderDocument {
+        throw NSError(domain: "PageLumenTests", code: 1, userInfo: [NSLocalizedDescriptionKey: "Fixture is unreadable"])
+    }
+
+    func processClipboardImage(_ image: NSImage, onProgress: DocumentProcessingProgressHandler?) async throws -> ReaderDocument {
+        throw NSError(domain: "PageLumenTests", code: 1, userInfo: [NSLocalizedDescriptionKey: "Fixture is unreadable"])
     }
 }
 

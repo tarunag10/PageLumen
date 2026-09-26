@@ -17,7 +17,11 @@ struct SummaryExportView: View {
 
     var body: some View {
         @Bindable var store = store
-        ScrollView {
+        Group {
+            if store.document.pages.isEmpty {
+                emptyExportState
+            } else {
+                ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("STEP 4")
@@ -38,7 +42,7 @@ struct SummaryExportView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                ScrollView(.horizontal, showsIndicators: false) {
+                ScrollView(.horizontal, showsIndicators: true) {
                 HStack(spacing: 12) {
                     Picker("Length", selection: $store.summaryLength) {
                         ForEach(SummaryLength.allCases) { length in
@@ -89,11 +93,13 @@ struct SummaryExportView: View {
                     Spacer()
 
                     Button {
-                        store.selectedDestination = .review
+                        _ = store.navigate(to: .review)
                     } label: {
                         Label("Back to Review", systemImage: "arrow.left")
                     }
                     .accessibilityIdentifier("export.backToReview")
+                    .disabled(!store.canNavigate(to: .review))
+                    .help(store.navigationAvailabilityMessage(to: .review))
                 }
                 .padding(.vertical, 2)
                 }
@@ -112,7 +118,10 @@ struct SummaryExportView: View {
                         }
                         .accessibilityElement(children: .combine)
                         .accessibilityIdentifier("export.status")
+                        .accessibilityAddTraits(.updatesFrequently)
                 }
+
+                exportFormatSection
 
                 if store.isStirlingOperationInFlight {
                     HStack(spacing: 12) {
@@ -259,37 +268,6 @@ struct SummaryExportView: View {
                     }
                     .tint(AccessibleStyle.accent)
 
-                    Divider().overlay(AccessibleStyle.border)
-
-                    Text("Save as")
-                        .font(.headline)
-                        .foregroundStyle(AccessibleStyle.primaryText)
-
-                    TipView(ExportAccessibilityTip())
-
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 10)], alignment: .leading, spacing: 10) {
-                        ForEach(ExportFormat.allCases) { format in
-                            Button {
-                                store.export(format: format)
-                            } label: {
-                                Text(format.rawValue)
-                                    .font(.callout.weight(.medium))
-                                    .foregroundStyle(AccessibleStyle.primaryText)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 8)
-                            }
-                            .buttonStyle(.bordered)
-                            .disabled(!store.canExport(format))
-                            .accessibilityIdentifier("export.\(format.rawValue)")
-                            .help(store.exportAvailabilityMessage(for: format))
-                        }
-                    }
-                    .tint(AccessibleStyle.accent)
-
-                    Text("Tagged HTML and Accessibility Report are the review-ready accessibility outputs. Readable PDF is selectable text, not full PDF/UA validation yet.")
-                        .font(.callout)
-                        .foregroundStyle(AccessibleStyle.secondaryText)
-
                     if store.canUseStirlingCompression {
                         Button {
                             isShowingStirlingConfirmation = true
@@ -355,7 +333,7 @@ struct SummaryExportView: View {
                                 Text(format.rawValue).tag(format)
                             }
                         }
-                        .frame(width: 220)
+                        .frame(minWidth: 180, idealWidth: 220, maxWidth: 320)
                     }
 
                     ScrollView {
@@ -384,10 +362,84 @@ struct SummaryExportView: View {
             .frame(maxWidth: 880)
             .frame(maxWidth: .infinity)
         }
+                .disabled(store.isProcessing)
+            }
+        }
         .background(AccessibleStyle.appBackground)
         .onDisappear {
             speech.stop()
         }
+    }
+
+    private var emptyExportState: some View {
+        ContentUnavailableView {
+            Label("Nothing to Export", systemImage: "doc.text.magnifyingglass")
+        } description: {
+            Text("Import a document and complete processing before choosing an export format.")
+        } actions: {
+            Button {
+                store.openDocumentPanel()
+            } label: {
+                Label("Open Files", systemImage: "doc.badge.plus")
+            }
+            .buttonStyle(.borderedProminent)
+            .keyboardShortcut("o", modifiers: [.command])
+        }
+        .accessibilityIdentifier("export.emptyState")
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .disabled(store.isProcessing)
+    }
+
+    private var exportFormatSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Save your document")
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(AccessibleStyle.primaryText)
+                    Text("Choose a format to open the save panel and export the full reviewed document.")
+                        .font(.callout)
+                        .foregroundStyle(AccessibleStyle.secondaryText)
+                }
+                Spacer()
+                Image(systemName: "arrow.down.doc")
+                    .font(.title2)
+                    .foregroundStyle(AccessibleStyle.accentBright)
+                    .accessibilityHidden(true)
+            }
+
+            TipView(ExportAccessibilityTip())
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 10)], alignment: .leading, spacing: 10) {
+                ForEach(ExportFormat.allCases) { format in
+                    Button {
+                        store.export(format: format)
+                    } label: {
+                        Text(format.rawValue)
+                            .font(.callout.weight(.medium))
+                            .foregroundStyle(AccessibleStyle.primaryText)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                    }
+                    // Format choices are peer actions; reserve prominent
+                    // treatment for the surrounding workflow action and the
+                    // native save confirmation.
+                    .buttonStyle(.bordered)
+                    .disabled(!store.canExport(format))
+                    .accessibilityIdentifier("export.\(format.rawValue)")
+                    .accessibilityValue(store.canExport(format) ? "Available" : store.exportAvailabilityMessage(for: format))
+                    .accessibilityHint(store.exportAvailabilityMessage(for: format))
+                    .help(store.exportAvailabilityMessage(for: format))
+                }
+            }
+            .tint(AccessibleStyle.accent)
+
+            Text("Tagged HTML and Accessibility Report are the review-ready accessibility outputs. Readable PDF is selectable text, not full PDF/UA validation yet.")
+                .font(.callout)
+                .foregroundStyle(AccessibleStyle.secondaryText)
+        }
+        .padding(20)
+        .accessiblePanel()
     }
 
     private func findingTitle(_ finding: AccessibilityFinding) -> String {
@@ -396,12 +448,18 @@ struct SummaryExportView: View {
     }
 
     private var statusSymbol: String {
-        store.statusMessage.localizedCaseInsensitiveContains("failed") || store.statusMessage.localizedCaseInsensitiveContains("error")
+        statusIsProblem
             ? "exclamationmark.triangle.fill"
             : "checkmark.circle.fill"
     }
 
     private var statusTint: Color {
-        statusSymbol == "exclamationmark.triangle.fill" ? AccessibleStyle.warning : AccessibleStyle.success
+        statusIsProblem ? AccessibleStyle.warning : AccessibleStyle.success
+    }
+
+    private var statusIsProblem: Bool {
+        let message = store.statusMessage
+        return ["failed", "error", "blocked", "cancelled", "unavailable", "disabled", "required", "could not"]
+            .contains { message.localizedCaseInsensitiveContains($0) }
     }
 }

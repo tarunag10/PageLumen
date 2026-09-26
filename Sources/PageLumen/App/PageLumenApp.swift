@@ -4,19 +4,62 @@ import SwiftUI
 import TipKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    private var pendingOpenURLs: [URL] = []
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
+        showMainWindow()
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        showMainWindow()
+        return true
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
-        for url in urls {
-            guard PageLumenSystemWorkflowContract.supportsDocumentURL(url) else { continue }
-            NotificationCenter.default.post(
-                name: .pageLumenOpenDocumentRequest,
-                object: nil,
-                userInfo: ["url": url]
-            )
+        let supportedURLs = queueOpenURLs(urls)
+        guard !supportedURLs.isEmpty else { return }
+        var userInfo: [AnyHashable: Any] = ["urls": supportedURLs]
+        // Preserve the original single-file notification contract for older
+        // receivers while the `urls` payload carries multi-file opens.
+        if supportedURLs.count == 1, let url = supportedURLs.first {
+            userInfo["url"] = url
+        }
+        NotificationCenter.default.post(
+            name: .pageLumenOpenDocumentRequest,
+            object: nil,
+            userInfo: userInfo
+        )
+    }
+
+    @discardableResult
+    func queueOpenURLs(_ urls: [URL]) -> [URL] {
+        let supportedURLs = urls.filter(PageLumenSystemWorkflowContract.supportsDocumentURL)
+        pendingOpenURLs.append(contentsOf: supportedURLs)
+        return supportedURLs
+    }
+
+    func consumePendingOpenURLs() -> [URL] {
+        defer { pendingOpenURLs.removeAll() }
+        return pendingOpenURLs
+    }
+
+    func restorePendingOpenURLs(_ urls: [URL]) {
+        pendingOpenURLs.insert(contentsOf: urls, at: 0)
+    }
+
+    func markOpenURLDelivered(_ url: URL) {
+        pendingOpenURLs.removeAll { $0 == url }
+    }
+
+    private func showMainWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        // SwiftUI creates WindowGroup windows after applicationDidFinishLaunching;
+        // dispatching once lets the scene materialize before bringing it forward.
+        DispatchQueue.main.async {
+            guard let window = NSApp.windows.first(where: { $0.canBecomeKey }) else { return }
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
         }
     }
 }
@@ -45,6 +88,14 @@ struct PageLumenApp: App {
     /// This argument is test-only and has no effect during normal launches.
     private var isUITestingSettingsLaunch: Bool {
         ProcessInfo.processInfo.arguments.contains("-ui-testing-settings")
+    }
+
+    private var isUITestingReviewEmptyLaunch: Bool {
+        ProcessInfo.processInfo.arguments.contains("-ui-testing-review-empty")
+    }
+
+    private var isUITestingExportEmptyLaunch: Bool {
+        ProcessInfo.processInfo.arguments.contains("-ui-testing-export-empty")
     }
 
     /// Appearance overrides are test-only launch seams. They let the UI
@@ -98,6 +149,26 @@ struct PageLumenApp: App {
                     if isUITestingFixtureLaunch {
                         store.loadSample()
                     }
+                    if isUITestingReviewEmptyLaunch {
+                        store.document = ReaderDocument(title: "Empty", sourceType: .sample, pages: [])
+                        store.selectedDestination = .review
+                    }
+                    if isUITestingExportEmptyLaunch {
+                        store.document = ReaderDocument(title: "Empty", sourceType: .sample, pages: [])
+                        store.selectedDestination = .summaryExport
+                    }
+                    let pendingURLs = appDelegate.consumePendingOpenURLs()
+                    if !pendingURLs.isEmpty, !store.startImport(urls: pendingURLs) {
+                        appDelegate.restorePendingOpenURLs(pendingURLs)
+                    }
+                }
+                .onChange(of: store.isProcessing) { _, isProcessing in
+                    guard !isProcessing else { return }
+                    let pendingURLs = appDelegate.consumePendingOpenURLs()
+                    guard !pendingURLs.isEmpty else { return }
+                    if !store.startImport(urls: pendingURLs) {
+                        appDelegate.restorePendingOpenURLs(pendingURLs)
+                    }
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .pageLumenShowOnboardingRequest)) { _ in
                     isShowingOnboarding = true
@@ -107,8 +178,16 @@ struct PageLumenApp: App {
                     store.openRecentDocument(id: id)
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .pageLumenOpenDocumentRequest)) { notification in
-                    guard let url = notification.userInfo?["url"] as? URL else { return }
-                    store.startImport(urls: [url])
+                    let urls = (notification.userInfo?["urls"] as? [URL])
+                        ?? (notification.userInfo?["url"] as? URL).map { [$0] }
+                    guard let urls, !urls.isEmpty else { return }
+                    if store.isProcessing {
+                        let noun = urls.count == 1 ? "file" : "files"
+                        store.statusMessage = "Queued \(urls.count) \(noun); it will import after the current operation finishes."
+                        return
+                    }
+                    guard store.startImport(urls: urls) else { return }
+                    urls.forEach(appDelegate.markOpenURLDelivered)
                 }
                 .task {
                     try? Tips.configure([
@@ -123,43 +202,49 @@ struct PageLumenApp: App {
                     store.openDocumentPanel()
                 }
                 .keyboardShortcut("o", modifiers: [.command])
+                .disabled(store.isProcessing)
 
                 Button("Paste Image") {
                     store.pasteImageFromClipboard()
                 }
                 .keyboardShortcut("v", modifiers: [.command, .shift])
+                .disabled(store.isProcessing)
 
                 Button("Review First Issue") {
                     store.jumpToFirstReviewIssue()
                 }
                 .keyboardShortcut("r", modifiers: [.command, .shift])
+                .disabled(store.reviewIssueCount == 0)
 
                 Button("Next Review Issue") {
                     store.jumpToNextReviewIssue()
                 }
                 .keyboardShortcut("]", modifiers: [.command, .shift])
+                .disabled(store.reviewIssueCount == 0)
 
                 Button("Previous Review Issue") {
                     store.jumpToPreviousReviewIssue()
                 }
                 .keyboardShortcut("[", modifiers: [.command, .shift])
+                .disabled(store.reviewIssueCount == 0)
 
                 Button("Accept Current Review Finding") {
                     store.acceptCurrentReviewIssue()
                 }
                 .keyboardShortcut("a", modifiers: [.command, .shift])
-                .disabled(store.currentReviewIssue == nil)
+                .disabled(store.isProcessing || store.currentReviewIssue == nil)
 
                 Button("Reject Current Review Finding") {
                     store.rejectCurrentReviewIssue()
                 }
                 .keyboardShortcut("x", modifiers: [.command, .shift])
-                .disabled(store.currentReviewIssue == nil)
+                .disabled(store.isProcessing || store.currentReviewIssue == nil)
 
                 Button("Mark Page Reviewed") {
                     store.setSelectedPageReviewed(true)
                 }
                 .keyboardShortcut(.return, modifiers: [.command, .shift])
+                .disabled(store.isProcessing || store.selectedPage == nil || store.selectedPage?.blocks.isEmpty == true)
             }
         }
 
@@ -167,6 +252,7 @@ struct PageLumenApp: App {
             SettingsView()
                 .environment(store)
                 .tint(AccessibleStyle.accent)
+                .preferredColorScheme(effectiveAppearancePreference == "light" ? .light : effectiveAppearancePreference == "dark" ? .dark : nil)
         }
 
         MenuBarExtra("PageLumen", systemImage: "doc.text.magnifyingglass") {
@@ -184,9 +270,13 @@ private struct MenuBarActions: View {
         Button("Capture Selected Region") {
             store.captureSelectedRegion()
         }
+        .disabled(store.isProcessing)
+        .help(store.isProcessing ? "Finish or cancel the current import first" : "Capture a selected screen region")
         Button("Capture Window") {
             store.captureWindow()
         }
+        .disabled(store.isProcessing)
+        .help(store.isProcessing ? "Finish or cancel the current import first" : "Capture the current window")
         Divider()
         Button("Open PageLumen Window") {
             openWindow(id: "main")

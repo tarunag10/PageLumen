@@ -68,16 +68,14 @@ struct OnboardingView: View {
             .controlSize(.large)
             .accessibilityHint("Closes the welcome screen and opens the main workspace.")
 
-            Button("Show this on launch") {
-                // The "Show on launch" preference lives in Settings, so dismissing
-                // the welcome screen here just closes the sheet for this session.
+            Button("Maybe later") {
                 isPresented = false
             }
             .buttonStyle(.link)
-            .accessibilityHint("Dismiss the welcome screen now. You can reopen it from Settings.")
+            .accessibilityHint("Dismiss the welcome screen for now. You can reopen it from Settings.")
         }
         .padding(36)
-        .frame(width: 540)
+        .frame(minWidth: 420, idealWidth: 540, maxWidth: 680)
         .background(AccessibleStyle.appBackground)
         .overlay {
             RoundedRectangle(cornerRadius: AccessibleStyle.cornerRadius)

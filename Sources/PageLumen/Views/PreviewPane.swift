@@ -14,30 +14,37 @@ struct PreviewPane: View {
         ZStack {
             if let page {
                 ScrollView {
-                    ZStack(alignment: .topLeading) {
-                        PreviewImage(data: page.thumbnailData)
-                            .frame(width: 360, height: 470)
-                            .background(AccessibleStyle.panelBackground, in: RoundedRectangle(cornerRadius: AccessibleStyle.innerCornerRadius))
-                            .overlay {
-                                RoundedRectangle(cornerRadius: AccessibleStyle.innerCornerRadius)
-                                    .stroke(AccessibleStyle.border)
+                    GeometryReader { proxy in
+                        let canvasWidth = min(max(proxy.size.width - 56, 220), 520)
+                        let canvasHeight = canvasWidth * 470 / 360
+
+                        ZStack(alignment: .topLeading) {
+                            PreviewImage(data: page.thumbnailData)
+                                .frame(width: canvasWidth, height: canvasHeight)
+                                .background(AccessibleStyle.panelBackground, in: RoundedRectangle(cornerRadius: AccessibleStyle.innerCornerRadius))
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: AccessibleStyle.innerCornerRadius)
+                                        .stroke(AccessibleStyle.border)
+                                }
+                                .shadow(color: .black.opacity(0.3), radius: 14, y: 6)
+
+                            if showReadingOrder {
+                                ReadingOrderOverlay(page: page)
+                                    .frame(width: canvasWidth, height: canvasHeight)
                             }
-                            .shadow(color: .black.opacity(0.3), radius: 14, y: 6)
 
-                        if showReadingOrder {
-                            ReadingOrderOverlay(page: page)
-                                .frame(width: 360, height: 470)
+                            if store.currentReviewIssue?.pageNumber == page.pageNumber,
+                               store.currentReviewIssue?.blockID == nil {
+                                OriginalPageWarningOverlay()
+                                    .frame(width: canvasWidth, height: canvasHeight)
+                                    .accessibilityElement(children: .combine)
+                                    .accessibilityLabel("Original page region for the selected page warning")
+                                    .accessibilityHint("Inspect this original page before correcting the warning in the Review Queue.")
+                            }
                         }
-
-                        if store.currentReviewIssue?.pageNumber == page.pageNumber,
-                           store.currentReviewIssue?.blockID == nil {
-                            OriginalPageWarningOverlay()
-                                .frame(width: 360, height: 470)
-                                .accessibilityElement(children: .combine)
-                                .accessibilityLabel("Original page region for the selected page warning")
-                                .accessibilityHint("Inspect this original page before correcting the warning in the Review Queue.")
-                        }
+                        .frame(width: canvasWidth, height: canvasHeight)
                     }
+                    .frame(minHeight: 320, idealHeight: 526, maxHeight: 740)
                     .padding(28)
                 }
             } else {

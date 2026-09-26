@@ -41,11 +41,21 @@ struct ProcessingView: View {
 
             if let activeDocument {
                 ScrollView {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 180), spacing: 16)], spacing: 16) {
-                        ForEach(activeDocument.pages) { page in
-                            ProcessingPageCard(page: page) {
-                                store.selectedPageNumber = page.pageNumber
-                                store.selectedDestination = .review
+                    VStack(alignment: .leading, spacing: 16) {
+                        if store.batchQueue.failedCount > 0 && store.batchQueue.completedDocuments.isEmpty && !store.isProcessing {
+                            recoveryBanner
+                        }
+
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 180), spacing: 16)], spacing: 16) {
+                            ForEach(activeDocument.pages) { page in
+                                ProcessingPageCard(
+                                    page: page,
+                                    isDisabled: store.isProcessing || !store.canNavigate(to: .review),
+                                    disabledHint: store.navigationAvailabilityMessage(to: .review)
+                                ) {
+                                    guard store.navigate(to: .review) else { return }
+                                    store.selectedPageNumber = page.pageNumber
+                                }
                             }
                         }
                     }
@@ -56,11 +66,59 @@ struct ProcessingView: View {
                     Label("Preparing Import", systemImage: "text.viewfinder")
                 } description: {
                     Text(store.statusMessage)
+                } actions: {
+                    Button {
+                        guard !store.isProcessing else { return }
+                        store.openDocumentPanel()
+                    } label: {
+                        Label("Open Files", systemImage: "doc.badge.plus")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(store.isProcessing)
+                    .help(store.isProcessing ? "Finish or cancel the current import first" : "Open another document")
+                    .accessibilityIdentifier("processing.openFiles")
+                    Button {
+                        _ = store.navigate(to: .home)
+                    } label: {
+                        Text("Back to Add")
+                    }
+                    .disabled(!store.canNavigate(to: .home))
+                    .help(store.navigationAvailabilityMessage(to: .home))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .background(AccessibleStyle.appBackground)
+    }
+
+    private var recoveryBanner: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Import needs attention", systemImage: "exclamationmark.triangle.fill")
+                .font(.headline)
+                .foregroundStyle(AccessibleStyle.warning)
+            Text("No file completed successfully. Review is unavailable until you retry with another file or processing option.")
+                .font(.callout)
+                .foregroundStyle(AccessibleStyle.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 10) {
+                Button {
+                    guard !store.isProcessing else { return }
+                    store.openDocumentPanel()
+                } label: {
+                    Label("Open Files", systemImage: "doc.badge.plus")
+                }
+                .buttonStyle(.borderedProminent)
+                Button("Back to Add") {
+                    _ = store.navigate(to: .home)
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessiblePanel(paddedShadow: false)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("processing.recovery")
+        .accessibilityAddTraits(.updatesFrequently)
     }
 
     private var header: some View {
@@ -78,12 +136,15 @@ struct ProcessingView: View {
                 Text(title)
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(AccessibleStyle.primaryText)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Text(store.statusMessage)
                     .font(.callout)
                     .foregroundStyle(AccessibleStyle.secondaryText)
                     .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.updatesFrequently)
             }
 
             Spacer()
@@ -97,8 +158,11 @@ struct ProcessingView: View {
 
             VStack(alignment: .trailing, spacing: 6) {
                 ProgressView(value: pageProgress)
-                    .frame(width: 200)
+                    .frame(minWidth: 140, idealWidth: 200, maxWidth: 260)
                     .tint(AccessibleStyle.accentBright)
+                    .accessibilityLabel("Processing progress")
+                    .accessibilityValue(progressLabel)
+                    .accessibilityIdentifier("processing.progress")
 
                 Text(progressLabel)
                     .font(.caption)
@@ -138,6 +202,8 @@ struct ProcessingView: View {
 
 private struct ProcessingPageCard: View {
     let page: ReaderPage
+    let isDisabled: Bool
+    let disabledHint: String
     let action: () -> Void
     @AppStorage("boostContrast") private var boostContrast = false
 
@@ -175,9 +241,10 @@ private struct ProcessingPageCard: View {
             .accessiblePanel()
         }
         .buttonStyle(.plain)
+        .disabled(isDisabled)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Page \(page.pageNumber), \(page.ocrStatus.statusDescriptor.label)")
-        .accessibilityHint("Open this page in Review.")
+        .accessibilityHint(isDisabled ? disabledHint : "Open this page in Review.")
     }
 
     @ViewBuilder

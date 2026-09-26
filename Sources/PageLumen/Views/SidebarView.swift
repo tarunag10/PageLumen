@@ -15,7 +15,16 @@ struct SidebarView: View {
         VStack(spacing: 0) {
             SidebarHeader()
 
-            List(selection: $store.selectedDestination) {
+            List(selection: Binding(
+                get: { store.selectedDestination },
+                set: { destination in
+                    guard let destination else {
+                        store.selectedDestination = nil
+                        return
+                    }
+                    _ = store.navigate(to: destination)
+                }
+            )) {
                 Section("Steps") {
                     SidebarRow(title: "1. Add Document", systemImage: "tray.and.arrow.down", tag: DocumentStore.Destination.home)
                     SidebarRow(title: "2. Process", systemImage: "text.viewfinder", tag: DocumentStore.Destination.processing)
@@ -40,7 +49,8 @@ struct SidebarView: View {
                                         Text(item.fileName)
                                             .font(.callout.weight(.medium))
                                             .foregroundStyle(AccessibleStyle.primaryText)
-                                            .lineLimit(1)
+                                            .lineLimit(2)
+                                            .fixedSize(horizontal: false, vertical: true)
 
                                         Text(detail(for: item))
                                             .font(.caption2)
@@ -50,9 +60,13 @@ struct SidebarView: View {
                                 }
                             }
                             .buttonStyle(.plain)
-                            .disabled(item.document == nil)
+                            .disabled(store.isProcessing || item.document == nil)
                             .accessibilityLabel("\(item.fileName), \(detail(for: item))")
-                            .accessibilityHint(item.document == nil ? "This file is not available to review." : "Open this imported document in Review.")
+                            .accessibilityHint(item.document == nil
+                                ? "This file is not available to review."
+                                : store.isProcessing
+                                    ? "Finish processing before switching documents."
+                                    : "Open this imported document in Review.")
                         }
                     }
                 }
@@ -81,7 +95,8 @@ struct SidebarView: View {
                                             Text(document.title)
                                                 .font(.callout.weight(.medium))
                                                 .foregroundStyle(AccessibleStyle.primaryText)
-                                                .lineLimit(1)
+                                                .lineLimit(2)
+                                                .fixedSize(horizontal: false, vertical: true)
 
                                             Text(librarySubtitle(for: document))
                                                 .font(.caption2)
@@ -91,13 +106,17 @@ struct SidebarView: View {
                                     }
                                 }
                                 .buttonStyle(.plain)
+                                .disabled(store.isProcessing)
                                 .contextMenu {
                                     Button("Forget Recent Document", role: .destructive) {
                                         documentToForget = document
                                     }
+                                    .disabled(store.isProcessing)
                                 }
                                 .accessibilityLabel("\(document.title), \(librarySubtitle(for: document))")
-                                .accessibilityHint("Open this document in Review.")
+                                .accessibilityHint(store.isProcessing
+                                    ? "Finish processing before switching documents."
+                                    : "Open this document in Review.")
                             }
                         }
                     }
@@ -119,8 +138,11 @@ struct SidebarView: View {
                                     }
                                 }
                                 .buttonStyle(.plain)
+                                .disabled(store.isProcessing)
                                 .accessibilityLabel("\(result.title), page \(result.pageNumber)")
-                                .accessibilityHint("Open this local-library search result in Review.")
+                                .accessibilityHint(store.isProcessing
+                                    ? "Finish processing before switching documents."
+                                    : "Open this local-library search result in Review.")
                             }
                         }
                     }
@@ -134,8 +156,7 @@ struct SidebarView: View {
                     } else {
                         ForEach(store.document.outline) { item in
                             Button {
-                                store.selectedPageNumber = item.pageNumber
-                                store.selectedDestination = .review
+                                _ = store.selectReviewSource(pageNumber: item.pageNumber)
                             } label: {
                                 HStack(spacing: 11) {
                                     Image(systemName: "textformat.size")
@@ -155,8 +176,11 @@ struct SidebarView: View {
                                 }
                             }
                             .buttonStyle(.plain)
+                            .disabled(!store.canNavigate(to: .review))
                             .accessibilityLabel("Heading \(item.title), page \(item.pageNumber)")
-                            .accessibilityHint("Open this heading in Review.")
+                            .accessibilityHint(store.canNavigate(to: .review)
+                                ? "Open this heading in Review."
+                                : store.navigationAvailabilityMessage(to: .review))
                         }
                     }
                 }
@@ -252,7 +276,8 @@ struct SidebarView: View {
                     Text(document.title)
                         .font(.callout.weight(.medium))
                         .foregroundStyle(AccessibleStyle.primaryText)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text(subtitle)
                         .font(.caption2)
                         .foregroundStyle(AccessibleStyle.secondaryText)
@@ -261,13 +286,16 @@ struct SidebarView: View {
             }
         }
         .buttonStyle(.plain)
+        .disabled(store.isProcessing)
         .contextMenu {
             Button("Forget Recent Document", role: .destructive) {
                 documentToForget = document
             }
         }
         .accessibilityLabel("\(document.title), \(subtitle)")
-        .accessibilityHint("Open this document in Review.")
+        .accessibilityHint(store.isProcessing
+            ? "Finish processing before switching documents."
+            : "Open this document in Review.")
     }
 }
 
@@ -320,10 +348,13 @@ private struct SidebarRow: View {
         Label(title, systemImage: systemImage)
             .tag(tag)
             .font(.callout.weight(.medium))
-            .disabled(!store.canNavigate(to: tag))
-            .accessibilityLabel(title)
-            .accessibilityValue(store.canNavigate(to: tag) ? "Available" : "Unavailable until a document is imported")
-    }
+        .disabled(!store.canNavigate(to: tag))
+        .accessibilityLabel(title)
+        .accessibilityValue(store.navigationAvailabilityMessage(to: tag))
+        .accessibilityHint(store.canNavigate(to: tag)
+            ? "Show the \(title.lowercased()) step."
+            : store.navigationAvailabilityMessage(to: tag))
+        }
 }
 
 private struct SidebarStatusFooter: View {
@@ -334,7 +365,7 @@ private struct SidebarStatusFooter: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
                 Circle()
-                    .fill(AccessibleStyle.success)
+                    .fill(statusTone)
                     .frame(width: 6, height: 6)
                 Text(title)
                     .font(.caption.weight(.semibold))
@@ -355,5 +386,27 @@ private struct SidebarStatusFooter: View {
                 .fill(AccessibleStyle.border)
                 .frame(height: 1)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("sidebar.status")
+        .accessibilityLabel(displayTitle)
+        .accessibilityValue(status)
+    }
+
+    private var displayTitle: String {
+        title == "Untitled document" || title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? "No document loaded"
+            : title
+    }
+
+    private var statusTone: Color {
+        let value = status.lowercased()
+        if value.contains("fail") || value.contains("error") || value.contains("denied") {
+            return AccessibleStyle.error
+        }
+        if value.contains("review") || value.contains("warning") || value.contains("cancel") ||
+            value.contains("blocked") || value.contains("unavailable") || value.contains("disabled") {
+            return AccessibleStyle.warning
+        }
+        return AccessibleStyle.success
     }
 }
