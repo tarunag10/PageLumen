@@ -18,7 +18,7 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/swift-snapshot-testing.git", from: "1.17.0"),
         // Test-only Markdown AST validation. Keep this exact so parser behavior
         // cannot change without an intentional dependency review.
-        .package(url: "https://github.com/swiftlang/swift-markdown.git", exact: "0.8.0")
+        .package(url: "https://github.com/swiftlang/swift-markdown.git", exact: "0.9.0")
     ],
     targets: [
         .target(
