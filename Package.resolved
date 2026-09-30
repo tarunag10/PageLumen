@@ -1,5 +1,5 @@
 {
-  "originHash" : "d98d97c0839d2cc41b0db3577e262b277bdc72a364e27cb72e8033277f4b107b",
+  "originHash" : "b99b1ef4e4992e74a8d8f90b9ba6623fa317eeef0322bd093f5f26f8d44bfc15",
   "pins" : [
     {
       "identity" : "swift-cmark",
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-snapshot-testing.git",
       "state" : {
-        "revision" : "59a99c458de4d2dee580529b61b4f78dca7b7fa6",
-        "version" : "1.19.4"
+        "revision" : "28e5de025e3fd98991791bfbf83023ab3708da03",
+        "version" : "1.19.6"
       }
     },
     {
